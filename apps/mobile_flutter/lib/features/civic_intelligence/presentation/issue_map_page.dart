@@ -176,10 +176,9 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   Future<void> _onStyleLoaded() async {
     _styleLoaded = true;
-    // Boost place/barangay label visibility by increasing text size on
-    // relevant symbol layers provided by the liberty tile style.
     final controller = _mapController;
     if (controller != null) {
+      // Boost place/barangay label visibility.
       for (final layer in [
         'place-suburb',
         'place-village',
@@ -190,9 +189,36 @@ class _IssueMapPageState extends State<IssueMapPage> {
         try {
           await controller.setLayerProperties(
             layer,
-            SymbolLayerProperties(textSize: 14, textHaloWidth: 1.5,
-                textHaloColor: '#FFFFFF'),
+            SymbolLayerProperties(
+              textSize: 14,
+              textHaloWidth: 1.5,
+              textHaloColor: '#FFFFFF',
+            ),
           );
+        } catch (_) {}
+      }
+
+      // Hide noisy POI layers — gas stations, cafes, shops, etc.
+      // We only want place/area labels relevant to community research.
+      for (final layer in [
+        'poi',
+        'poi-level-1',
+        'poi-level-2',
+        'poi-level-3',
+        'poi-railway',
+        'poi-transit',
+        'poi-label',
+        'amenity-label',
+        'shop-label',
+        'food-and-drink-label',
+        'gas-station-label',
+        'cafe-label',
+        'restaurant-label',
+        'hotel-label',
+        'attraction-label',
+      ]) {
+        try {
+          await controller.setLayerVisibility(layer, false);
         } catch (_) {}
       }
     }
