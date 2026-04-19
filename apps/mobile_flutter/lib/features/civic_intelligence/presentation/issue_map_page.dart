@@ -204,28 +204,26 @@ class _IssueMapPageState extends State<IssueMapPage> {
         'road_one_way_arrow_opposite',
       };
 
-      // Style each place label with yellow tones and size hierarchy.
-      // No halo/outline — clean text with subtle blur for readability.
-      const labelStyles = {
-        'label_country_1': (color: '#FFD60A', size: 22.0, font: 'Noto Sans Bold'),
-        'label_country_2': (color: '#FFD60A', size: 20.0, font: 'Noto Sans Bold'),
-        'label_country_3': (color: '#FFD60A', size: 18.0, font: 'Noto Sans Bold'),
-        'label_state':     (color: '#FFC107', size: 15.0, font: 'Noto Sans Bold'),
-        'label_city_capital': (color: '#FFB300', size: 14.0, font: 'Noto Sans Bold'),
-        'label_city':      (color: '#FFB300', size: 13.0, font: 'Noto Sans Bold'),
-        'label_town':      (color: '#FFA000', size: 12.0, font: 'Noto Sans Regular'),
-        'label_village':   (color: '#FF8F00', size: 11.0, font: 'Noto Sans Regular'),
-        'label_other':     (color: '#E65100', size: 10.0, font: 'Noto Sans Regular'),
+      // Keep default black colors for readability, just increase sizes
+      // per hierarchy. Poppins only applies to Flutter UI, not map tiles.
+      const labelSizes = {
+        'label_country_1': 22.0,
+        'label_country_2': 20.0,
+        'label_country_3': 18.0,
+        'label_state':     15.0,
+        'label_city_capital': 14.0,
+        'label_city':      13.0,
+        'label_town':      12.0,
+        'label_village':   11.0,
+        'label_other':     10.0,
       };
 
-      for (final entry in labelStyles.entries) {
+      for (final entry in labelSizes.entries) {
         try {
           await controller.setLayerProperties(
             entry.key,
             SymbolLayerProperties(
-              textColor: entry.value.color,
-              textSize: entry.value.size,
-              textFont: [entry.value.font],
+              textSize: entry.value,
               textHaloWidth: 0,
               textHaloBlur: 0,
             ),
