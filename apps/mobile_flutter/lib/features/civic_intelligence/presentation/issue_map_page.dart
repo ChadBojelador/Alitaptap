@@ -204,18 +204,30 @@ class _IssueMapPageState extends State<IssueMapPage> {
         'road_one_way_arrow_opposite',
       };
 
-      // Boost place label size and add white halo for readability.
-      for (final layer in [
-        'label_village', 'label_town', 'label_city',
-        'label_city_capital', 'label_other',
-      ]) {
+      // Style each place label with yellow tones and size hierarchy.
+      // Country > State > City > Town > Village > Other
+      const labelStyles = {
+        'label_country_1': (color: '#FFD60A', halo: '#1C1C1E', size: 22.0),
+        'label_country_2': (color: '#FFD60A', halo: '#1C1C1E', size: 20.0),
+        'label_country_3': (color: '#FFD60A', halo: '#1C1C1E', size: 18.0),
+        'label_state':     (color: '#FFC107', halo: '#1C1C1E', size: 16.0),
+        'label_city_capital': (color: '#FFB300', halo: '#1C1C1E', size: 15.0),
+        'label_city':      (color: '#FFB300', halo: '#1C1C1E', size: 14.0),
+        'label_town':      (color: '#FFA000', halo: '#FFFFFF', size: 13.0),
+        'label_village':   (color: '#FF8F00', halo: '#FFFFFF', size: 12.0),
+        'label_other':     (color: '#E65100', halo: '#FFFFFF', size: 11.0),
+      };
+
+      for (final entry in labelStyles.entries) {
         try {
           await controller.setLayerProperties(
-            layer,
+            entry.key,
             SymbolLayerProperties(
-              textSize: 14,
-              textHaloWidth: 1.5,
-              textHaloColor: '#FFFFFF',
+              textColor: entry.value.color,
+              textSize: entry.value.size,
+              textHaloColor: entry.value.halo,
+              textHaloWidth: 1.8,
+              textHaloBlur: 0.5,
             ),
           );
         } catch (_) {}
