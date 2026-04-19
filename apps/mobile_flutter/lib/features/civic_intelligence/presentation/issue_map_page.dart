@@ -28,16 +28,18 @@ class IssueMapPage extends StatefulWidget {
     this.studentId,
     this.onToggleTheme,
     this.themeMode = ThemeMode.dark,
+    this.initialIdeaText,
+    this.autoRun = false,
   });
 
   final bool showIdeaDock;
   final String? studentId;
-
-  /// Callback to toggle between light and dark mode at the app level.
   final VoidCallback? onToggleTheme;
-
-  /// Current theme mode — used to adapt overlay colors and map tint.
   final ThemeMode themeMode;
+
+  /// Pre-fill the idea dock and auto-run matching on open.
+  final String? initialIdeaText;
+  final bool autoRun;
 
   @override
   State<IssueMapPage> createState() => _IssueMapPageState();
@@ -76,9 +78,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialIdeaText != null) {
+      _ideaController.text = widget.initialIdeaText!;
+    }
     _loadPatchedStyle();
     _resolveCurrentLocation();
     _loadIssues();
+    if (widget.autoRun && (widget.initialIdeaText?.length ?? 0) >= 5) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _submitIdea());
+    }
   }
 
   /// Fetches the liberty style JSON and patches layer colors to match
