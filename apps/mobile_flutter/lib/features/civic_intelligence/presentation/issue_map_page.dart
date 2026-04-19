@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../core/models/issue.dart';
@@ -42,8 +44,8 @@ class IssueMapPage extends StatefulWidget {
 }
 
 class _IssueMapPageState extends State<IssueMapPage> {
-  // Liberty style has full 3D buildings and crisp labels in both modes.
-  static const _mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+  // Liberty style base — fetched and patched at runtime with theme colors.
+  static const _mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom = 6.0;
   static const _userZoom = 16.5;
@@ -67,14 +69,76 @@ class _IssueMapPageState extends State<IssueMapPage> {
   Circle? _userLocationCircle;
   Offset? _userScreenPosition;
   double _bearing = 0.0;
+  String? _patchedStyle;
 
   bool get _isDark => widget.themeMode == ThemeMode.dark;
 
   @override
   void initState() {
     super.initState();
+    _loadPatchedStyle();
     _resolveCurrentLocation();
     _loadIssues();
+  }
+
+  /// Fetches the liberty style JSON and patches layer colors to match
+  /// the Alitaptap yellow/dark theme while keeping realistic map details.
+  Future<void> _loadPatchedStyle() async {
+    try {
+      final res = await http.get(Uri.parse(_mapStyleUrl));
+      if (res.statusCode != 200) return;
+      final style = jsonDecode(res.body) as Map<String, dynamic>;
+      final layers = style['layers'] as List<dynamic>;
+
+      // Color map: layer id substring → fill/line/background color override.
+      // We keep natural greens, realistic water blues, and warm road tones
+      // while adding subtle yellow highlights on key features.
+      final colorPatches = <String, String>{
+        'background':        '#F5EFD6', // warm parchment land
+        'landcover-grass':   '#C8DBA0', // natural green
+        'landcover-wood':    '#A8C878',
+        'landcover-scrub':   '#BFCF90',
+        'landuse-residential': '#EDE8D0',
+        'landuse-commercial':  '#E8DFC0',
+        'landuse-industrial':  '#D8CFA8',
+        'water':             '#7AB8D4', // realistic water blue
+        'waterway':          '#7AB8D4',
+        'road-motorway':     '#FFD60A', // yellow primary roads
+        'road-trunk':        '#FFD60A',
+        'road-primary':      '#FFDF4D',
+        'road-secondary':    '#F5C842',
+        'road-tertiary':     '#E8E0B0',
+        'road-minor':        '#EDE8D0',
+        'road-path':         '#D4C890',
+        'building':          '#D4C8A0', // warm sandstone buildings
+        'building-top':      '#C8BC94',
+      };
+
+      for (final layer in layers) {
+        final map = layer as Map<String, dynamic>;
+        final id = (map['id'] as String? ?? '').toLowerCase();
+        final type = map['type'] as String? ?? '';
+        final paint = map['paint'] as Map<String, dynamic>? ?? {};
+
+        for (final entry in colorPatches.entries) {
+          if (id.contains(entry.key)) {
+            if (type == 'background') {
+              paint['background-color'] = entry.value;
+            } else if (type == 'fill') {
+              paint['fill-color'] = entry.value;
+            } else if (type == 'line') {
+              paint['line-color'] = entry.value;
+            }
+            map['paint'] = paint;
+            break;
+          }
+        }
+      }
+
+      if (mounted) setState(() => _patchedStyle = jsonEncode(style));
+    } catch (_) {
+      // Fall back to default liberty style on any error.
+    }
   }
 
   @override
@@ -297,7 +361,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
         children: [
           // ── Map (liberty style — 3D buildings always on) ──────────────────
           MapLibreMap(
-            styleString: _mapStyle,
+            styleString: _patchedStyle ?? _mapStyleUrl,
             initialCameraPosition: const CameraPosition(
               target: _defaultCenter,
               zoom: _defaultZoom,
