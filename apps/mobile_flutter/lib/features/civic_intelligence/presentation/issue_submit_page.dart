@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../services/api_service.dart';
@@ -17,6 +18,9 @@ class IssueSubmitPage extends StatefulWidget {
 
 class _IssueSubmitPageState extends State<IssueSubmitPage> {
   static const _openFreeMapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+  static const _defaultCenter = LatLng(14.6, 121.0);
+  static const _defaultZoom = 12.0;
+  static const _userZoom = 16.0;
 
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
@@ -26,10 +30,18 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   MapLibreMapController? _mapController;
   Circle? _selectedCircle;
   bool _styleLoaded = false;
+  bool _cameraMovedToUser = false;
+  Position? _userPosition;
 
   double? _lat;
   double? _lng;
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveCurrentLocation();
+  }
 
   @override
   void dispose() {
@@ -44,7 +56,53 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
 
   Future<void> _onStyleLoaded() async {
     _styleLoaded = true;
+    await _moveCameraToUserLocation();
     await _renderSelectedPin();
+  }
+
+  Future<void> _resolveCurrentLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      if (!mounted) return;
+
+      setState(() => _userPosition = position);
+      await _moveCameraToUserLocation(force: true);
+    } catch (_) {
+      // Keep default center when location is unavailable.
+    }
+  }
+
+  Future<void> _moveCameraToUserLocation({bool force = false}) async {
+    if (!force && _cameraMovedToUser) return;
+
+    final controller = _mapController;
+    final userPosition = _userPosition;
+    if (!_styleLoaded || controller == null || userPosition == null) return;
+
+    await controller.animateCamera(
+      CameraUpdate.newLatLngZoom(
+        LatLng(userPosition.latitude, userPosition.longitude),
+        _userZoom,
+      ),
+    );
+    _cameraMovedToUser = true;
   }
 
   Future<void> _submit() async {
@@ -199,14 +257,15 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 child: MapLibreMap(
                   styleString: _openFreeMapStyle,
                   initialCameraPosition: CameraPosition(
-                    target: LatLng(_lat ?? 14.6, _lng ?? 121.0),
-                    zoom: 12,
+                    target: LatLng(_lat ?? _defaultCenter.latitude,
+                        _lng ?? _defaultCenter.longitude),
+                    zoom: _defaultZoom,
                   ),
                   onMapCreated: _onMapCreated,
                   onStyleLoadedCallback: _onStyleLoaded,
                   onMapClick: _onMapTap,
                   compassEnabled: true,
-                  myLocationEnabled: false,
+                  myLocationEnabled: true,
                 ),
               ),
               const SizedBox(height: 8),

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../core/models/issue.dart';
@@ -17,18 +18,24 @@ class IssueMapPage extends StatefulWidget {
 
 class _IssueMapPageState extends State<IssueMapPage> {
   static const _openFreeMapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+  static const _defaultCenter = LatLng(14.6, 121.0);
+  static const _defaultZoom = 10.0;
+  static const _userZoom = 15.5;
 
   final _api = ApiService();
   List<Issue> _issues = [];
   String? _errorMessage;
+  Position? _userPosition;
 
   bool _loading = true;
   bool _styleLoaded = false;
+  bool _cameraMovedToUser = false;
   MapLibreMapController? _mapController;
 
   @override
   void initState() {
     super.initState();
+    _resolveCurrentLocation();
     _loadIssues();
   }
 
@@ -62,7 +69,54 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   Future<void> _onStyleLoaded() async {
     _styleLoaded = true;
+    await _moveCameraToUserLocation();
     await _renderIssuePins();
+  }
+
+  Future<void> _resolveCurrentLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      if (!mounted) return;
+      setState(() => _userPosition = position);
+      await _moveCameraToUserLocation(force: true);
+    } catch (_) {
+      // Keep default center when location is unavailable.
+    }
+  }
+
+  Future<void> _moveCameraToUserLocation({bool force = false}) async {
+    if (!force && _cameraMovedToUser) return;
+
+    final controller = _mapController;
+    final userPosition = _userPosition;
+    if (!_styleLoaded || controller == null || userPosition == null) return;
+
+    await controller.animateCamera(
+      CameraUpdate.newLatLngZoom(
+        LatLng(userPosition.latitude, userPosition.longitude),
+        _userZoom,
+      ),
+    );
+
+    _cameraMovedToUser = true;
   }
 
   Future<void> _renderIssuePins() async {
@@ -120,6 +174,14 @@ class _IssueMapPageState extends State<IssueMapPage> {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.my_location),
+            tooltip: 'Go to my location',
+            onPressed: () async {
+              await _resolveCurrentLocation();
+              await _moveCameraToUserLocation(force: true);
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() {
@@ -136,15 +198,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
           // --- Map ---
           MapLibreMap(
             styleString: _openFreeMapStyle,
-            initialCameraPosition: const CameraPosition(
-              target: LatLng(14.6, 121.0),
-              zoom: 10,
+            initialCameraPosition: CameraPosition(
+              target: _defaultCenter,
+              zoom: _defaultZoom,
             ),
             onMapCreated: _onMapCreated,
             onStyleLoadedCallback: _onStyleLoaded,
             onMapClick: _onMapTap,
             compassEnabled: true,
-            myLocationEnabled: false,
+            myLocationEnabled: true,
           ),
 
           // --- Loading overlay ---
