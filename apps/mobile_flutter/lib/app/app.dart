@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/models/app_role.dart';
@@ -23,8 +22,8 @@ class AlitaptapApp extends StatefulWidget {
 
 class _AlitaptapAppState extends State<AlitaptapApp> {
   final _authService = AuthService();
-  AppRole? _role;
   ThemeMode _themeMode = ThemeMode.dark;
+  final _navigatorKey = GlobalKey<NavigatorState>();
 
   void toggleTheme() =>
       setState(() => _themeMode =
@@ -33,7 +32,14 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   // TODO: remove once Firestore rules are configured and role is persisted.
   // Role is passed directly from SignInPage to bypass Firestore permission.
   void _onRoleSelected(String role) {
-    setState(() => _role = AppRoleX.fromString(role));
+    final page = switch (AppRoleX.fromString(role)) {
+      AppRole.community => const CommunityHomePage(),
+      AppRole.student => const StudentHomePage(),
+      AppRole.admin => const AdminHomePage(),
+    };
+    Navigator.of(
+      _navigatorKey.currentContext!,
+    ).push(MaterialPageRoute(builder: (_) => page));
   }
 
   Future<void> _bootstrapRole() async {
@@ -131,18 +137,13 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'ALITAPTAP',
       debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
-      home: _role == null
-          ? SignInPage(onRoleSelected: _onRoleSelected)
-          : switch (_role!) {
-              AppRole.community => const CommunityHomePage(),
-              AppRole.student => const StudentHomePage(),
-              AppRole.admin => const AdminHomePage(),
-            },
+      home: SignInPage(onRoleSelected: _onRoleSelected),
     );
   }
 }
