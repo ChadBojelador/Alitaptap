@@ -6,7 +6,6 @@ import '../features/auth/presentation/sign_in_page.dart';
 import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/community_home_page.dart';
 import '../features/home/presentation/student_home_page.dart';
-import '../services/auth_service.dart';
 
 /// Root application widget.
 /// Bootstraps Firebase Auth, resolves the user role, and routes to the
@@ -21,7 +20,6 @@ class AlitaptapApp extends StatefulWidget {
 }
 
 class _AlitaptapAppState extends State<AlitaptapApp> {
-  final _authService = AuthService();
   ThemeMode _themeMode = ThemeMode.dark;
   final _navigatorKey = GlobalKey<NavigatorState>();
 
@@ -42,31 +40,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
     ).push(MaterialPageRoute(builder: (_) => page));
   }
 
-  Future<void> _bootstrapRole() async {
-    try {
-      await _authService.signInAnonymously();
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      final hint = switch (e.code) {
-        'operation-not-allowed' =>
-          'Enable Anonymous sign-in in Firebase Authentication.',
-        'api-key-not-valid' =>
-          'Check Firebase web API key and app configuration.',
-        'app-not-authorized' =>
-          'Add localhost/127.0.0.1 to Firebase Auth authorized domains.',
-        _ => 'Check Firebase Auth setup, API key restrictions, and network.',
-      };
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Auth setup issue: $hint')),
-      );
-    } catch (_) {}
-
-    final role = await _authService.getCurrentUserRole();
-    if (!mounted) return;
-    setState(() => _role = role);
-  }
-
-  ThemeData _buildTheme(Brightness brightness) {
+ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     final poppins = GoogleFonts.poppinsTextTheme(
       isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
