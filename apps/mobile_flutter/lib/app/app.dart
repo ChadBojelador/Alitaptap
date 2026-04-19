@@ -51,20 +51,25 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
     final theme = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF0A84FF),
-        brightness: Brightness.light,
+        seedColor: const Color(0xFFFFD60A),
+        brightness: Brightness.dark,
+      ).copyWith(
+        primary: const Color(0xFFFFD60A),
+        onPrimary: const Color(0xFF1C1C1E),
+        surface: const Color(0xFF1C1C1E),
+        onSurface: const Color(0xFFF5F5F5),
       ),
-      scaffoldBackgroundColor: const Color(0xFFF2F2F7),
+      scaffoldBackgroundColor: const Color(0xFF121212),
       appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: Color(0xFF1C1C1E),
+        foregroundColor: Color(0xFFFFD60A),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: Colors.white.withValues(alpha: 0.78),
+        color: const Color(0xFF2C2C2E),
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
@@ -72,7 +77,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.65),
+        fillColor: const Color(0xFF2C2C2E),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -80,6 +85,8 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF2C2C2E),
+        contentTextStyle: const TextStyle(color: Color(0xFFF5F5F5)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );

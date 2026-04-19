@@ -159,7 +159,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
         CameraPosition(
           target: userLatLng,
           zoom: _userZoom,
-          tilt: 45,
+          tilt: 60,
         ),
       ),
     );
@@ -282,7 +282,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
             initialCameraPosition: CameraPosition(
               target: _defaultCenter,
               zoom: _defaultZoom,
-              tilt: 45,
+              tilt: 60,
             ),
             cameraTargetBounds: CameraTargetBounds(_philippinesBounds),
             minMaxZoomPreference: const MinMaxZoomPreference(5.0, 20.0),
@@ -314,16 +314,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
               bottom: 16,
               left: 16,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.78),
+                  color: const Color(0xFF1C1C1E).withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.42)),
+                  border: Border.all(color: const Color(0xFFFFD60A).withValues(alpha: 0.5)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 8,
+                      color: const Color(0xFFFFD60A).withValues(alpha: 0.18),
+                      blurRadius: 12,
                       offset: const Offset(0, 2),
                     ),
                   ],
@@ -331,13 +330,12 @@ class _IssueMapPageState extends State<IssueMapPage> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.pin_drop,
-                        size: 18, color: theme.colorScheme.primary),
+                    const Icon(Icons.pin_drop, size: 18, color: Color(0xFFFFD60A)),
                     const SizedBox(width: 6),
                     Text(
                       '${_issues.length} validated issues',
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: const Color(0xFF1C1C1E),
+                        color: const Color(0xFFF5F5F5),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -352,25 +350,17 @@ class _IssueMapPageState extends State<IssueMapPage> {
               left: 16,
               right: 16,
               child: Card(
-                color: Colors.white.withValues(alpha: 0.86),
+                color: const Color(0xFF2C2C2E).withValues(alpha: 0.95),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.wifi_off_rounded,
-                        color: theme.colorScheme.error,
-                      ),
+                      const Icon(Icons.wifi_off_rounded, color: Color(0xFFFFD60A)),
                       const SizedBox(width: 10),
-                      Expanded(
+                      const Expanded(
                         child: Text(
                           'Could not load issues. Check backend/network, then refresh.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF1C1C1E),
-                          ),
+                          style: TextStyle(color: Color(0xFFF5F5F5)),
                         ),
                       ),
                     ],
@@ -407,30 +397,27 @@ class _IssueMapPageState extends State<IssueMapPage> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.white.withValues(alpha: 0.52),
-                            Colors.white.withValues(alpha: 0.30),
+                            const Color(0xFF2C2C2E).withValues(alpha: 0.92),
+                            const Color(0xFF1C1C1E).withValues(alpha: 0.88),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.46),
+                          color: const Color(0xFFFFD60A).withValues(alpha: 0.35),
                           width: 1.1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.11),
-                            blurRadius: 18,
-                            offset: const Offset(0, 10),
+                            color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
+                            blurRadius: 20,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
                       child: Row(
                         children: [
                           const SizedBox(width: 14),
-                          Icon(
-                            Icons.search,
-                            color: const Color(0xFF8E8E93).withValues(alpha: 0.95),
-                          ),
+                          const Icon(Icons.search, color: Color(0xFFFFD60A)),
                           const SizedBox(width: 8),
                           Expanded(
                             child: TextField(
@@ -438,7 +425,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
                               textInputAction: TextInputAction.search,
                               onSubmitted: (_) => _submitIdea(),
                               style: const TextStyle(
-                                color: Color(0xFF1C1C1E),
+                                color: Color(0xFFF5F5F5),
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -457,9 +444,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
                             padding: const EdgeInsets.only(right: 6),
                             child: IconButton.filled(
                               style: IconButton.styleFrom(
-                                backgroundColor:
-                                    theme.colorScheme.primary.withValues(alpha: 0.96),
-                                foregroundColor: Colors.white,
+                                backgroundColor: const Color(0xFFFFD60A),
+                                foregroundColor: const Color(0xFF1C1C1E),
                               ),
                               onPressed: _matchingIdea ? null : _submitIdea,
                               icon: _matchingIdea
@@ -468,7 +454,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
                                       height: 18,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: Colors.white,
+                                        color: Color(0xFF1C1C1E),
                                       ),
                                     )
                                   : const Icon(Icons.arrow_upward_rounded),
@@ -603,19 +589,12 @@ class _IssueListSheet extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.82),
-                    Colors.white.withValues(alpha: 0.70),
-                  ],
-                ),
+                color: const Color(0xFF1C1C1E).withValues(alpha: 0.55),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.42)),
+                border: Border.all(color: const Color(0xFFFFD60A).withValues(alpha: 0.25)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: const Color(0xFFFFD60A).withValues(alpha: 0.08),
                     blurRadius: 14,
                     offset: const Offset(0, -2),
                   ),
@@ -648,20 +627,24 @@ class _IssueListSheet extends StatelessWidget {
                   final issue = issues[index - 1];
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
-                    color: Colors.white.withValues(alpha: 0.74),
+                    color: const Color(0xFF2C2C2E),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                        child: Icon(
+                        backgroundColor: const Color(0xFFFFD60A).withValues(alpha: 0.16),
+                        child: const Icon(
                           Icons.warning_amber_rounded,
-                          color: theme.colorScheme.primary,
+                          color: Color(0xFFFFD60A),
                         ),
                       ),
                       title: Text(issue.title,
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Color(0xFFF5F5F5))),
                       subtitle: Text(issue.description,
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                      trailing: const Icon(Icons.chevron_right),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Color(0xFF8E8E93))),
+                      trailing: const Icon(Icons.chevron_right, color: Color(0xFFFFD60A)),
                       onTap: () => onTap(issue),
                     ),
                   );
