@@ -828,20 +828,25 @@ class _MapCompass extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 44,
-        height: 44,
+        width: 52,
+        height: 52,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF1C1C1E).withValues(alpha: 0.75),
+          color: const Color(0xFF1C1C1E),
           border: Border.all(
-            color: const Color(0xFFFFD60A).withValues(alpha: 0.45),
-            width: 1.2,
+            color: const Color(0xFFFFD60A),
+            width: 1.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
+              color: const Color(0xFFFFD60A).withValues(alpha: 0.35),
+              blurRadius: 14,
+              spreadRadius: 2,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -859,31 +864,48 @@ class _CompassPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final r = size.width * 0.28;
+    final r = size.width * 0.32;
 
-    // North — yellow
+    // North — bright yellow
     final northPaint = Paint()..color = const Color(0xFFFFD60A);
     final northPath = Path()
       ..moveTo(cx, cy - r * 1.5)
-      ..lineTo(cx - r * 0.5, cy)
-      ..lineTo(cx + r * 0.5, cy)
+      ..lineTo(cx - r * 0.55, cy + r * 0.2)
+      ..lineTo(cx + r * 0.55, cy + r * 0.2)
       ..close();
     canvas.drawPath(northPath, northPaint);
 
     // South — white
-    final southPaint = Paint()..color = Colors.white.withValues(alpha: 0.6);
+    final southPaint = Paint()..color = Colors.white.withValues(alpha: 0.85);
     final southPath = Path()
       ..moveTo(cx, cy + r * 1.5)
-      ..lineTo(cx - r * 0.5, cy)
-      ..lineTo(cx + r * 0.5, cy)
+      ..lineTo(cx - r * 0.55, cy - r * 0.2)
+      ..lineTo(cx + r * 0.55, cy - r * 0.2)
       ..close();
     canvas.drawPath(southPath, southPaint);
 
     // Center dot
     canvas.drawCircle(
       Offset(cx, cy),
-      r * 0.28,
+      r * 0.3,
       Paint()..color = Colors.white,
+    );
+
+    // N label
+    final tp = TextPainter(
+      text: const TextSpan(
+        text: 'N',
+        style: TextStyle(
+          color: Color(0xFF1C1C1E),
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(
+      canvas,
+      Offset(cx - tp.width / 2, cy - r * 1.5 + 2),
     );
   }
 
