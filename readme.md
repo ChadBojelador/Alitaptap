@@ -4,6 +4,19 @@ What if research didn’t start in the classroom, but in the community?
 
 ALITAPTAP is a platform that helps students build research around real community problems, align ideas with the UN Sustainable Development Goals (SDGs), and turn projects into measurable social impact.
 
+Project planning and execution tracking are documented in [docs/README.md](docs/README.md).
+
+## Core Workflow (Main Idea)
+
+1. Civilians upload community problems with location data.
+2. Each report appears as a pinpoint on the map, creating a live, multi-problem community map.
+3. A student enters a research idea.
+4. The system finds and ranks the mapped problems most semantically related to that idea.
+5. The student clicks a matched problem.
+6. The platform suggests possible research titles focused on solving that specific problem.
+
+In short: **community-reported map problems → student idea matching → problem-specific research title suggestions**.
+
 ## Key Features
 
 ### 1) Civic Intelligence
