@@ -15,6 +15,8 @@ This folder tracks planning, architecture, contracts, and delivery for the MVP.
 - [Roadmap Milestones](01-tracking/roadmap-milestones.md)
 - [Tracking Board](01-tracking/tracking-board.md)
 - [M1 Foundations Checklist](01-tracking/m1-foundations-checklist.md)
+- [M5 QA + Demo Checklist](01-tracking/m5-qa-demo-checklist.md)
+- [Demo Script](05-product/demo-script.md)
 - [Auth and Role Model](00-governance/auth-role-model.md)
 - [Firebase Setup](00-governance/firebase-setup.md)
 

@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
@@ -146,8 +144,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.pin_drop,
-                        size: 18,
-                        color: theme.colorScheme.onPrimaryContainer),
+                        size: 18, color: theme.colorScheme.onPrimaryContainer),
                     const SizedBox(width: 6),
                     Text(
                       '${_issues.length} validated issues',
@@ -196,8 +193,7 @@ class _IssueListSheet extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -219,14 +215,13 @@ class _IssueListSheet extends StatelessWidget {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withOpacity(0.4),
+                        color:
+                            theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text('Reported Issues',
-                        style: theme.textTheme.titleMedium),
+                    Text('Reported Issues', style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
                   ],
                 );

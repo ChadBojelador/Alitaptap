@@ -99,6 +99,7 @@ Request
 - `max_results`: number (optional, default 5)
 
 Response
+- `run_id`: string
 - `matches`: array of
   - `issue_id`: string
   - `score`: number

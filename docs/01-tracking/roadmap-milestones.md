@@ -13,17 +13,17 @@ Evidence:
 - [Auth and Role Model](../00-governance/auth-role-model.md)
 - [Firebase Setup](../00-governance/firebase-setup.md)
 
-## M2 (Day 2-3): Civic Intelligence
+## M2 (Day 2-3): Civic Intelligence ✅
 - Community issue submission
 - Admin validation
 - Map pins for validated issues
 
-## M3 (Day 4-6): Neural Mapper
+## M3 (Day 4-6): Neural Mapper ✅
 - Student idea input
 - Semantic matching endpoint
 - Ranked match list in app
 
-## M4 (Day 7-8): Title Suggestions
+## M4 (Day 7-8): Title Suggestions ✅
 - Problem detail screen
 - AI research title suggestions endpoint
 - Save suggestion history
@@ -31,3 +31,7 @@ Evidence:
 ## M5 (Day 9-10): QA + Demo
 - End-to-end test and bug fixes
 - Demo script and impact narrative
+
+Evidence:
+- [M5 QA + Demo Checklist](m5-qa-demo-checklist.md)
+- [Demo Script](../05-product/demo-script.md)

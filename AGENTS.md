@@ -203,9 +203,9 @@ Never commit `.env` or `secrets/` to version control.
 |-----------|-------------|-------------------------------------------|-------------|
 | **M0**    | 0–6h        | Scope lock, entity freeze                 | ✅ Done      |
 | **M1**    | 6–24h       | App shell + API skeleton + Firebase setup | ✅ Done      |
-| **M2**    | Day 2–3     | Civic Intelligence (issue submit, map)    | 🔲 Backlog   |
-| **M3**    | Day 4–6     | Neural Mapper (idea matching)             | 🔲 Backlog   |
-| **M4**    | Day 7–8     | Title Suggestions                         | 🔲 Backlog   |
+| **M2**    | Day 2–3     | Civic Intelligence (issue submit, map)    | ✅ Done      |
+| **M3**    | Day 4–6     | Neural Mapper (idea matching)             | ✅ Done      |
+| **M4**    | Day 7–8     | Title Suggestions                         | ✅ Done      |
 | **M5**    | Day 9–10    | QA + Demo                                 | 🔲 Backlog   |
 
 Refer to [docs/01-tracking/roadmap-milestones.md](docs/01-tracking/roadmap-milestones.md) for details.

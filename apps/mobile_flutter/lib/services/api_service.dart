@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../core/models/issue.dart';
 import '../core/models/match_result.dart';
+import '../core/models/title_suggestions.dart';
 
 /// HTTP client wrapper for calling the FastAPI backend.
 class ApiService {
@@ -94,6 +95,21 @@ class ApiService {
     }
 
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Generate and fetch research title suggestions for an issue.
+  Future<TitleSuggestions> getTitleSuggestions(String issueId) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/issues/$issueId/title-suggestions'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch title suggestions: ${response.body}');
+    }
+
+    return TitleSuggestions.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   // -----------------------------------------------------------------------

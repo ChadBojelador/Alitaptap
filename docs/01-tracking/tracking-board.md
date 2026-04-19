@@ -12,12 +12,14 @@
 | T-03 | Map validated issues in app | Civic Intelligence | M2 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-02 | Mapbox pins render from API data, submit form works | apps/mobile_flutter/lib/features/civic_intelligence/ |
 | T-04 | Build idea match API | Neural Mapper | M3 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-01 | POST /mapper/match returns ranked list | services/api_fastapi/app/services/mapper_service.py |
 | T-05 | Add student idea input UI | Neural Mapper | M3 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-04 | Student sees ranked problem matches | apps/mobile_flutter/lib/features/neural_mapper/ |
-| T-06 | Problem title suggestion API | Neural Mapper | M4 | TBD | P0 | Backlog |  |  | T-04 | Suggestions returned for selected issue |  |
-| T-07 | Show title suggestions in problem detail | Neural Mapper | M4 | TBD | P0 | Backlog |  |  | T-06 | At least 3 suggestions visible |  |
+| T-06 | Problem title suggestion API | Neural Mapper | M4 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-04 | Suggestions returned for selected issue | services/api_fastapi/app/api/routes/issues.py |
+| T-07 | Show title suggestions in problem detail | Neural Mapper | M4 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-06 | At least 3 suggestions visible | apps/mobile_flutter/lib/features/civic_intelligence/presentation/issue_detail_page.dart |
+| T-08 | Execute M5 QA checklist | QA | M5 | Team | P0 | Backlog | 2026-04-19 | 2026-04-20 | T-02, T-03, T-04, T-05, T-06, T-07 | End-to-end flow validated and evidence captured | docs/01-tracking/m5-qa-demo-checklist.md |
+| T-09 | Finalize and rehearse demo script | Product | M5 | Team | P0 | Backlog | 2026-04-19 | 2026-04-20 | T-08 | Demo can be delivered in 5-7 minutes | docs/05-product/demo-script.md |
 
 ## Kanban
 ### Backlog
-- T-06, T-07
+- T-08, T-09
 
 ### Ready
 - (move IDs here)
@@ -41,3 +43,5 @@
 - T-03 (apps/mobile_flutter/lib/features/civic_intelligence/)
 - T-04 (services/api_fastapi/app/services/mapper_service.py)
 - T-05 (apps/mobile_flutter/lib/features/neural_mapper/)
+- T-06 (services/api_fastapi/app/api/routes/issues.py)
+- T-07 (apps/mobile_flutter/lib/features/civic_intelligence/presentation/issue_detail_page.dart)
