@@ -66,6 +66,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
   MapLibreMapController? _mapController;
   Circle? _userLocationCircle;
   Offset? _userScreenPosition;
+  double _bearing = 0.0;
 
   bool get _isDark => widget.themeMode == ThemeMode.dark;
 
@@ -128,7 +129,11 @@ class _IssueMapPageState extends State<IssueMapPage> {
     }
   }
 
-  void _onCameraMove() => _updateUserScreenPosition();
+  void _onCameraMove() {
+    _updateUserScreenPosition();
+    final bearing = _mapController?.cameraPosition?.bearing ?? 0.0;
+    if (mounted) setState(() => _bearing = bearing);
+  }
 
   Future<void> _resolveCurrentLocation() async {
     try {
@@ -283,7 +288,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
             onMapCreated: _onMapCreated,
             onStyleLoadedCallback: _onStyleLoaded,
             onMapClick: _onMapTap,
-            compassEnabled: true,
+            compassEnabled: false,
             myLocationEnabled: true,
           ),
 
@@ -378,6 +383,27 @@ class _IssueMapPageState extends State<IssueMapPage> {
               color: Colors.black26,
               child: Center(
                 child: CircularProgressIndicator(color: _yellow),
+              ),
+            ),
+
+          // ── Issue count badge ─────────────────────────────────────────────
+          if (!_loading)
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: _MapCompass(
+                bearing: _bearing,
+                onTap: () => _mapController?.animateCamera(
+                  CameraUpdate.newCameraPosition(
+                    CameraPosition(
+                      target: _mapController?.cameraPosition?.target ??
+                          _defaultCenter,
+                      zoom: _mapController?.cameraPosition?.zoom ?? _defaultZoom,
+                      tilt: _mapController?.cameraPosition?.tilt ?? 60,
+                      bearing: 0,
+                    ),
+                  ),
+                ),
               ),
             ),
 
@@ -641,6 +667,81 @@ class _YouAreHereMarkerState extends State<_YouAreHereMarker>
       ),
     );
   }
+}
+
+/// Small compass rose that rotates with the map bearing.
+/// Tapping it snaps the map back to north.
+class _MapCompass extends StatelessWidget {
+  const _MapCompass({required this.bearing, required this.onTap});
+  final double bearing;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF1C1C1E).withValues(alpha: 0.75),
+          border: Border.all(
+            color: const Color(0xFFFFD60A).withValues(alpha: 0.45),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Transform.rotate(
+          angle: -bearing * (3.141592653589793 / 180),
+          child: CustomPaint(painter: _CompassPainter()),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompassPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width * 0.28;
+
+    // North — yellow
+    final northPaint = Paint()..color = const Color(0xFFFFD60A);
+    final northPath = Path()
+      ..moveTo(cx, cy - r * 1.5)
+      ..lineTo(cx - r * 0.5, cy)
+      ..lineTo(cx + r * 0.5, cy)
+      ..close();
+    canvas.drawPath(northPath, northPaint);
+
+    // South — white
+    final southPaint = Paint()..color = Colors.white.withValues(alpha: 0.6);
+    final southPath = Path()
+      ..moveTo(cx, cy + r * 1.5)
+      ..lineTo(cx - r * 0.5, cy)
+      ..lineTo(cx + r * 0.5, cy)
+      ..close();
+    canvas.drawPath(southPath, southPaint);
+
+    // Center dot
+    canvas.drawCircle(
+      Offset(cx, cy),
+      r * 0.28,
+      Paint()..color = Colors.white,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CompassPainter old) => false;
 }
 
 /// Draggable bottom sheet listing issues for quick browsing.
