@@ -12,25 +12,31 @@ import '../../neural_mapper/presentation/idea_match_page.dart';
 import 'issue_detail_page.dart';
 
 /// Full-screen map page showing validated community issues as pins.
-/// Uses OpenFreeMap (liberty style) with 3D building tilt.
-/// UI overlays use semi-transparent dark panels with yellow (#FFD60A) accents
-/// so the 3D map remains visible beneath them.
+/// Uses OpenFreeMap with 3D building tilt (60°).
+/// - Dark mode: 'positron' style — light-grey, low contrast, 3D buildings visible.
+/// - Light mode: 'liberty' style — full color, crisp labels.
+/// UI overlays are semi-transparent so the 3D map shows through.
 class IssueMapPage extends StatefulWidget {
   const IssueMapPage({
     super.key,
     this.showIdeaDock = false,
     this.studentId,
+    this.onToggleTheme,
+    this.themeMode = ThemeMode.dark,
   });
 
   final bool showIdeaDock;
   final String? studentId;
+  final VoidCallback? onToggleTheme;
+  final ThemeMode themeMode;
 
   @override
   State<IssueMapPage> createState() => _IssueMapPageState();
 }
 
 class _IssueMapPageState extends State<IssueMapPage> {
-  static const _openFreeMapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+  static const _openFreeMapStyleLight = 'https://tiles.openfreemap.org/styles/liberty';
+  static const _openFreeMapStyleDark = 'https://tiles.openfreemap.org/styles/positron';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom = 5.5;
   static const _userZoom = 15.5;
@@ -263,7 +269,9 @@ class _IssueMapPageState extends State<IssueMapPage> {
         children: [
           // --- Map ---
           MapLibreMap(
-            styleString: _openFreeMapStyle,
+            styleString: widget.themeMode == ThemeMode.dark
+                ? _openFreeMapStyleDark
+                : _openFreeMapStyleLight,
             initialCameraPosition: CameraPosition(
               target: _defaultCenter,
               zoom: _defaultZoom,
@@ -301,10 +309,12 @@ class _IssueMapPageState extends State<IssueMapPage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1C1C1E).withValues(alpha: 0.55),
+                        color: widget.themeMode == ThemeMode.dark
+                            ? const Color(0xFF1E1E1E).withValues(alpha: 0.6)
+                            : const Color(0xFFFFFDE7).withValues(alpha: 0.75),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+                          color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -330,6 +340,20 @@ class _IssueMapPageState extends State<IssueMapPage> {
                               await _resolveCurrentLocation();
                               await _moveCameraToUserLocation(force: true);
                             },
+                          ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            icon: Icon(
+                              widget.themeMode == ThemeMode.dark
+                                  ? Icons.light_mode_rounded
+                                  : Icons.dark_mode_rounded,
+                              color: const Color(0xFFFFD60A),
+                              size: 18,
+                            ),
+                            tooltip: 'Toggle theme',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: widget.onToggleTheme,
                           ),
                           const SizedBox(width: 12),
                           IconButton(
@@ -392,31 +416,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
                       ),
                     ),
                   ],
-                ),
-              ),
-            ),
-
-          if (!_loading && _errorMessage != null)
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: Card(
-                color: const Color(0xFF2C2C2E).withValues(alpha: 0.95),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.wifi_off_rounded, color: Color(0xFFFFD60A)),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          'Could not load issues. Check backend/network, then refresh.',
-                          style: TextStyle(color: Color(0xFFF5F5F5)),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
