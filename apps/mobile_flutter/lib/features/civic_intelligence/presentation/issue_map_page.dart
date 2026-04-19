@@ -289,7 +289,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
             onStyleLoadedCallback: _onStyleLoaded,
             onMapClick: _onMapTap,
             compassEnabled: false,
-            myLocationEnabled: true,
+            myLocationEnabled: false,
             attributionButtonMargins: const Point(-100, -100),
           ),
 
