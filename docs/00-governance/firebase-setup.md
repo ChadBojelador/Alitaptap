@@ -18,3 +18,18 @@
 - `issues`
 - `mapper_runs`
 - `title_suggestions`
+
+## Web Auth Troubleshooting
+
+If browser console shows errors like:
+
+`Failed to load resource: theidentitytoolkit.googleapis.com/v1/accounts:signUp`
+
+check these in order:
+
+1. **Anonymous Auth enabled** in Firebase Console → Authentication → Sign-in method.
+2. **Authorized domains** include:
+	- `localhost`
+	- `127.0.0.1`
+3. **API key restrictions** in Google Cloud Console allow Identity Toolkit calls from your local referrer.
+4. Browser extensions (ad/tracker blockers) are not blocking `googleapis.com` requests.
