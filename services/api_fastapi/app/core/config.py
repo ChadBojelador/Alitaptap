@@ -9,8 +9,6 @@ class Settings(BaseSettings):
     firebase_project_id: str = ''
     firebase_service_account_path: str = ''
 
-    mapbox_access_token: str = ''
-
     huggingface_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
 
     model_config = SettingsConfigDict(
