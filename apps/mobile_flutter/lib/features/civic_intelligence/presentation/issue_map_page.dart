@@ -27,9 +27,13 @@ class IssueMapPage extends StatefulWidget {
 
 class _IssueMapPageState extends State<IssueMapPage> {
   static const _openFreeMapStyle = 'https://tiles.openfreemap.org/styles/liberty';
-  static const _defaultCenter = LatLng(14.6, 121.0);
-  static const _defaultZoom = 10.0;
+  static const _defaultCenter = LatLng(12.8797, 121.7740);
+  static const _defaultZoom = 5.5;
   static const _userZoom = 15.5;
+  static final _philippinesBounds = LatLngBounds(
+    southwest: LatLng(4.5, 116.0),
+    northeast: LatLng(21.5, 127.0),
+  );
 
   final _api = ApiService();
   final _ideaController = TextEditingController();
@@ -43,6 +47,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
   bool _cameraMovedToUser = false;
   bool _matchingIdea = false;
   MapLibreMapController? _mapController;
+  Circle? _userLocationCircle;
+  Offset? _userScreenPosition;
 
   @override
   void initState() {
@@ -53,6 +59,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   @override
   void dispose() {
+    _mapController?.removeListener(_onCameraMove);
     _ideaController.dispose();
     super.dispose();
   }
@@ -83,6 +90,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   void _onMapCreated(MapLibreMapController controller) {
     _mapController = controller;
+    controller.addListener(_onCameraMove);
   }
 
   Future<void> _onStyleLoaded() async {
@@ -90,6 +98,18 @@ class _IssueMapPageState extends State<IssueMapPage> {
     await _moveCameraToUserLocation();
     await _renderIssuePins();
   }
+
+  Future<void> _updateUserScreenPosition() async {
+    final controller = _mapController;
+    final userPosition = _userPosition;
+    if (controller == null || userPosition == null) return;
+    final point = await controller.toScreenLocation(
+      LatLng(userPosition.latitude, userPosition.longitude),
+    );
+    if (mounted) setState(() => _userScreenPosition = Offset(point.x.toDouble(), point.y.toDouble()));
+  }
+
+  void _onCameraMove() => _updateUserScreenPosition();
 
   Future<void> _resolveCurrentLocation() async {
     try {
@@ -127,13 +147,24 @@ class _IssueMapPageState extends State<IssueMapPage> {
     final userPosition = _userPosition;
     if (!_styleLoaded || controller == null || userPosition == null) return;
 
+    final userLatLng = LatLng(userPosition.latitude, userPosition.longitude);
+
+    if (_userLocationCircle != null) {
+      await controller.removeCircle(_userLocationCircle!);
+      _userLocationCircle = null;
+    }
+
     await controller.animateCamera(
-      CameraUpdate.newLatLngZoom(
-        LatLng(userPosition.latitude, userPosition.longitude),
-        _userZoom,
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: userLatLng,
+          zoom: _userZoom,
+          tilt: 45,
+        ),
       ),
     );
 
+    await _updateUserScreenPosition();
     _cameraMovedToUser = true;
   }
 
@@ -251,13 +282,24 @@ class _IssueMapPageState extends State<IssueMapPage> {
             initialCameraPosition: CameraPosition(
               target: _defaultCenter,
               zoom: _defaultZoom,
+              tilt: 45,
             ),
+            cameraTargetBounds: CameraTargetBounds(_philippinesBounds),
+            minMaxZoomPreference: const MinMaxZoomPreference(5.0, 20.0),
             onMapCreated: _onMapCreated,
             onStyleLoadedCallback: _onStyleLoaded,
             onMapClick: _onMapTap,
             compassEnabled: true,
             myLocationEnabled: true,
           ),
+
+          // --- You're Here overlay ---
+          if (_userScreenPosition != null)
+            Positioned(
+              left: _userScreenPosition!.dx - 40,
+              top: _userScreenPosition!.dy - 72,
+              child: const _YouAreHereMarker(),
+            ),
 
           // --- Loading overlay ---
           if (_loading)
@@ -440,6 +482,99 @@ class _IssueMapPageState extends State<IssueMapPage> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Glowing yellow "You're here" location pin overlay.
+class _YouAreHereMarker extends StatefulWidget {
+  const _YouAreHereMarker();
+
+  @override
+  State<_YouAreHereMarker> createState() => _YouAreHereMarkerState();
+}
+
+class _YouAreHereMarkerState extends State<_YouAreHereMarker>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _anim;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _anim, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 80,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1C1C1E).withValues(alpha: 0.82),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              "You're here",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFFFD60A),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          AnimatedBuilder(
+            animation: _pulse,
+            builder: (_, __) => Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 36 * _pulse.value,
+                  height: 36 * _pulse.value,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFFFD60A).withValues(alpha: 0.25 * _pulse.value),
+                  ),
+                ),
+                Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFFFD60A),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFD60A).withValues(alpha: 0.7),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.location_on, size: 12, color: Color(0xFF1C1C1E)),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
