@@ -80,22 +80,21 @@ This turns strong concepts into actionable, community-backed projects.
 - Smooth animations and modern UI for dashboards, maps, and insights
 
 Recommended packages:
-- `mapbox_gl` or `flutter_map` (interactive maps)
+- `flutter_map` + OpenStreetMap tiles (interactive maps)
 - `lottie` (animations)
 - `fl_chart` (graphs and dashboards)
 - `provider` or `riverpod` (state management)
 - `flutter_animate` (UI transitions)
 
 ### Map System (Core Feature)
-**Recommended:** Mapbox
-- Highly customizable visuals
-- Heatmaps for community reports
-- Clustered markers
-- SDG-based color coding
+**Recommended:** OpenStreetMap via `flutter_map`
+- Open-source map tiles
+- No vendor lock-in
+- Simple marker-based community mapping
 
 **Alternative:** Google Maps
-- Easier setup
-- Less design flexibility
+- Rich ecosystem
+- API key and billing considerations
 
 ### Backend (Core Engine)
 - FastAPI (Python)

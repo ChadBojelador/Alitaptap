@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../core/models/issue.dart';
 import '../../../services/api_service.dart';
 import 'issue_detail_page.dart';
 
-/// Full-screen Mapbox map showing validated community issues as pins.
+/// Full-screen OpenStreetMap view showing validated community issues as pins.
 class IssueMapPage extends StatefulWidget {
   const IssueMapPage({super.key});
 
@@ -17,8 +18,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
   final _api = ApiService();
   List<Issue> _issues = [];
   bool _loading = true;
-  MapboxMap? _mapboxMap;
-  PointAnnotationManager? _annotationManager;
 
   @override
   void initState() {
@@ -34,7 +33,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
           _issues = issues;
           _loading = false;
         });
-        _addPins();
       }
     } catch (e) {
       if (mounted) {
@@ -44,35 +42,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
         );
       }
     }
-  }
-
-  Future<void> _onMapCreated(MapboxMap mapboxMap) async {
-    _mapboxMap = mapboxMap;
-    _annotationManager =
-        await mapboxMap.annotations.createPointAnnotationManager();
-    _addPins();
-  }
-
-  Future<void> _addPins() async {
-    if (_annotationManager == null || _issues.isEmpty) return;
-
-    final options = <PointAnnotationOptions>[];
-    for (final issue in _issues) {
-      options.add(
-        PointAnnotationOptions(
-          geometry: Point(
-            coordinates: Position(issue.lng, issue.lat),
-          ),
-          textField: issue.title,
-          textSize: 11,
-          textOffset: [0, 1.5],
-          iconSize: 1.5,
-          // Use default marker icon
-        ),
-      );
-    }
-
-    await _annotationManager!.createMulti(options);
   }
 
   void _onPinTapped(Issue issue) {
@@ -104,14 +73,41 @@ class _IssueMapPageState extends State<IssueMapPage> {
       body: Stack(
         children: [
           // --- Map ---
-          MapWidget(
-            cameraOptions: CameraOptions(
-              center: Point(
-                coordinates: Position(121.0, 14.6), // Default: Philippines
-              ),
-              zoom: 10,
+          FlutterMap(
+            options: const MapOptions(
+              initialCenter: LatLng(14.6, 121.0),
+              initialZoom: 10,
             ),
-            onMapCreated: _onMapCreated,
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.alitaptap.mobile',
+              ),
+              MarkerLayer(
+                markers: _issues
+                    .map(
+                      (issue) => Marker(
+                        point: LatLng(issue.lat, issue.lng),
+                        width: 44,
+                        height: 44,
+                        child: GestureDetector(
+                          onTap: () => _onPinTapped(issue),
+                          child: const Icon(
+                            Icons.location_pin,
+                            color: Colors.red,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution('© OpenStreetMap contributors'),
+                ],
+              ),
+            ],
           ),
 
           // --- Loading overlay ---

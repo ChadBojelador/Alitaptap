@@ -14,7 +14,7 @@
 6. Student opens a problem and receives research title suggestions.
 
 ## Components
-- Flutter App: input forms, map UI, student discovery
+- Flutter App: input forms, OpenStreetMap-based map UI, student discovery
 - FastAPI Service: issue APIs, matching APIs, title suggestion APIs
 - Firebase: Auth, Firestore, Storage
 - AI Layer: embeddings + title generation

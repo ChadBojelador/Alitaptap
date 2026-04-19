@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../services/api_service.dart';
 
@@ -22,7 +23,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   double? _lat;
   double? _lng;
   bool _submitting = false;
-  bool _pickingLocation = false;
 
   @override
   void dispose() {
@@ -69,13 +69,10 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     }
   }
 
-  void _onMapTap(MapContentGestureContext gestureContext) {
-    final point = gestureContext.point;
-    final coords = point.coordinates;
+  void _onMapTap(TapPosition tapPosition, LatLng point) {
     setState(() {
-      _lat = coords.lat.toDouble();
-      _lng = coords.lng.toDouble();
-      _pickingLocation = false;
+      _lat = point.latitude;
+      _lng = point.longitude;
     });
   }
 
@@ -157,17 +154,42 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   border: Border.all(color: theme.colorScheme.outline),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: MapWidget(
-                  cameraOptions: CameraOptions(
-                    center: Point(
-                      coordinates: Position(
-                        _lng ?? 121.0,
-                        _lat ?? 14.6,
-                      ),
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(
+                      _lat ?? 14.6,
+                      _lng ?? 121.0,
                     ),
-                    zoom: 12,
+                    initialZoom: 12,
+                    onTap: _onMapTap,
                   ),
-                  onTapListener: _onMapTap,
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.alitaptap.mobile',
+                    ),
+                    if (_lat != null && _lng != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(_lat!, _lng!),
+                            width: 44,
+                            height: 44,
+                            child: const Icon(
+                              Icons.location_pin,
+                              color: Colors.red,
+                              size: 40,
+                            ),
+                          ),
+                        ],
+                      ),
+                    const RichAttributionWidget(
+                      attributions: [
+                        TextSourceAttribution('© OpenStreetMap contributors'),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
