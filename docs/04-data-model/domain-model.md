@@ -1,6 +1,6 @@
 # Domain Model (MVP)
 
-> **Schema Status: LOCKED for M2** — Do not add or rename fields without updating this doc and api-contracts.md first.
+> **Schema Status: LOCKED for M3** — Do not add or rename fields without updating this doc and api-contracts.md first.
 
 ## Collections
 

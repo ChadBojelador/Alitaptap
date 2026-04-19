@@ -10,14 +10,14 @@
 | T-01 | Define issue schema | Civic Intelligence | M0 | Team | P0 | Done | 2026-04-19 | 2026-04-19 |  | Fields finalized and locked | docs/04-data-model/domain-model.md |
 | T-02 | Implement issue submit API | Civic Intelligence | M2 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-01 | POST /issues writes to Firestore, GET reads back | services/api_fastapi/app/api/routes/issues.py |
 | T-03 | Map validated issues in app | Civic Intelligence | M2 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-02 | Mapbox pins render from API data, submit form works | apps/mobile_flutter/lib/features/civic_intelligence/ |
-| T-04 | Build idea match API | Neural Mapper | M3 | TBD | P0 | Backlog |  |  | T-01 | POST /mapper/match returns ranked list |  |
-| T-05 | Add student idea input UI | Neural Mapper | M3 | TBD | P0 | Backlog |  |  | T-04 | Student sees ranked problem matches |  |
+| T-04 | Build idea match API | Neural Mapper | M3 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-01 | POST /mapper/match returns ranked list | services/api_fastapi/app/services/mapper_service.py |
+| T-05 | Add student idea input UI | Neural Mapper | M3 | Team | P0 | Done | 2026-04-19 | 2026-04-19 | T-04 | Student sees ranked problem matches | apps/mobile_flutter/lib/features/neural_mapper/ |
 | T-06 | Problem title suggestion API | Neural Mapper | M4 | TBD | P0 | Backlog |  |  | T-04 | Suggestions returned for selected issue |  |
 | T-07 | Show title suggestions in problem detail | Neural Mapper | M4 | TBD | P0 | Backlog |  |  | T-06 | At least 3 suggestions visible |  |
 
 ## Kanban
 ### Backlog
-- T-04, T-05, T-06, T-07
+- T-06, T-07
 
 ### Ready
 - (move IDs here)
@@ -39,3 +39,5 @@
 - T-01 (docs/04-data-model/domain-model.md)
 - T-02 (services/api_fastapi/app/api/routes/issues.py)
 - T-03 (apps/mobile_flutter/lib/features/civic_intelligence/)
+- T-04 (services/api_fastapi/app/services/mapper_service.py)
+- T-05 (apps/mobile_flutter/lib/features/neural_mapper/)

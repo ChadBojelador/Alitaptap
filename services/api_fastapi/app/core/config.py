@@ -11,6 +11,8 @@ class Settings(BaseSettings):
 
     mapbox_access_token: str = ''
 
+    huggingface_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
+
     model_config = SettingsConfigDict(
         env_file='.env',
         env_file_encoding='utf-8',

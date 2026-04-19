@@ -1,42 +1,129 @@
-# OS
+# ===========================
+#  OS
+# ===========================
 .DS_Store
 Thumbs.db
 Desktop.ini
-
-# Editor/IDE
-.vscode/
-.idea/
 *.swp
 *.swo
+*~
 
-# Logs
-*.log
+# ===========================
+#  Editor / IDE
+# ===========================
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# ===========================
+#  Environment / Secrets
+# ===========================
+.env
+.env.*
+!.env.example
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+firebase-service-account*.json
+
+# ===========================
+#  Python / FastAPI
+# ===========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.coverage
+.coverage.*
+*.cover
+*.mo
+*.pot
+
+# ===========================
+#  Flutter / Dart
+# ===========================
+# Dart build artifacts
+.dart_tool/
+.packages
+build/
+.pub-cache/
+.pub/
+
+# Flutter-specific
+**/android/.gradle/
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+**/android/**/*.jks
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Runner.xcworkspace/xcshareddata/
+**/ios/Runner.xcworkspace/xcuserdata/
+**/ios/Runner.xcodeproj/xcuserdata/
+**/ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/generated_plugin_registrant.dart
+.metadata
+
+# Coverage
+coverage/
+lcov.info
+
+# ===========================
+#  Node.js (if any tooling)
+# ===========================
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment / secrets
-.env
-.env.*
-!.env.example
-
-# Dependencies
-node_modules/
-
-# Python
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.mypy_cache/
-.venv/
-venv/
-
-# Build / cache outputs
+# ===========================
+#  Build / Cache / Output
+# ===========================
 dist/
-build/
-coverage/
+*.class
+*.cache
 .cache/
 tmp/
 temp/
 
+# ===========================
+#  Logs
+# ===========================
+*.log
+
+# ===========================
+#  Misc
+# ===========================
+*.bak
+*.orig
+*.rej
+.gemini/
