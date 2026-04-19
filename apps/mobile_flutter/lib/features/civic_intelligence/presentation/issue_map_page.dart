@@ -472,6 +472,13 @@ class _IssueMapPageState extends State<IssueMapPage> {
                       ),
                       child: Row(
                         children: [
+                          if (Navigator.of(context).canPop()) ...[
+                            _HeaderBtn(
+                              icon: Icons.arrow_back_ios_rounded,
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
                           const Icon(Icons.map_rounded,
                               color: _yellow, size: 17),
                           const SizedBox(width: 8),
