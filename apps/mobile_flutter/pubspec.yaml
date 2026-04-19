@@ -1,7 +1,7 @@
 name: alitaptap_mobile
-description: ALITAPTAP mobile app shell (M1 foundations)
+description: ALITAPTAP — community problems to student research
 publish_to: "none"
-version: 0.1.0+1
+version: 0.2.0+1
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -13,6 +13,9 @@ dependencies:
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
+  mapbox_maps_flutter: ^2.4.0
+  http: ^1.2.0
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
