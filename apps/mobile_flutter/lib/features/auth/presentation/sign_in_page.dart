@@ -19,12 +19,26 @@ class _SignInPageState extends State<SignInPage> {
   bool _loading = false;
   String? _selectedRole; // 'community' | 'student'
 
+  // BYPASS NOTE
+  // -----------
+  // Originally this method called AuthService.setRole() to persist the chosen
+  // role to Firestore so returning users skip this screen. That call was
+  // commented out because Firestore security rules are not yet configured,
+  // which caused a "permission-denied" error on every sign-in attempt.
+  //
+  // What was removed:
+  //   await _authService.setRole(_selectedRole!);
+  //
+  // To restore: configure Firestore rules to allow authenticated users to
+  // write their own users/{uid} document, then uncomment the line above.
+  // See docs/00-governance/firebase-setup.md for the required ruleset.
   Future<void> _proceed() async {
     if (_selectedRole == null || _loading) return;
     setState(() => _loading = true);
     try {
       await _authService.signInAnonymously();
-      // TODO: persist role to Firestore once security rules are configured.
+      // TODO: uncomment once Firestore rules allow users/{uid} writes.
+      // await _authService.setRole(_selectedRole!);
       widget.onRoleSelected(_selectedRole!);
     } catch (e) {
       if (!mounted) return;

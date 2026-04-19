@@ -8,10 +8,33 @@ import '../features/home/presentation/community_home_page.dart';
 import '../features/home/presentation/student_home_page.dart';
 
 /// Root application widget.
-/// Bootstraps Firebase Auth, resolves the user role, and routes to the
-/// appropriate home screen (community / student / admin).
-/// Supports light and dark mode toggle, with Poppins as the global font
-/// and #FFD60A yellow as the primary accent color.
+///
+/// ## Theme
+/// - Uses Poppins font globally via [GoogleFonts].
+/// - Primary accent: #FFD60A (yellow). Supports light and dark mode toggle.
+/// - Dark: deep charcoal surfaces. Light: clean white surfaces.
+///
+/// ## Role Routing (BYPASSED — see note below)
+/// Originally, this widget bootstrapped Firebase Auth anonymously, then read
+/// the user's role from Firestore (`users/{uid}.role`) to decide which home
+/// screen to show. That flow was removed because:
+///
+///   1. Firestore security rules were not yet configured, causing
+///      "permission-denied" errors on every launch.
+///   2. The `_bootstrapRole` method and `FirebaseAuthException` handling
+///      were deleted to unblock development.
+///
+/// CURRENT BEHAVIOUR: [SignInPage] collects the role from the user directly
+/// and calls [_onRoleSelected], which pushes the correct home page onto the
+/// navigator stack. The role is NOT persisted — every app launch shows the
+/// sign-in screen again.
+///
+/// TO RESTORE PERSISTENCE:
+///   1. Set Firestore rules to allow authenticated users to read/write their
+///      own `users/{uid}` document (see docs/00-governance/firebase-setup.md).
+///   2. Re-enable `AuthService.setRole()` call in [SignInPage._proceed].
+///   3. Re-add `_bootstrapRole()` here to read the role on launch and skip
+///      the sign-in screen for returning users.
 class AlitaptapApp extends StatefulWidget {
   const AlitaptapApp({super.key});
 
