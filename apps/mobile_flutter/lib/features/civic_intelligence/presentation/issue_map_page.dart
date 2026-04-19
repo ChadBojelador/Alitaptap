@@ -515,16 +515,25 @@ class _YouAreHereMarkerState extends State<_YouAreHereMarker>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E).withValues(alpha: 0.82),
+              color: const Color(0xFF1C1C1E).withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFFD60A).withValues(alpha: 0.6)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
             child: const Text(
               "You're here",
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Color(0xFFFFD60A),
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
               ),
             ),
           ),
