@@ -178,29 +178,37 @@ class _IssueMapPageState extends State<IssueMapPage> {
     _styleLoaded = true;
     final controller = _mapController;
     if (controller != null) {
-      // Layers we want to KEEP — place names and road labels only.
+      // Exact layer IDs from the liberty style.
+      // Keep: place names, road names, water labels.
+      // Hide: all POI layers (gas stations, cafes, shops, etc).
       const keepLayers = {
-        'place-suburb',
-        'place-village',
-        'place-town',
-        'place-city',
-        'place-neighbourhood',
-        'place-country-1',
-        'place-country-2',
-        'place-country-3',
-        'place-state',
-        'place-island',
-        'road-label',
-        'road-label-small',
-        'road-label-medium',
-        'road-label-large',
-        'waterway-label',
-        'water-label',
-        'natural-label',
+        'label_other',
+        'label_village',
+        'label_town',
+        'label_state',
+        'label_city',
+        'label_city_capital',
+        'label_country_1',
+        'label_country_2',
+        'label_country_3',
+        'highway-name-path',
+        'highway-name-minor',
+        'highway-name-major',
+        'highway-shield-non-us',
+        'highway-shield-us-interstate',
+        'road_shield_us',
+        'waterway_line_label',
+        'water_name_point_label',
+        'water_name_line_label',
+        'road_one_way_arrow',
+        'road_one_way_arrow_opposite',
       };
 
-      // Boost kept place label visibility.
-      for (final layer in keepLayers) {
+      // Boost place label size and add white halo for readability.
+      for (final layer in [
+        'label_village', 'label_town', 'label_city',
+        'label_city_capital', 'label_other',
+      ]) {
         try {
           await controller.setLayerProperties(
             layer,
@@ -213,25 +221,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
         } catch (_) {}
       }
 
-      // Fetch the full style to get actual layer IDs, then hide everything
-      // that is a symbol layer and not in our keep list.
-      try {
-        final res = await http.get(Uri.parse(_mapStyleUrl));
-        if (res.statusCode == 200) {
-          final style = jsonDecode(res.body) as Map<String, dynamic>;
-          final layers = style['layers'] as List<dynamic>;
-          for (final layer in layers) {
-            final map = layer as Map<String, dynamic>;
-            final id = map['id'] as String? ?? '';
-            final type = map['type'] as String? ?? '';
-            if (type == 'symbol' && !keepLayers.contains(id)) {
-              try {
-                await controller.setLayerVisibility(id, false);
-              } catch (_) {}
-            }
-          }
-        }
-      } catch (_) {}
+      // Hide all symbol layers not in the keep list.
+      const hideLayers = [
+        'poi_r20', 'poi_r7', 'poi_r1', 'poi_transit', 'airport',
+      ];
+      for (final layer in hideLayers) {
+        try {
+          await controller.setLayerVisibility(layer, false);
+        } catch (_) {}
+      }
     }
     await _moveCameraToUserLocation();
     await _renderIssuePins();
