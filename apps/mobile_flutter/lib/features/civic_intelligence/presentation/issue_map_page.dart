@@ -1,12 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../core/models/issue.dart';
 import '../../../services/api_service.dart';
 import 'issue_detail_page.dart';
 
-/// Full-screen OpenStreetMap view showing validated community issues as pins.
+/// Full-screen OpenFreeMap view showing validated community issues as pins.
 class IssueMapPage extends StatefulWidget {
   const IssueMapPage({super.key});
 
@@ -15,9 +16,14 @@ class IssueMapPage extends StatefulWidget {
 }
 
 class _IssueMapPageState extends State<IssueMapPage> {
+  static const _openFreeMapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+
   final _api = ApiService();
   List<Issue> _issues = [];
+
   bool _loading = true;
+  bool _styleLoaded = false;
+  MapLibreMapController? _mapController;
 
   @override
   void initState() {
@@ -33,6 +39,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
           _issues = issues;
           _loading = false;
         });
+        await _renderIssuePins();
       }
     } catch (e) {
       if (mounted) {
@@ -41,6 +48,52 @@ class _IssueMapPageState extends State<IssueMapPage> {
           SnackBar(content: Text('Error loading issues: $e')),
         );
       }
+    }
+  }
+
+  void _onMapCreated(MapLibreMapController controller) {
+    _mapController = controller;
+  }
+
+  Future<void> _onStyleLoaded() async {
+    _styleLoaded = true;
+    await _renderIssuePins();
+  }
+
+  Future<void> _renderIssuePins() async {
+    final controller = _mapController;
+    if (!_styleLoaded || controller == null) return;
+
+    await controller.clearCircles();
+
+    for (final issue in _issues) {
+      await controller.addCircle(
+        CircleOptions(
+          geometry: LatLng(issue.lat, issue.lng),
+          circleRadius: 7,
+          circleColor: '#D32F2F',
+          circleStrokeColor: '#FFFFFF',
+          circleStrokeWidth: 2,
+        ),
+      );
+    }
+  }
+
+  void _onMapTap(Point<double> point, LatLng latLng) {
+    const tapThresholdDegrees = 0.006;
+    Issue? issue;
+
+    for (final candidate in _issues) {
+      final latDelta = (candidate.lat - latLng.latitude).abs();
+      final lngDelta = (candidate.lng - latLng.longitude).abs();
+      if (latDelta <= tapThresholdDegrees && lngDelta <= tapThresholdDegrees) {
+        issue = candidate;
+        break;
+      }
+    }
+
+    if (issue != null) {
+      _onPinTapped(issue);
     }
   }
 
@@ -73,41 +126,17 @@ class _IssueMapPageState extends State<IssueMapPage> {
       body: Stack(
         children: [
           // --- Map ---
-          FlutterMap(
-            options: const MapOptions(
-              initialCenter: LatLng(14.6, 121.0),
-              initialZoom: 10,
+          MapLibreMap(
+            styleString: _openFreeMapStyle,
+            initialCameraPosition: const CameraPosition(
+              target: LatLng(14.6, 121.0),
+              zoom: 10,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.alitaptap.mobile',
-              ),
-              MarkerLayer(
-                markers: _issues
-                    .map(
-                      (issue) => Marker(
-                        point: LatLng(issue.lat, issue.lng),
-                        width: 44,
-                        height: 44,
-                        child: GestureDetector(
-                          onTap: () => _onPinTapped(issue),
-                          child: const Icon(
-                            Icons.location_pin,
-                            color: Colors.red,
-                            size: 40,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution('© OpenStreetMap contributors'),
-                ],
-              ),
-            ],
+            onMapCreated: _onMapCreated,
+            onStyleLoadedCallback: _onStyleLoaded,
+            onMapClick: _onMapTap,
+            compassEnabled: true,
+            myLocationEnabled: false,
           ),
 
           // --- Loading overlay ---

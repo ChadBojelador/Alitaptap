@@ -99,7 +99,7 @@ Alitaptap/
 | **Auth**         | Firebase Auth (anonymous for prototype)            |
 | **Storage**      | Firebase Storage                                   |
 | **AI/ML**        | OpenAI API / open-source LLMs, Sentence Transformers, scikit-learn |
-| **Maps**         | OpenStreetMap (via `flutter_map`) or Google Maps   |
+| **Maps**         | OpenFreeMap (via `maplibre_gl`) or Google Maps     |
 | **Payments**     | Stripe API (future, out of MVP scope)              |
 | **Deployment**   | Render or Railway (backend), Firebase (data/auth)  |
 

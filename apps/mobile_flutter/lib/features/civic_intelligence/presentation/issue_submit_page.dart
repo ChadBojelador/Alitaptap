@@ -1,6 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../services/api_service.dart';
 
@@ -15,10 +16,16 @@ class IssueSubmitPage extends StatefulWidget {
 }
 
 class _IssueSubmitPageState extends State<IssueSubmitPage> {
+  static const _openFreeMapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _api = ApiService();
+
+  MapLibreMapController? _mapController;
+  Circle? _selectedCircle;
+  bool _styleLoaded = false;
 
   double? _lat;
   double? _lng;
@@ -29,6 +36,15 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     _titleCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  void _onMapCreated(MapLibreMapController controller) {
+    _mapController = controller;
+  }
+
+  Future<void> _onStyleLoaded() async {
+    _styleLoaded = true;
+    await _renderSelectedPin();
   }
 
   Future<void> _submit() async {
@@ -69,11 +85,34 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     }
   }
 
-  void _onMapTap(TapPosition tapPosition, LatLng point) {
+  Future<void> _onMapTap(Point<double> point, LatLng latLng) async {
     setState(() {
-      _lat = point.latitude;
-      _lng = point.longitude;
+      _lat = latLng.latitude;
+      _lng = latLng.longitude;
     });
+    await _renderSelectedPin();
+  }
+
+  Future<void> _renderSelectedPin() async {
+    final controller = _mapController;
+    if (!_styleLoaded || controller == null) return;
+
+    if (_selectedCircle != null) {
+      await controller.removeCircle(_selectedCircle!);
+      _selectedCircle = null;
+    }
+
+    if (_lat == null || _lng == null) return;
+
+    _selectedCircle = await controller.addCircle(
+      CircleOptions(
+        geometry: LatLng(_lat!, _lng!),
+        circleRadius: 7,
+        circleColor: '#D32F2F',
+        circleStrokeColor: '#FFFFFF',
+        circleStrokeWidth: 2,
+      ),
+    );
   }
 
   @override
@@ -141,10 +180,13 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   label: Text(
                     '${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}',
                   ),
-                  onDeleted: () => setState(() {
-                    _lat = null;
-                    _lng = null;
-                  }),
+                  onDeleted: () async {
+                    setState(() {
+                      _lat = null;
+                      _lng = null;
+                    });
+                    await _renderSelectedPin();
+                  },
                 ),
               const SizedBox(height: 8),
               Container(
@@ -154,42 +196,17 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   border: Border.all(color: theme.colorScheme.outline),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: FlutterMap(
-                  options: MapOptions(
-                    initialCenter: LatLng(
-                      _lat ?? 14.6,
-                      _lng ?? 121.0,
-                    ),
-                    initialZoom: 12,
-                    onTap: _onMapTap,
+                child: MapLibreMap(
+                  styleString: _openFreeMapStyle,
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(_lat ?? 14.6, _lng ?? 121.0),
+                    zoom: 12,
                   ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.alitaptap.mobile',
-                    ),
-                    if (_lat != null && _lng != null)
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: LatLng(_lat!, _lng!),
-                            width: 44,
-                            height: 44,
-                            child: const Icon(
-                              Icons.location_pin,
-                              color: Colors.red,
-                              size: 40,
-                            ),
-                          ),
-                        ],
-                      ),
-                    const RichAttributionWidget(
-                      attributions: [
-                        TextSourceAttribution('© OpenStreetMap contributors'),
-                      ],
-                    ),
-                  ],
+                  onMapCreated: _onMapCreated,
+                  onStyleLoadedCallback: _onStyleLoaded,
+                  onMapClick: _onMapTap,
+                  compassEnabled: true,
+                  myLocationEnabled: false,
                 ),
               ),
               const SizedBox(height: 8),

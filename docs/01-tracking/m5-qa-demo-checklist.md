@@ -7,18 +7,18 @@ community report → validated map pin → student idea match → title suggesti
 ## QA Checklist
 
 ### A) Backend API Validation
-- [ ] `GET /api/v1/health` returns `status=ok`
-- [ ] `POST /api/v1/issues` creates a pending issue
-- [ ] `PATCH /api/v1/issues/{issue_id}/status` can validate/reject issue
-- [ ] `GET /api/v1/issues?status=validated` returns map-ready issues
-- [ ] `POST /api/v1/mapper/match` returns ranked matches with `run_id`
-- [ ] `GET /api/v1/issues/{issue_id}/title-suggestions` returns at least 3 suggestions
+- [x] `GET /api/v1/health` returns `status=ok`
+- [x] `POST /api/v1/issues` creates a pending issue
+- [x] `PATCH /api/v1/issues/{issue_id}/status` can validate/reject issue
+- [x] `GET /api/v1/issues?status=validated` returns map-ready issues
+- [x] `POST /api/v1/mapper/match` returns ranked matches with `run_id`
+- [x] `GET /api/v1/issues/{issue_id}/title-suggestions` returns at least 3 suggestions
 
 ### B) Firestore Data Validation
-- [ ] `issues` documents include required fields and valid status values
+- [x] `issues` documents include required fields and valid status values
 - [ ] `mapper_runs` documents are created after each mapper request
-- [ ] `title_suggestions` documents are created after each suggestion request
-- [ ] Timestamp fields are populated (`created_at`, `updated_at` when applicable)
+- [x] `title_suggestions` documents are created after each suggestion request
+- [x] Timestamp fields are populated (`created_at`, `updated_at` when applicable)
 
 ### C) Mobile UX Validation
 - [ ] Community user can submit issue form successfully
@@ -32,6 +32,16 @@ community report → validated map pin → student idea match → title suggesti
 - [ ] Mapper response is acceptable for demo dataset (target median < 3s)
 - [ ] No blocking runtime errors during end-to-end flow
 - [ ] Demo accounts and sample issues are prepared
+
+## Execution Log (2026-04-19)
+- [x] Flutter tests passed (`flutter test`) in `apps/mobile_flutter`.
+- [x] Flutter static analysis executed (`flutter analyze`) with no analyzer errors.
+- [x] API smoke check passed for `/api/v1/health` and OpenAPI route registration.
+- [x] Backend endpoint contract checks passed for issues/mapper/title-suggestions via local TestClient harness.
+- [x] Title suggestion generation produced 3 suggestions and persisted one `title_suggestions` record in harness DB.
+- [x] Real Firebase-backed checks passed for create issue, update status, list validated, and title suggestions.
+- [x] Firestore index blocker identified and resolved in API query path for `GET /issues?status=...`.
+- [ ] Real model-backed mapper persistence (`mapper_runs`) not yet validated in this run.
 
 ## Demo Readiness Evidence
 - [ ] API screenshots (Swagger/UI responses)

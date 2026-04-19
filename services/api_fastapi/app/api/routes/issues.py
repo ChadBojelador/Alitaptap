@@ -182,7 +182,12 @@ def list_issues(
     if status is not None:
         query = query.where('status', '==', status.value)
 
-    query = query.order_by('created_at', direction='DESCENDING')
+    # Avoid requiring a composite index for (status + created_at) during
+    # early-stage deployment. Keep explicit ordering only for the unfiltered
+    # query path.
+    if status is None:
+        query = query.order_by('created_at', direction='DESCENDING')
+
     docs = query.stream()
 
     items = []

@@ -80,17 +80,17 @@ This turns strong concepts into actionable, community-backed projects.
 - Smooth animations and modern UI for dashboards, maps, and insights
 
 Recommended packages:
-- `flutter_map` + OpenStreetMap tiles (interactive maps)
+- `maplibre_gl` + OpenFreeMap style tiles (interactive maps)
 - `lottie` (animations)
 - `fl_chart` (graphs and dashboards)
 - `provider` or `riverpod` (state management)
 - `flutter_animate` (UI transitions)
 
 ### Map System (Core Feature)
-**Recommended:** OpenStreetMap via `flutter_map`
-- Open-source map tiles
+**Recommended:** OpenFreeMap via `maplibre_gl`
+- Open-source vector map stack
 - No vendor lock-in
-- Simple marker-based community mapping
+- Style endpoint: `https://tiles.openfreemap.org/styles/liberty`
 
 **Alternative:** Google Maps
 - Rich ecosystem
