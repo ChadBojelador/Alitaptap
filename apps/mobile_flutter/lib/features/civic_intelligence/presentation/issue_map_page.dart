@@ -45,8 +45,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
   // Liberty style has full 3D buildings and crisp labels in both modes.
   static const _mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
-  static const _defaultZoom = 5.5;
-  static const _userZoom = 15.5;
+  static const _defaultZoom = 6.0;
+  static const _userZoom = 16.5;
   static final _philippinesBounds = LatLngBounds(
     southwest: LatLng(4.5, 116.0),
     northeast: LatLng(21.5, 127.0),
@@ -112,6 +112,26 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   Future<void> _onStyleLoaded() async {
     _styleLoaded = true;
+    // Boost place/barangay label visibility by increasing text size on
+    // relevant symbol layers provided by the liberty tile style.
+    final controller = _mapController;
+    if (controller != null) {
+      for (final layer in [
+        'place-suburb',
+        'place-village',
+        'place-town',
+        'place-city',
+        'place-neighbourhood',
+      ]) {
+        try {
+          await controller.setLayerProperties(
+            layer,
+            SymbolLayerProperties(textSize: 14, textHaloWidth: 1.5,
+                textHaloColor: '#FFFFFF'),
+          );
+        } catch (_) {}
+      }
+    }
     await _moveCameraToUserLocation();
     await _renderIssuePins();
   }
@@ -284,7 +304,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
               tilt: 60,
             ),
             cameraTargetBounds: CameraTargetBounds(_philippinesBounds),
-            minMaxZoomPreference: const MinMaxZoomPreference(5.0, 20.0),
+            minMaxZoomPreference: const MinMaxZoomPreference(5.5, 20.0),
             onMapCreated: _onMapCreated,
             onStyleLoadedCallback: _onStyleLoaded,
             onMapClick: _onMapTap,
