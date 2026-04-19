@@ -4,11 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../services/auth_service.dart';
 
 /// Landing page where users pick their role before entering the app.
-/// Role is persisted to Firestore via [AuthService] so subsequent launches
-/// skip this screen and go directly to the correct home page.
+/// Role is passed directly to the app without Firestore.
+/// TODO: persist role to Firestore once security rules are configured.
 class SignInPage extends StatefulWidget {
-  const SignInPage({super.key, required this.onContinue});
-  final Future<void> Function() onContinue;
+  const SignInPage({super.key, required this.onRoleSelected});
+  final void Function(String role) onRoleSelected;
 
   @override
   State<SignInPage> createState() => _SignInPageState();
@@ -24,8 +24,8 @@ class _SignInPageState extends State<SignInPage> {
     setState(() => _loading = true);
     try {
       await _authService.signInAnonymously();
-      await _authService.setRole(_selectedRole!);
-      await widget.onContinue();
+      // TODO: persist role to Firestore once security rules are configured.
+      widget.onRoleSelected(_selectedRole!);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

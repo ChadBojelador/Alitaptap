@@ -30,6 +30,12 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       setState(() => _themeMode =
           _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
 
+  // TODO: remove once Firestore rules are configured and role is persisted.
+  // Role is passed directly from SignInPage to bypass Firestore permission.
+  void _onRoleSelected(String role) {
+    setState(() => _role = AppRoleX.fromString(role));
+  }
+
   Future<void> _bootstrapRole() async {
     try {
       await _authService.signInAnonymously();
@@ -131,7 +137,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
       home: _role == null
-          ? SignInPage(onContinue: _bootstrapRole)
+          ? SignInPage(onRoleSelected: _onRoleSelected)
           : switch (_role!) {
               AppRole.community => const CommunityHomePage(),
               AppRole.student => const StudentHomePage(),
