@@ -224,7 +224,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
             entry.key,
             SymbolLayerProperties(
               textSize: entry.value,
-              textHaloWidth: 0,
+              textHaloColor: '#FFFFFF',
+              textHaloWidth: 1.0,
               textHaloBlur: 0,
             ),
           );
@@ -427,7 +428,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
           if (_isDark)
             IgnorePointer(
               child: Container(
-                color: const Color(0xFF0A0A0A).withValues(alpha: 0.15),
+                color: const Color(0xFF0A0A0A).withValues(alpha: 0.08),
               ),
             ),
 
