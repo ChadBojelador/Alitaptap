@@ -12,10 +12,13 @@ import '../../neural_mapper/presentation/idea_match_page.dart';
 import 'issue_detail_page.dart';
 
 /// Full-screen map page showing validated community issues as pins.
-/// Uses OpenFreeMap with 3D building tilt (60°).
-/// - Dark mode: 'positron' style — light-grey, low contrast, 3D buildings visible.
-/// - Light mode: 'liberty' style — full color, crisp labels.
-/// UI overlays are semi-transparent so the 3D map shows through.
+///
+/// Always uses OpenFreeMap 'liberty' style so 3D buildings are visible in
+/// both light and dark mode. In dark mode a semi-transparent dark tint is
+/// layered over the map to reduce brightness without hiding buildings or labels.
+///
+/// UI overlays adapt to the current [ThemeMode] using [Theme.of(context)] so
+/// colors stay harmonious across both modes.
 class IssueMapPage extends StatefulWidget {
   const IssueMapPage({
     super.key,
@@ -27,7 +30,11 @@ class IssueMapPage extends StatefulWidget {
 
   final bool showIdeaDock;
   final String? studentId;
+
+  /// Callback to toggle between light and dark mode at the app level.
   final VoidCallback? onToggleTheme;
+
+  /// Current theme mode — used to adapt overlay colors and map tint.
   final ThemeMode themeMode;
 
   @override
@@ -35,8 +42,8 @@ class IssueMapPage extends StatefulWidget {
 }
 
 class _IssueMapPageState extends State<IssueMapPage> {
-  static const _openFreeMapStyleLight = 'https://tiles.openfreemap.org/styles/liberty';
-  static const _openFreeMapStyleDark = 'https://tiles.openfreemap.org/styles/positron';
+  // Liberty style has full 3D buildings and crisp labels in both modes.
+  static const _mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom = 5.5;
   static const _userZoom = 15.5;
@@ -59,6 +66,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
   MapLibreMapController? _mapController;
   Circle? _userLocationCircle;
   Offset? _userScreenPosition;
+
+  bool get _isDark => widget.themeMode == ThemeMode.dark;
 
   @override
   void initState() {
@@ -91,9 +100,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
           _loading = false;
           _errorMessage = e.toString();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading issues: $e')),
-        );
       }
     }
   }
@@ -111,12 +117,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   Future<void> _updateUserScreenPosition() async {
     final controller = _mapController;
-    final userPosition = _userPosition;
-    if (controller == null || userPosition == null) return;
+    final pos = _userPosition;
+    if (controller == null || pos == null) return;
     final point = await controller.toScreenLocation(
-      LatLng(userPosition.latitude, userPosition.longitude),
+      LatLng(pos.latitude, pos.longitude),
     );
-    if (mounted) setState(() => _userScreenPosition = Offset(point.x.toDouble(), point.y.toDouble()));
+    if (mounted) {
+      setState(() => _userScreenPosition =
+          Offset(point.x.toDouble(), point.y.toDouble()));
+    }
   }
 
   void _onCameraMove() => _updateUserScreenPosition();
@@ -130,34 +139,25 @@ class _IssueMapPageState extends State<IssueMapPage> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-
       if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return;
-      }
+          permission == LocationPermission.deniedForever) return;
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
-
       if (!mounted) return;
       setState(() => _userPosition = position);
       await _moveCameraToUserLocation(force: true);
-    } catch (_) {
-      // Keep default center when location is unavailable.
-    }
+    } catch (_) {}
   }
 
   Future<void> _moveCameraToUserLocation({bool force = false}) async {
     if (!force && _cameraMovedToUser) return;
-
     final controller = _mapController;
-    final userPosition = _userPosition;
-    if (!_styleLoaded || controller == null || userPosition == null) return;
+    final pos = _userPosition;
+    if (!_styleLoaded || controller == null || pos == null) return;
 
-    final userLatLng = LatLng(userPosition.latitude, userPosition.longitude);
+    final userLatLng = LatLng(pos.latitude, pos.longitude);
 
     if (_userLocationCircle != null) {
       await controller.removeCircle(_userLocationCircle!);
@@ -166,11 +166,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
     await controller.animateCamera(
       CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: userLatLng,
-          zoom: _userZoom,
-          tilt: 60,
-        ),
+        CameraPosition(target: userLatLng, zoom: _userZoom, tilt: 60),
       ),
     );
 
@@ -181,15 +177,13 @@ class _IssueMapPageState extends State<IssueMapPage> {
   Future<void> _renderIssuePins() async {
     final controller = _mapController;
     if (!_styleLoaded || controller == null) return;
-
     await controller.clearCircles();
-
     for (final issue in _issues) {
       await controller.addCircle(
         CircleOptions(
           geometry: LatLng(issue.lat, issue.lng),
           circleRadius: 7,
-          circleColor: '#D32F2F',
+          circleColor: '#E53935',
           circleStrokeColor: '#FFFFFF',
           circleStrokeWidth: 2,
         ),
@@ -198,28 +192,19 @@ class _IssueMapPageState extends State<IssueMapPage> {
   }
 
   void _onMapTap(Point<double> point, LatLng latLng) {
-    const tapThresholdDegrees = 0.006;
-    Issue? issue;
-
+    const threshold = 0.006;
     for (final candidate in _issues) {
-      final latDelta = (candidate.lat - latLng.latitude).abs();
-      final lngDelta = (candidate.lng - latLng.longitude).abs();
-      if (latDelta <= tapThresholdDegrees && lngDelta <= tapThresholdDegrees) {
-        issue = candidate;
-        break;
+      if ((candidate.lat - latLng.latitude).abs() <= threshold &&
+          (candidate.lng - latLng.longitude).abs() <= threshold) {
+        _onPinTapped(candidate);
+        return;
       }
-    }
-
-    if (issue != null) {
-      _onPinTapped(issue);
     }
   }
 
   void _onPinTapped(Issue issue) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => IssueDetailPage(issueId: issue.issueId),
-      ),
+      MaterialPageRoute(builder: (_) => IssueDetailPage(issueId: issue.issueId)),
     );
   }
 
@@ -231,7 +216,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
       );
       return;
     }
-
     final studentId = widget.studentId;
     if (studentId == null || studentId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -239,7 +223,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
       );
       return;
     }
-
     setState(() => _matchingIdea = true);
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -250,29 +233,47 @@ class _IssueMapPageState extends State<IssueMapPage> {
         ),
       ),
     );
-    if (mounted) {
-      setState(() => _matchingIdea = false);
-    }
+    if (mounted) setState(() => _matchingIdea = false);
   }
+
+  // ---------------------------------------------------------------------------
+  // Theme helpers — all overlay colors derived from these so they stay in sync.
+  // ---------------------------------------------------------------------------
+
+  /// Panel background: dark charcoal in dark mode, warm cream in light mode.
+  Color get _panelBg => _isDark
+      ? const Color(0xFF1C1C1E).withValues(alpha: 0.72)
+      : const Color(0xFFFFFDE7).withValues(alpha: 0.82);
+
+  /// Text color on panels.
+  Color get _textColor =>
+      _isDark ? const Color(0xFFF5F5F5) : const Color(0xFF1C1C1E);
+
+  /// Subtle text / hint color.
+  Color get _subtleText =>
+      _isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
+
+  /// Card background inside the bottom sheet.
+  Color get _cardBg => _isDark
+      ? const Color(0xFF2A2A2A).withValues(alpha: 0.9)
+      : const Color(0xFFFFF9C4).withValues(alpha: 0.9);
+
+  static const _yellow = Color(0xFFFFD60A);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(0),
+        preferredSize: Size.zero,
         child: AppBar(backgroundColor: Colors.transparent),
       ),
       body: Stack(
         children: [
-          // --- Map ---
+          // ── Map (liberty style — 3D buildings always on) ──────────────────
           MapLibreMap(
-            styleString: widget.themeMode == ThemeMode.dark
-                ? _openFreeMapStyleDark
-                : _openFreeMapStyleLight,
-            initialCameraPosition: CameraPosition(
+            styleString: _mapStyle,
+            initialCameraPosition: const CameraPosition(
               target: _defaultCenter,
               zoom: _defaultZoom,
               tilt: 60,
@@ -286,7 +287,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
             myLocationEnabled: true,
           ),
 
-          // --- You're Here overlay ---
+          // ── Dark mode tint — subtle overlay, keeps 3D buildings visible ───
+          if (_isDark)
+            IgnorePointer(
+              child: Container(
+                color: const Color(0xFF0A0A0A).withValues(alpha: 0.28),
+              ),
+            ),
+
+          // ── You're Here marker ────────────────────────────────────────────
           if (_userScreenPosition != null)
             Positioned(
               left: _userScreenPosition!.dx - 40,
@@ -294,7 +303,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
               child: const _YouAreHereMarker(),
             ),
 
-          // --- Floating compact header ---
+          // ── Floating header ───────────────────────────────────────────────
           Positioned(
             top: 0,
             left: 0,
@@ -305,68 +314,54 @@ class _IssueMapPageState extends State<IssueMapPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 9),
                       decoration: BoxDecoration(
-                        color: widget.themeMode == ThemeMode.dark
-                            ? const Color(0xFF1E1E1E).withValues(alpha: 0.6)
-                            : const Color(0xFFFFFDE7).withValues(alpha: 0.75),
+                        color: _panelBg,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
+                          color: _yellow.withValues(alpha: 0.45),
                         ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.map_rounded, color: Color(0xFFFFD60A), size: 18),
+                          const Icon(Icons.map_rounded,
+                              color: _yellow, size: 17),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Community Problems Map',
                               style: GoogleFonts.poppins(
-                                color: const Color(0xFFF5F5F5),
-                                fontSize: 13,
+                                color: _textColor,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.my_location, color: Color(0xFFFFD60A), size: 18),
-                            tooltip: 'Go to my location',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          _HeaderBtn(
+                            icon: Icons.my_location_rounded,
                             onPressed: () async {
                               await _resolveCurrentLocation();
                               await _moveCameraToUserLocation(force: true);
                             },
                           ),
-                          const SizedBox(width: 12),
-                          IconButton(
-                            icon: Icon(
-                              widget.themeMode == ThemeMode.dark
-                                  ? Icons.light_mode_rounded
-                                  : Icons.dark_mode_rounded,
-                              color: const Color(0xFFFFD60A),
-                              size: 18,
-                            ),
-                            tooltip: 'Toggle theme',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          const SizedBox(width: 8),
+                          _HeaderBtn(
+                            icon: _isDark
+                                ? Icons.light_mode_rounded
+                                : Icons.dark_mode_rounded,
                             onPressed: widget.onToggleTheme,
                           ),
-                          const SizedBox(width: 12),
-                          IconButton(
-                            icon: const Icon(Icons.refresh_rounded, color: Color(0xFFFFD60A), size: 18),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () {
-                              setState(() {
-                                _loading = true;
-                                _errorMessage = null;
-                              });
+                          const SizedBox(width: 8),
+                          _HeaderBtn(
+                            icon: Icons.refresh_rounded,
+                            onPressed: () => setState(() {
+                              _loading = true;
+                              _errorMessage = null;
                               _loadIssues();
-                            },
+                            }),
                           ),
                         ],
                       ),
@@ -377,50 +372,55 @@ class _IssueMapPageState extends State<IssueMapPage> {
             ),
           ),
 
-          // --- Loading overlay ---
+          // ── Loading overlay ───────────────────────────────────────────────
           if (_loading)
             Container(
               color: Colors.black26,
-              child: const Center(child: CircularProgressIndicator()),
+              child: Center(
+                child: CircularProgressIndicator(color: _yellow),
+              ),
             ),
 
-          // --- Issue count badge ---
+          // ── Issue count badge ─────────────────────────────────────────────
           if (!_loading)
             Positioned(
               bottom: 16,
               left: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E).withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFFFD60A).withValues(alpha: 0.5)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFD60A).withValues(alpha: 0.18),
-                      blurRadius: 12,
-                      offset: const Offset(0, 2),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _panelBg,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                          color: _yellow.withValues(alpha: 0.45)),
                     ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.pin_drop, size: 18, color: Color(0xFFFFD60A)),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${_issues.length} validated issues',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: const Color(0xFFF5F5F5),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.pin_drop,
+                            size: 16, color: _yellow),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_issues.length} validated issues',
+                          style: GoogleFonts.poppins(
+                            color: _textColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
 
-          // --- Issue list sheet ---
+          // ── Issue list sheet ──────────────────────────────────────────────
           if (!_loading && _issues.isNotEmpty)
             Positioned(
               bottom: 0,
@@ -429,9 +429,14 @@ class _IssueMapPageState extends State<IssueMapPage> {
               child: _IssueListSheet(
                 issues: _issues,
                 onTap: _onPinTapped,
+                panelBg: _panelBg,
+                cardBg: _cardBg,
+                textColor: _textColor,
+                subtleText: _subtleText,
               ),
             ),
 
+          // ── Idea dock ─────────────────────────────────────────────────────
           if (widget.showIdeaDock)
             Positioned(
               left: 16,
@@ -441,25 +446,18 @@ class _IssueMapPageState extends State<IssueMapPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF2C2C2E).withValues(alpha: 0.92),
-                            const Color(0xFF1C1C1E).withValues(alpha: 0.88),
-                          ],
-                        ),
+                        color: _panelBg,
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                          color: const Color(0xFFFFD60A).withValues(alpha: 0.35),
+                          color: _yellow.withValues(alpha: 0.4),
                           width: 1.1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
+                            color: _yellow.withValues(alpha: 0.1),
                             blurRadius: 20,
                             offset: const Offset(0, 6),
                           ),
@@ -468,22 +466,22 @@ class _IssueMapPageState extends State<IssueMapPage> {
                       child: Row(
                         children: [
                           const SizedBox(width: 14),
-                          const Icon(Icons.search, color: Color(0xFFFFD60A)),
+                          const Icon(Icons.search, color: _yellow),
                           const SizedBox(width: 8),
                           Expanded(
                             child: TextField(
                               controller: _ideaController,
                               textInputAction: TextInputAction.search,
                               onSubmitted: (_) => _submitIdea(),
-                              style: const TextStyle(
-                                color: Color(0xFFF5F5F5),
-                                fontSize: 16,
+                              style: GoogleFonts.poppins(
+                                color: _textColor,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w500,
                               ),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 hintText: 'Match your ideas',
-                                hintStyle: TextStyle(
-                                  color: Color(0xFF8E8E93),
+                                hintStyle: GoogleFonts.poppins(
+                                  color: _subtleText,
                                   fontWeight: FontWeight.w400,
                                 ),
                                 border: InputBorder.none,
@@ -495,7 +493,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
                             padding: const EdgeInsets.only(right: 6),
                             child: IconButton.filled(
                               style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFFFFD60A),
+                                backgroundColor: _yellow,
                                 foregroundColor: const Color(0xFF1C1C1E),
                               ),
                               onPressed: _matchingIdea ? null : _submitIdea,
@@ -525,7 +523,22 @@ class _IssueMapPageState extends State<IssueMapPage> {
   }
 }
 
-/// Glowing yellow "You're here" location pin overlay.
+/// Small icon button used in the floating header.
+class _HeaderBtn extends StatelessWidget {
+  const _HeaderBtn({required this.icon, this.onPressed});
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Icon(icon, color: const Color(0xFFFFD60A), size: 18),
+    );
+  }
+}
+
+/// Glowing yellow "You're here" location pin overlay with pulse animation.
 class _YouAreHereMarker extends StatefulWidget {
   const _YouAreHereMarker();
 
@@ -566,9 +579,10 @@ class _YouAreHereMarkerState extends State<_YouAreHereMarker>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E).withValues(alpha: 0.92),
+              color: const Color(0xFF1C1C1E).withValues(alpha: 0.88),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFFD60A).withValues(alpha: 0.6)),
+              border: Border.all(
+                  color: const Color(0xFFFFD60A).withValues(alpha: 0.65)),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
@@ -577,14 +591,14 @@ class _YouAreHereMarkerState extends State<_YouAreHereMarker>
                 ),
               ],
             ),
-            child: const Text(
+            child: Text(
               "You're here",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFFFFD60A),
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.3,
+              style: GoogleFonts.poppins(
+                color: const Color(0xFFFFD60A),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
               ),
             ),
           ),
@@ -599,7 +613,8 @@ class _YouAreHereMarkerState extends State<_YouAreHereMarker>
                   height: 36 * _pulse.value,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFFFFD60A).withValues(alpha: 0.25 * _pulse.value),
+                    color: const Color(0xFFFFD60A)
+                        .withValues(alpha: 0.22 * _pulse.value),
                   ),
                 ),
                 Container(
@@ -610,13 +625,14 @@ class _YouAreHereMarkerState extends State<_YouAreHereMarker>
                     color: const Color(0xFFFFD60A),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFFD60A).withValues(alpha: 0.7),
-                        blurRadius: 12,
+                        color: const Color(0xFFFFD60A).withValues(alpha: 0.65),
+                        blurRadius: 10,
                         spreadRadius: 2,
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.location_on, size: 12, color: Color(0xFF1C1C1E)),
+                  child: const Icon(Icons.location_on,
+                      size: 12, color: Color(0xFF1C1C1E)),
                 ),
               ],
             ),
@@ -628,16 +644,26 @@ class _YouAreHereMarkerState extends State<_YouAreHereMarker>
 }
 
 /// Draggable bottom sheet listing issues for quick browsing.
+/// Colors are passed in from [_IssueMapPageState] so they adapt to theme mode.
 class _IssueListSheet extends StatelessWidget {
-  const _IssueListSheet({required this.issues, required this.onTap});
+  const _IssueListSheet({
+    required this.issues,
+    required this.onTap,
+    required this.panelBg,
+    required this.cardBg,
+    required this.textColor,
+    required this.subtleText,
+  });
 
   final List<Issue> issues;
   final ValueChanged<Issue> onTap;
+  final Color panelBg;
+  final Color cardBg;
+  final Color textColor;
+  final Color subtleText;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return DraggableScrollableSheet(
       initialChildSize: 0.15,
       minChildSize: 0.08,
@@ -649,16 +675,11 @@ class _IssueListSheet extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E).withValues(alpha: 0.55),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border.all(color: const Color(0xFFFFD60A).withValues(alpha: 0.25)),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFFD60A).withValues(alpha: 0.08),
-                    blurRadius: 14,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+                color: panelBg,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(
+                    color: const Color(0xFFFFD60A).withValues(alpha: 0.25)),
               ),
               child: ListView.builder(
                 controller: scrollController,
@@ -673,7 +694,8 @@ class _IssueListSheet extends StatelessWidget {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8E8E93).withValues(alpha: 0.45),
+                            color: const Color(0xFFFFD60A)
+                                .withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -681,7 +703,7 @@ class _IssueListSheet extends StatelessWidget {
                         Text(
                           'Reported Issues',
                           style: GoogleFonts.poppins(
-                            color: const Color(0xFFF5F5F5),
+                            color: textColor,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -690,28 +712,37 @@ class _IssueListSheet extends StatelessWidget {
                       ],
                     );
                   }
-
                   final issue = issues[index - 1];
-                  return Card(
+                  return Container(
                     margin: const EdgeInsets.only(bottom: 8),
-                    color: const Color(0xFF2C2C2E),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color: const Color(0xFFFFD60A)
+                              .withValues(alpha: 0.15)),
+                    ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: const Color(0xFFFFD60A).withValues(alpha: 0.16),
-                        child: const Icon(
-                          Icons.warning_amber_rounded,
-                          color: Color(0xFFFFD60A),
-                        ),
+                        backgroundColor:
+                            const Color(0xFFFFD60A).withValues(alpha: 0.18),
+                        child: const Icon(Icons.warning_amber_rounded,
+                            color: Color(0xFFFFD60A)),
                       ),
                       title: Text(issue.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Color(0xFFF5F5F5))),
+                          style: GoogleFonts.poppins(
+                              color: textColor,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13)),
                       subtitle: Text(issue.description,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Color(0xFF8E8E93))),
-                      trailing: const Icon(Icons.chevron_right, color: Color(0xFFFFD60A)),
+                          style: GoogleFonts.poppins(
+                              color: subtleText, fontSize: 11)),
+                      trailing: const Icon(Icons.chevron_right,
+                          color: Color(0xFFFFD60A)),
                       onTap: () => onTap(issue),
                     ),
                   );
