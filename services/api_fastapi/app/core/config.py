@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     firebase_project_id: str = ''
     firebase_service_account_path: str = ''
 
+    mapbox_access_token: str = ''
+
     model_config = SettingsConfigDict(
         env_file='.env',
         env_file_encoding='utf-8',
