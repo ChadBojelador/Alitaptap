@@ -15,6 +15,16 @@ class AuthService {
     return _auth.signInAnonymously();
   }
 
+  /// Persists the chosen role to Firestore so subsequent launches skip sign-in.
+  Future<void> setRole(String role) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    await _firestore.collection('users').doc(user.uid).set(
+      {'role': role, 'created_at': DateTime.now().toIso8601String()},
+      SetOptions(merge: true),
+    );
+  }
+
   Future<AppRole> getCurrentUserRole() async {
     final user = _auth.currentUser;
     if (user == null) return AppRole.student;

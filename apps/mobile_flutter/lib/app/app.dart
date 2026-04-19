@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/models/app_role.dart';
 import '../features/auth/presentation/sign_in_page.dart';
-import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/community_home_page.dart';
+import '../features/home/presentation/student_home_page.dart';
 import '../services/auth_service.dart';
 
 /// Root application widget.
@@ -134,13 +134,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
           ? SignInPage(onContinue: _bootstrapRole)
           : switch (_role!) {
               AppRole.community => const CommunityHomePage(),
-              AppRole.student => IssueMapPage(
-                  showIdeaDock: true,
-                  studentId:
-                      FirebaseAuth.instance.currentUser?.uid ?? 'anon',
-                  onToggleTheme: toggleTheme,
-                  themeMode: _themeMode,
-                ),
+              AppRole.student => const StudentHomePage(),
               AppRole.admin => const AdminHomePage(),
             },
     );
