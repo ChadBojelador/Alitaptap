@@ -329,23 +329,23 @@ class _IssueMapPageState extends State<IssueMapPage> {
   // Theme helpers — all overlay colors derived from these so they stay in sync.
   // ---------------------------------------------------------------------------
 
-  /// Panel background: dark charcoal in dark mode, warm cream in light mode.
+  /// Panel background: dark charcoal in dark mode, clean white in light mode.
   Color get _panelBg => _isDark
-      ? const Color(0xFF1C1C1E).withValues(alpha: 0.72)
-      : const Color(0xFFFFFDE7).withValues(alpha: 0.82);
+      ? const Color(0xFF1C1C1E).withValues(alpha: 0.78)
+      : const Color(0xFFFFFFFF).withValues(alpha: 0.88);
 
   /// Text color on panels.
   Color get _textColor =>
-      _isDark ? const Color(0xFFF5F5F5) : const Color(0xFF1C1C1E);
+      _isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A);
 
   /// Subtle text / hint color.
   Color get _subtleText =>
-      _isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
+      _isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666);
 
   /// Card background inside the bottom sheet.
   Color get _cardBg => _isDark
-      ? const Color(0xFF2A2A2A).withValues(alpha: 0.9)
-      : const Color(0xFFFFF9C4).withValues(alpha: 0.9);
+      ? const Color(0xFF242424).withValues(alpha: 0.95)
+      : const Color(0xFFF5F5F5).withValues(alpha: 0.95);
 
   static const _yellow = Color(0xFFFFD60A);
 

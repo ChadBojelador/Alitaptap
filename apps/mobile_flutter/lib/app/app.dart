@@ -69,26 +69,32 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       ).copyWith(
         primary: const Color(0xFFFFD60A),
         onPrimary: const Color(0xFF1C1C1E),
-        surface: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8F5E9),
-        onSurface: isDark ? const Color(0xFFF5F5F5) : const Color(0xFF1C1C1E),
+        // Light: clean white surface with dark text for strong contrast.
+        // Dark: deep charcoal surface with light text.
+        surface: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+        onSurface: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A),
+        surfaceContainerHighest:
+            isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF2F2F2),
       ),
       scaffoldBackgroundColor:
-          isDark ? const Color(0xFF141414) : const Color(0xFFF5F0E0),
+          isDark ? const Color(0xFF141414) : const Color(0xFFF0F0F0),
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFFFFD60A),
+        // Light mode: dark text on light bg for readability.
+        foregroundColor:
+            isDark ? const Color(0xFFFFD60A) : const Color(0xFF1A1A1A),
         titleTextStyle: GoogleFonts.poppins(
-          color: const Color(0xFFFFD60A),
+          color: isDark ? const Color(0xFFFFD60A) : const Color(0xFF1A1A1A),
           fontSize: 17,
           fontWeight: FontWeight.w600,
         ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFDE7),
+        color: isDark ? const Color(0xFF242424) : const Color(0xFFFFFFFF),
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
@@ -96,7 +102,8 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFDE7),
+        fillColor:
+            isDark ? const Color(0xFF242424) : const Color(0xFFEEEEEE),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -105,9 +112,9 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor:
-            isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFDE7),
+            isDark ? const Color(0xFF242424) : const Color(0xFF1A1A1A),
         contentTextStyle: GoogleFonts.poppins(
-          color: isDark ? const Color(0xFFF5F5F5) : const Color(0xFF1C1C1E),
+          color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFFFFFFFF),
         ),
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
