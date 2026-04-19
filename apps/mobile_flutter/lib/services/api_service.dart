@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../core/models/issue.dart';
@@ -9,9 +11,26 @@ import '../core/models/title_suggestions.dart';
 /// HTTP client wrapper for calling the FastAPI backend.
 class ApiService {
   ApiService({String? baseUrl})
-      : _baseUrl = baseUrl ?? 'http://10.0.2.2:8000/api/v1';
+      : _baseUrl = baseUrl ??
+            const String.fromEnvironment(
+              'API_BASE_URL',
+              defaultValue: kIsWeb
+                  ? 'http://127.0.0.1:8000/api/v1'
+                  : 'http://10.0.2.2:8000/api/v1',
+            );
 
   final String _baseUrl;
+  static const _requestTimeout = Duration(seconds: 12);
+
+  Future<http.Response> _sendWithTimeout(Future<http.Response> request) async {
+    try {
+      return await request.timeout(_requestTimeout);
+    } on TimeoutException {
+      throw Exception(
+        'Request timed out. Please check if the backend is running and reachable.',
+      );
+    }
+  }
 
   // -----------------------------------------------------------------------
   // Issues
@@ -26,17 +45,19 @@ class ApiService {
     required double lng,
     String? imageUrl,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/issues'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'reporter_id': reporterId,
-        'title': title,
-        'description': description,
-        'lat': lat,
-        'lng': lng,
-        'image_url': imageUrl,
-      }),
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/issues'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'reporter_id': reporterId,
+          'title': title,
+          'description': description,
+          'lat': lat,
+          'lng': lng,
+          'image_url': imageUrl,
+        }),
+      ),
     );
 
     if (response.statusCode != 200) {
@@ -48,11 +69,11 @@ class ApiService {
 
   /// Get issues, optionally filtered by status.
   Future<List<Issue>> getIssues({String? status}) async {
-    final uri = status != null
-        ? Uri.parse('$_baseUrl/issues?status=$status')
-        : Uri.parse('$_baseUrl/issues');
+    final uri = Uri.parse('$_baseUrl/issues').replace(
+      queryParameters: status != null ? {'status': status} : null,
+    );
 
-    final response = await http.get(uri);
+    final response = await _sendWithTimeout(http.get(uri));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch issues: ${response.body}');
@@ -66,8 +87,10 @@ class ApiService {
 
   /// Get a single issue by ID.
   Future<Issue> getIssue(String issueId) async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/issues/$issueId'),
+    final response = await _sendWithTimeout(
+      http.get(
+        Uri.parse('$_baseUrl/issues/$issueId'),
+      ),
     );
 
     if (response.statusCode != 200) {
@@ -84,10 +107,12 @@ class ApiService {
     required String issueId,
     required String status,
   }) async {
-    final response = await http.patch(
-      Uri.parse('$_baseUrl/issues/$issueId/status'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'status': status}),
+    final response = await _sendWithTimeout(
+      http.patch(
+        Uri.parse('$_baseUrl/issues/$issueId/status'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'status': status}),
+      ),
     );
 
     if (response.statusCode != 200) {
@@ -99,8 +124,10 @@ class ApiService {
 
   /// Generate and fetch research title suggestions for an issue.
   Future<TitleSuggestions> getTitleSuggestions(String issueId) async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/issues/$issueId/title-suggestions'),
+    final response = await _sendWithTimeout(
+      http.get(
+        Uri.parse('$_baseUrl/issues/$issueId/title-suggestions'),
+      ),
     );
 
     if (response.statusCode != 200) {
@@ -122,14 +149,16 @@ class ApiService {
     required String ideaText,
     int maxResults = 5,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/mapper/match'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'student_id': studentId,
-        'idea_text': ideaText,
-        'max_results': maxResults,
-      }),
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/mapper/match'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'student_id': studentId,
+          'idea_text': ideaText,
+          'max_results': maxResults,
+        }),
+      ),
     );
 
     if (response.statusCode != 200) {

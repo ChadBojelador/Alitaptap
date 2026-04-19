@@ -20,6 +20,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   final _api = ApiService();
   List<Issue> _issues = [];
+  String? _errorMessage;
 
   bool _loading = true;
   bool _styleLoaded = false;
@@ -37,13 +38,17 @@ class _IssueMapPageState extends State<IssueMapPage> {
       if (mounted) {
         setState(() {
           _issues = issues;
+          _errorMessage = null;
           _loading = false;
         });
         await _renderIssuePins();
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _loading = false);
+        setState(() {
+          _loading = false;
+          _errorMessage = e.toString();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading issues: $e')),
         );
@@ -117,7 +122,10 @@ class _IssueMapPageState extends State<IssueMapPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              setState(() => _loading = true);
+              setState(() {
+                _loading = true;
+                _errorMessage = null;
+              });
               _loadIssues();
             },
           ),
@@ -178,6 +186,39 @@ class _IssueMapPageState extends State<IssueMapPage> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+
+          if (!_loading && _errorMessage != null)
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Card(
+                color: theme.colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.wifi_off_rounded,
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Could not load issues. Check backend/network, then refresh.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
