@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
@@ -10,7 +11,10 @@ import '../../../services/api_service.dart';
 import '../../neural_mapper/presentation/idea_match_page.dart';
 import 'issue_detail_page.dart';
 
-/// Full-screen OpenFreeMap view showing validated community issues as pins.
+/// Full-screen map page showing validated community issues as pins.
+/// Uses OpenFreeMap (liberty style) with 3D building tilt.
+/// UI overlays use semi-transparent dark panels with yellow (#FFD60A) accents
+/// so the 3D map remains visible beneath them.
 class IssueMapPage extends StatefulWidget {
   const IssueMapPage({
     super.key,
@@ -250,29 +254,10 @@ class _IssueMapPageState extends State<IssueMapPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Community Problems Map'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.my_location),
-            tooltip: 'Go to my location',
-            onPressed: () async {
-              await _resolveCurrentLocation();
-              await _moveCameraToUserLocation(force: true);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _loading = true;
-                _errorMessage = null;
-              });
-              _loadIssues();
-            },
-          ),
-        ],
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(0),
+        child: AppBar(backgroundColor: Colors.transparent),
       ),
       body: Stack(
         children: [
@@ -300,6 +285,73 @@ class _IssueMapPageState extends State<IssueMapPage> {
               top: _userScreenPosition!.dy - 72,
               child: const _YouAreHereMarker(),
             ),
+
+          // --- Floating compact header ---
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1C1C1E).withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.map_rounded, color: Color(0xFFFFD60A), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Community Problems Map',
+                              style: GoogleFonts.poppins(
+                                color: const Color(0xFFF5F5F5),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.my_location, color: Color(0xFFFFD60A), size: 18),
+                            tooltip: 'Go to my location',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () async {
+                              await _resolveCurrentLocation();
+                              await _moveCameraToUserLocation(force: true);
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            icon: const Icon(Icons.refresh_rounded, color: Color(0xFFFFD60A), size: 18),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                _loading = true;
+                                _errorMessage = null;
+                              });
+                              _loadIssues();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
           // --- Loading overlay ---
           if (_loading)
@@ -627,7 +679,14 @@ class _IssueListSheet extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text('Reported Issues', style: theme.textTheme.titleMedium),
+                        Text(
+                          'Reported Issues',
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFFF5F5F5),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                       ],
                     );

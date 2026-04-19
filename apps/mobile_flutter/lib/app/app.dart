@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../core/models/app_role.dart';
 import '../features/auth/presentation/sign_in_page.dart';
@@ -8,6 +9,9 @@ import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/community_home_page.dart';
 import '../services/auth_service.dart';
 
+/// Root application widget.
+/// Bootstraps Firebase Auth, resolves the user role, and routes to the
+/// appropriate home screen (community / student / admin).
 class AlitaptapApp extends StatefulWidget {
   const AlitaptapApp({super.key});
 
@@ -48,8 +52,12 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Poppins is applied globally via textTheme.
+    // Primary accent: #FFD60A (yellow). Surface: dark charcoal.
+    final poppins = GoogleFonts.poppinsTextTheme();
     final theme = ThemeData(
       useMaterial3: true,
+      textTheme: poppins,
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFFFFD60A),
         brightness: Brightness.dark,
@@ -60,12 +68,18 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
         onSurface: const Color(0xFFF5F5F5),
       ),
       scaffoldBackgroundColor: const Color(0xFF121212),
-      appBarTheme: const AppBarTheme(
+      // AppBar is hidden on the map screen; kept transparent for other screens.
+      appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: Color(0xFFFFD60A),
+        foregroundColor: const Color(0xFFFFD60A),
+        titleTextStyle: GoogleFonts.poppins(
+          color: const Color(0xFFFFD60A),
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
@@ -86,7 +100,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: const Color(0xFF2C2C2E),
-        contentTextStyle: const TextStyle(color: Color(0xFFF5F5F5)),
+        contentTextStyle: GoogleFonts.poppins(color: const Color(0xFFF5F5F5)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
