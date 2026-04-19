@@ -12,7 +12,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: SignInPage(
-          onContinue: () => tapped = true,
+            onContinue: () async {
+            tapped = true;
+            },
         ),
       ),
     );

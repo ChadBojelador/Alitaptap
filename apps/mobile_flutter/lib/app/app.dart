@@ -19,8 +19,14 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   AppRole? _role;
 
   Future<void> _bootstrapRole() async {
-    await _authService.signInAnonymously();
+    try {
+      await _authService.signInAnonymously();
+    } catch (_) {
+      // Continue with role lookup; unauthenticated lookup defaults to student.
+    }
+
     final role = await _authService.getCurrentUserRole();
+    if (!mounted) return;
     setState(() => _role = role);
   }
 
