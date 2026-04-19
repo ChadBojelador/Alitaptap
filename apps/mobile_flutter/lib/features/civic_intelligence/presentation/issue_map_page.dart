@@ -205,17 +205,17 @@ class _IssueMapPageState extends State<IssueMapPage> {
       };
 
       // Style each place label with yellow tones and size hierarchy.
-      // Country > State > City > Town > Village > Other
+      // No halo/outline — clean text with subtle blur for readability.
       const labelStyles = {
-        'label_country_1': (color: '#FFD60A', halo: '#1C1C1E', size: 22.0),
-        'label_country_2': (color: '#FFD60A', halo: '#1C1C1E', size: 20.0),
-        'label_country_3': (color: '#FFD60A', halo: '#1C1C1E', size: 18.0),
-        'label_state':     (color: '#FFC107', halo: '#1C1C1E', size: 16.0),
-        'label_city_capital': (color: '#FFB300', halo: '#1C1C1E', size: 15.0),
-        'label_city':      (color: '#FFB300', halo: '#1C1C1E', size: 14.0),
-        'label_town':      (color: '#FFA000', halo: '#FFFFFF', size: 13.0),
-        'label_village':   (color: '#FF8F00', halo: '#FFFFFF', size: 12.0),
-        'label_other':     (color: '#E65100', halo: '#FFFFFF', size: 11.0),
+        'label_country_1': (color: '#FFD60A', size: 22.0, font: 'Noto Sans Bold'),
+        'label_country_2': (color: '#FFD60A', size: 20.0, font: 'Noto Sans Bold'),
+        'label_country_3': (color: '#FFD60A', size: 18.0, font: 'Noto Sans Bold'),
+        'label_state':     (color: '#FFC107', size: 15.0, font: 'Noto Sans Bold'),
+        'label_city_capital': (color: '#FFB300', size: 14.0, font: 'Noto Sans Bold'),
+        'label_city':      (color: '#FFB300', size: 13.0, font: 'Noto Sans Bold'),
+        'label_town':      (color: '#FFA000', size: 12.0, font: 'Noto Sans Regular'),
+        'label_village':   (color: '#FF8F00', size: 11.0, font: 'Noto Sans Regular'),
+        'label_other':     (color: '#E65100', size: 10.0, font: 'Noto Sans Regular'),
       };
 
       for (final entry in labelStyles.entries) {
@@ -225,9 +225,9 @@ class _IssueMapPageState extends State<IssueMapPage> {
             SymbolLayerProperties(
               textColor: entry.value.color,
               textSize: entry.value.size,
-              textHaloColor: entry.value.halo,
-              textHaloWidth: 1.8,
-              textHaloBlur: 0.5,
+              textFont: [entry.value.font],
+              textHaloWidth: 0,
+              textHaloBlur: 0,
             ),
           );
         } catch (_) {}
