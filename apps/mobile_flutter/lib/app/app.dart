@@ -119,6 +119,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ALITAPTAP',
+      debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),

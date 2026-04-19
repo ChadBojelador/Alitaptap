@@ -290,6 +290,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
             onMapClick: _onMapTap,
             compassEnabled: false,
             myLocationEnabled: true,
+            attributionButtonMargins: const Point(-100, -100),
           ),
 
           // ── Dark mode tint — subtle overlay, keeps 3D buildings visible ───
