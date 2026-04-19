@@ -178,14 +178,29 @@ class _IssueMapPageState extends State<IssueMapPage> {
     _styleLoaded = true;
     final controller = _mapController;
     if (controller != null) {
-      // Boost place/barangay label visibility.
-      for (final layer in [
+      // Layers we want to KEEP — place names and road labels only.
+      const keepLayers = {
         'place-suburb',
         'place-village',
         'place-town',
         'place-city',
         'place-neighbourhood',
-      ]) {
+        'place-country-1',
+        'place-country-2',
+        'place-country-3',
+        'place-state',
+        'place-island',
+        'road-label',
+        'road-label-small',
+        'road-label-medium',
+        'road-label-large',
+        'waterway-label',
+        'water-label',
+        'natural-label',
+      };
+
+      // Boost kept place label visibility.
+      for (final layer in keepLayers) {
         try {
           await controller.setLayerProperties(
             layer,
@@ -198,29 +213,25 @@ class _IssueMapPageState extends State<IssueMapPage> {
         } catch (_) {}
       }
 
-      // Hide noisy POI layers — gas stations, cafes, shops, etc.
-      // We only want place/area labels relevant to community research.
-      for (final layer in [
-        'poi',
-        'poi-level-1',
-        'poi-level-2',
-        'poi-level-3',
-        'poi-railway',
-        'poi-transit',
-        'poi-label',
-        'amenity-label',
-        'shop-label',
-        'food-and-drink-label',
-        'gas-station-label',
-        'cafe-label',
-        'restaurant-label',
-        'hotel-label',
-        'attraction-label',
-      ]) {
-        try {
-          await controller.setLayerVisibility(layer, false);
-        } catch (_) {}
-      }
+      // Fetch the full style to get actual layer IDs, then hide everything
+      // that is a symbol layer and not in our keep list.
+      try {
+        final res = await http.get(Uri.parse(_mapStyleUrl));
+        if (res.statusCode == 200) {
+          final style = jsonDecode(res.body) as Map<String, dynamic>;
+          final layers = style['layers'] as List<dynamic>;
+          for (final layer in layers) {
+            final map = layer as Map<String, dynamic>;
+            final id = map['id'] as String? ?? '';
+            final type = map['type'] as String? ?? '';
+            if (type == 'symbol' && !keepLayers.contains(id)) {
+              try {
+                await controller.setLayerVisibility(id, false);
+              } catch (_) {}
+            }
+          }
+        }
+      } catch (_) {}
     }
     await _moveCameraToUserLocation();
     await _renderIssuePins();
