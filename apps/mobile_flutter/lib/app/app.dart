@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../core/models/app_role.dart';
 import '../features/auth/presentation/sign_in_page.dart';
+import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/community_home_page.dart';
-import '../features/home/presentation/student_home_page.dart';
 import '../services/auth_service.dart';
 
 class AlitaptapApp extends StatefulWidget {
@@ -48,14 +48,53 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF0A84FF),
+        brightness: Brightness.light,
+      ),
+      scaffoldBackgroundColor: const Color(0xFFF2F2F7),
+      appBarTheme: const AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Color(0xFF1C1C1E),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: Colors.white.withValues(alpha: 0.78),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.65),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    );
+
     return MaterialApp(
       title: 'ALITAPTAP',
-      theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
+      theme: theme,
       home: _role == null
           ? SignInPage(onContinue: _bootstrapRole)
           : switch (_role!) {
               AppRole.community => const CommunityHomePage(),
-              AppRole.student => const StudentHomePage(),
+              AppRole.student => IssueMapPage(
+                  showIdeaDock: true,
+                  studentId: FirebaseAuth.instance.currentUser?.uid ?? 'anon',
+                ),
               AppRole.admin => const AdminHomePage(),
             },
     );

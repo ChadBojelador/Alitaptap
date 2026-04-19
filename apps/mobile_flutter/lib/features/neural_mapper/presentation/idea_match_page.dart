@@ -7,9 +7,16 @@ import '../../civic_intelligence/presentation/issue_detail_page.dart';
 
 /// Student flow for matching a research idea to validated community problems.
 class IdeaMatchPage extends StatefulWidget {
-  const IdeaMatchPage({super.key, required this.studentId});
+  const IdeaMatchPage({
+    super.key,
+    required this.studentId,
+    this.initialIdeaText,
+    this.autoRun = false,
+  });
 
   final String studentId;
+  final String? initialIdeaText;
+  final bool autoRun;
 
   @override
   State<IdeaMatchPage> createState() => _IdeaMatchPageState();
@@ -23,6 +30,22 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
   String? _error;
   MapperRunResult? _runResult;
   final Map<String, Issue> _issueById = {};
+
+  @override
+  void initState() {
+    super.initState();
+    final initialText = widget.initialIdeaText?.trim();
+    if (initialText != null && initialText.isNotEmpty) {
+      _ideaController.text = initialText;
+      if (widget.autoRun && initialText.length >= 5) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _matchIdea();
+          }
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -74,8 +97,6 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
       }
     }
   }
-
-  String _scoreLabel(double score) => '${(score * 100).toStringAsFixed(1)}%';
 
   @override
   Widget build(BuildContext context) {

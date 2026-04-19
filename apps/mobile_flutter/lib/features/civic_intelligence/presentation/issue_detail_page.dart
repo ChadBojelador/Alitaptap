@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/models/issue.dart';
@@ -100,9 +102,36 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
               ? const Center(child: Text('Issue not found'))
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                      child: Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.82),
+                              Colors.white.withValues(alpha: 0.66),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.44),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 14,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                       // --- Status chip ---
                       Row(
                         children: [
@@ -147,6 +176,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
 
                       // --- Location ---
                       Card(
+                        color: Colors.white.withValues(alpha: 0.70),
                         child: ListTile(
                           leading: Icon(Icons.location_on,
                               color: theme.colorScheme.primary),
@@ -196,13 +226,13 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                         )
                       else if (_suggestionError != null)
                         Card(
-                          color: theme.colorScheme.errorContainer,
+                          color: Colors.white.withValues(alpha: 0.74),
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Text(
                               _suggestionError!,
                               style: TextStyle(
-                                color: theme.colorScheme.onErrorContainer,
+                                color: theme.colorScheme.error,
                               ),
                             ),
                           ),
@@ -222,6 +252,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                                 i++)
                               Card(
                                 margin: const EdgeInsets.only(bottom: 8),
+                                color: Colors.white.withValues(alpha: 0.72),
                                 child: ListTile(
                                   leading: CircleAvatar(child: Text('${i + 1}')),
                                   title: Text(_titleSuggestions!.suggestions[i]),
@@ -236,7 +267,10 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                             ),
                           ],
                         ),
-                    ],
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
     );

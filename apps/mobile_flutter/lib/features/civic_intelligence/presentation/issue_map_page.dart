@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -6,11 +7,19 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../core/models/issue.dart';
 import '../../../services/api_service.dart';
+import '../../neural_mapper/presentation/idea_match_page.dart';
 import 'issue_detail_page.dart';
 
 /// Full-screen OpenFreeMap view showing validated community issues as pins.
 class IssueMapPage extends StatefulWidget {
-  const IssueMapPage({super.key});
+  const IssueMapPage({
+    super.key,
+    this.showIdeaDock = false,
+    this.studentId,
+  });
+
+  final bool showIdeaDock;
+  final String? studentId;
 
   @override
   State<IssueMapPage> createState() => _IssueMapPageState();
@@ -23,6 +32,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
   static const _userZoom = 15.5;
 
   final _api = ApiService();
+  final _ideaController = TextEditingController();
+
   List<Issue> _issues = [];
   String? _errorMessage;
   Position? _userPosition;
@@ -30,6 +41,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
   bool _loading = true;
   bool _styleLoaded = false;
   bool _cameraMovedToUser = false;
+  bool _matchingIdea = false;
   MapLibreMapController? _mapController;
 
   @override
@@ -37,6 +49,12 @@ class _IssueMapPageState extends State<IssueMapPage> {
     super.initState();
     _resolveCurrentLocation();
     _loadIssues();
+  }
+
+  @override
+  void dispose() {
+    _ideaController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadIssues() async {
@@ -164,6 +182,38 @@ class _IssueMapPageState extends State<IssueMapPage> {
     );
   }
 
+  Future<void> _submitIdea() async {
+    final idea = _ideaController.text.trim();
+    if (idea.length < 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter at least 5 characters.')),
+      );
+      return;
+    }
+
+    final studentId = widget.studentId;
+    if (studentId == null || studentId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Student session not found. Please sign in again.')),
+      );
+      return;
+    }
+
+    setState(() => _matchingIdea = true);
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => IdeaMatchPage(
+          studentId: studentId,
+          initialIdeaText: idea,
+          autoRun: true,
+        ),
+      ),
+    );
+    if (mounted) {
+      setState(() => _matchingIdea = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -225,11 +275,12 @@ class _IssueMapPageState extends State<IssueMapPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
+                  color: Colors.white.withValues(alpha: 0.78),
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.42)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.12),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -239,12 +290,13 @@ class _IssueMapPageState extends State<IssueMapPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.pin_drop,
-                        size: 18, color: theme.colorScheme.onPrimaryContainer),
+                        size: 18, color: theme.colorScheme.primary),
                     const SizedBox(width: 6),
                     Text(
                       '${_issues.length} validated issues',
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
+                        color: const Color(0xFF1C1C1E),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -258,7 +310,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
               left: 16,
               right: 16,
               child: Card(
-                color: theme.colorScheme.errorContainer,
+                color: Colors.white.withValues(alpha: 0.86),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -268,14 +320,14 @@ class _IssueMapPageState extends State<IssueMapPage> {
                     children: [
                       Icon(
                         Icons.wifi_off_rounded,
-                        color: theme.colorScheme.onErrorContainer,
+                        color: theme.colorScheme.error,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'Could not load issues. Check backend/network, then refresh.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onErrorContainer,
+                            color: const Color(0xFF1C1C1E),
                           ),
                         ),
                       ),
@@ -294,6 +346,98 @@ class _IssueMapPageState extends State<IssueMapPage> {
               child: _IssueListSheet(
                 issues: _issues,
                 onTap: _onPinTapped,
+              ),
+            ),
+
+          if (widget.showIdeaDock)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: _issues.isNotEmpty ? 120 : 16,
+              child: SafeArea(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.52),
+                            Colors.white.withValues(alpha: 0.30),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.46),
+                          width: 1.1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.11),
+                            blurRadius: 18,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 14),
+                          Icon(
+                            Icons.search,
+                            color: const Color(0xFF8E8E93).withValues(alpha: 0.95),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _ideaController,
+                              textInputAction: TextInputAction.search,
+                              onSubmitted: (_) => _submitIdea(),
+                              style: const TextStyle(
+                                color: Color(0xFF1C1C1E),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: 'Match your ideas',
+                                hintStyle: TextStyle(
+                                  color: Color(0xFF8E8E93),
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                border: InputBorder.none,
+                                filled: false,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: IconButton.filled(
+                              style: IconButton.styleFrom(
+                                backgroundColor:
+                                    theme.colorScheme.primary.withValues(alpha: 0.96),
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: _matchingIdea ? null : _submitIdea,
+                              icon: _matchingIdea
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.arrow_upward_rounded),
+                              tooltip: 'Match idea',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
         ],
@@ -318,61 +462,77 @@ class _IssueListSheet extends StatelessWidget {
       minChildSize: 0.08,
       maxChildSize: 0.55,
       builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: ListView.builder(
-            controller: scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: issues.length + 1,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color:
-                            theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text('Reported Issues', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.82),
+                    Colors.white.withValues(alpha: 0.70),
                   ],
-                );
-              }
-
-              final issue = issues[index - 1];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    child: Icon(Icons.warning_amber_rounded,
-                        color: theme.colorScheme.onPrimaryContainer),
-                  ),
-                  title: Text(issue.title,
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  subtitle: Text(issue.description,
-                      maxLines: 2, overflow: TextOverflow.ellipsis),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => onTap(issue),
                 ),
-              );
-            },
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.42)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 14,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: issues.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8E8E93).withValues(alpha: 0.45),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Reported Issues', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                      ],
+                    );
+                  }
+
+                  final issue = issues[index - 1];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    color: Colors.white.withValues(alpha: 0.74),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                        child: Icon(
+                          Icons.warning_amber_rounded,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      title: Text(issue.title,
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      subtitle: Text(issue.description,
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => onTap(issue),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         );
       },
