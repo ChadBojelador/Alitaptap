@@ -298,7 +298,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
           if (_isDark)
             IgnorePointer(
               child: Container(
-                color: const Color(0xFF0A0A0A).withValues(alpha: 0.28),
+                color: const Color(0xFF0A0A0A).withValues(alpha: 0.15),
               ),
             ),
 
