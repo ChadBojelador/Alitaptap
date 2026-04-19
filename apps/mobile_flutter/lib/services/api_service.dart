@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../core/models/issue.dart';
+import '../core/models/match_result.dart';
 
 /// HTTP client wrapper for calling the FastAPI backend.
 class ApiService {
@@ -93,5 +94,34 @@ class ApiService {
     }
 
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  // -----------------------------------------------------------------------
+  // Neural Mapper
+  // -----------------------------------------------------------------------
+
+  /// Match a student idea against validated issues.
+  Future<MapperRunResult> matchIdea({
+    required String studentId,
+    required String ideaText,
+    int maxResults = 5,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/mapper/match'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'student_id': studentId,
+        'idea_text': ideaText,
+        'max_results': maxResults,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to match idea: ${response.body}');
+    }
+
+    return MapperRunResult.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 }
