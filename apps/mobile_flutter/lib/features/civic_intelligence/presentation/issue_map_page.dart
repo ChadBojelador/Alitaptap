@@ -18,13 +18,13 @@ import '../../../app/app.dart' show AppTheme;
 import 'issue_detail_page.dart';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-const _cyberGreen  = Color(0xFF00FFB2);
+const _cyberGreen  = Color(0xFFFFD60A);
 const _cyberRed    = Color(0xFFFF2D55);
 const _darkBg      = Color(0xFF0A0E17);
 const _darkPanel   = Color(0xFF0D1320);
 const _gridLine    = Color(0xFF1A2A3A);
 const _textPrimary = Color(0xFFE0FFF8);
-const _textMuted   = Color(0xFF4A7A6A);
+const _textMuted   = Color(0xFF8A7340);
 
 /// Full-screen cyber-terminal map page.
 ///
@@ -186,42 +186,42 @@ class _IssueMapPageState extends State<IssueMapPage>
         'waterway_river':                 '#004D5E',
         'waterway_other':                 '#003A4A',
         'waterway_tunnel':                '#002A36',
-        'road_motorway':                  '#00FFB2',
-        'road_motorway_casing':           '#009966',
-        'road_motorway_link':             '#00FFB2',
-        'road_motorway_link_casing':      '#009966',
-        'road_trunk_primary':             '#00CC8E',
-        'road_trunk_primary_casing':      '#007755',
-        'road_secondary_tertiary':        '#009977',
-        'road_secondary_tertiary_casing': '#005544',
+        'road_motorway':                  '#FFD60A',
+        'road_motorway_casing':           '#B38300',
+        'road_motorway_link':             '#FFD60A',
+        'road_motorway_link_casing':      '#B38300',
+        'road_trunk_primary':             '#FFC300',
+        'road_trunk_primary_casing':      '#8F6A00',
+        'road_secondary_tertiary':        '#E6B800',
+        'road_secondary_tertiary_casing': '#6E5200',
         'road_minor':                     '#0D2030',
         'road_minor_casing':              '#091828',
-        'road_link':                      '#009977',
-        'road_link_casing':               '#005544',
+        'road_link':                      '#E6B800',
+        'road_link_casing':               '#6E5200',
         'road_service_track':             '#0B1C2C',
         'road_service_track_casing':      '#071420',
         'road_path_pedestrian':           '#0B1C2C',
-        'bridge_motorway':                '#00FFB2',
-        'bridge_motorway_casing':         '#009966',
-        'bridge_trunk_primary':           '#00CC8E',
-        'bridge_trunk_primary_casing':    '#007755',
-        'bridge_secondary_tertiary':      '#009977',
+        'bridge_motorway':                '#FFD60A',
+        'bridge_motorway_casing':         '#B38300',
+        'bridge_trunk_primary':           '#FFC300',
+        'bridge_trunk_primary_casing':    '#8F6A00',
+        'bridge_secondary_tertiary':      '#E6B800',
         'bridge_street':                  '#0D2030',
-        'bridge_motorway_link':           '#00FFB2',
-        'bridge_link':                    '#009977',
+        'bridge_motorway_link':           '#FFD60A',
+        'bridge_link':                    '#E6B800',
         'bridge_service_track':           '#0B1C2C',
         'bridge_path_pedestrian':         '#0B1C2C',
-        'tunnel_motorway':                '#009966',
-        'tunnel_trunk_primary':           '#007755',
-        'tunnel_secondary_tertiary':      '#005544',
+        'tunnel_motorway':                '#B38300',
+        'tunnel_trunk_primary':           '#8F6A00',
+        'tunnel_secondary_tertiary':      '#6E5200',
         'tunnel_minor':                   '#091828',
         'building':                       '#0D1C30',
         'road_major_rail':                '#1A3040',
         'road_transit_rail':              '#1A3040',
         'bridge_major_rail':              '#1A3040',
         'bridge_transit_rail':            '#1A3040',
-        'boundary_2':                     '#00FFB2',
-        'boundary_3':                     '#00CC8E',
+        'boundary_2':                     '#FFD60A',
+        'boundary_3':                     '#FFC300',
       };
 
       for (final layer in layers) {
@@ -301,7 +301,7 @@ class _IssueMapPageState extends State<IssueMapPage>
           await controller.setLayerProperties(
             entry.key,
             SymbolLayerProperties(
-              textColor:      '#00FFB2',
+              textColor:      '#FFD60A',
               textSize:       entry.value,
               textHaloColor:  '#080C14',
               textHaloWidth:  2.5,
@@ -736,7 +736,7 @@ class _ScanlinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF00FFB2).withValues(alpha: 0.028)
+      ..color = const Color(0xFFFFD60A).withValues(alpha: 0.028)
       ..strokeWidth = 1;
 
     const spacing = 4.0;
@@ -752,7 +752,7 @@ class _ScanlinePainter extends CustomPainter {
       Offset(0, sweepY),
       Offset(size.width, sweepY),
       Paint()
-        ..color = const Color(0xFF00FFB2).withValues(alpha: 0.12)
+        ..color = const Color(0xFFFFD60A).withValues(alpha: 0.12)
         ..strokeWidth = 1.5,
     );
   }
