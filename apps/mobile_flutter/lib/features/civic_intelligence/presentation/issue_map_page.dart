@@ -81,7 +81,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
     if (widget.initialIdeaText != null) {
       _ideaController.text = widget.initialIdeaText!;
     }
-    _loadPatchedStyle();
+    _loadPatchedStyle(dark: widget.themeMode == ThemeMode.dark);
     _resolveCurrentLocation();
     _loadIssues();
     if (widget.autoRun && (widget.initialIdeaText?.length ?? 0) >= 5) {
@@ -89,92 +89,142 @@ class _IssueMapPageState extends State<IssueMapPage> {
     }
   }
 
-  /// Fetches the liberty style JSON and patches layer colors to match
-  /// the Alitaptap yellow + dark blue theme.
-  /// - Land: deep navy/dark blue base
-  /// - Water: bright electric blue
-  /// - Roads: yellow hierarchy (motorway=bright, minor=dim)
-  /// - Buildings: dark slate blue
-  /// - Green areas: muted dark teal
-  Future<void> _loadPatchedStyle() async {
+  @override
+  void didUpdateWidget(IssueMapPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload map style when theme mode changes.
+    if (oldWidget.themeMode != widget.themeMode) {
+      _styleLoaded = false;
+      _patchedStyle = null;
+      _loadPatchedStyle(dark: widget.themeMode == ThemeMode.dark);
+    }
+  }
+
+  /// Fetches the liberty style JSON and patches layer colors.
+  /// Dark mode: deep navy + yellow roads + electric blue water.
+  /// Light mode: warm parchment + yellow roads + sky blue water.
+  Future<void> _loadPatchedStyle({required bool dark}) async {
     try {
       final res = await http.get(Uri.parse(_mapStyleUrl));
       if (res.statusCode != 200) return;
       final style = jsonDecode(res.body) as Map<String, dynamic>;
       final layers = style['layers'] as List<dynamic>;
 
-      // Exact layer ID → color patches using real liberty style layer IDs.
-      final idPatches = <String, String>{
-        // Land base
-        'background':                  '#0D1B2A', // deep navy
-        'park':                        '#0F2A1E', // dark forest green
-        'landuse_residential':         '#111D2E', // slightly lighter navy
-        'landcover_wood':              '#0A2218', // dark green
-        'landcover_grass':             '#0D2318',
-        'landcover_wetland':           '#0A1F2A',
-        'landcover_sand':              '#1A2A1A',
-        'landcover_ice':               '#1A2A3A',
-        'landuse_cemetery':            '#0F1F2F',
-        'landuse_hospital':            '#0F1F2F',
-        'landuse_school':              '#0F1F2F',
-        'landuse_pitch':               '#0A2218',
-        'landuse_track':               '#0A2218',
-        'aeroway_fill':                '#0D1B2A',
-
-        // Water — electric blue
-        'water':                       '#1565C0',
-        'waterway_river':              '#1976D2',
-        'waterway_other':              '#1565C0',
-        'waterway_tunnel':             '#0D47A1',
-
-        // Roads — yellow hierarchy
-        'road_motorway':               '#FFD60A',
-        'road_motorway_casing':        '#B8960A',
-        'road_motorway_link':          '#FFD60A',
-        'road_motorway_link_casing':   '#B8960A',
-        'road_trunk_primary':          '#F5C842',
-        'road_trunk_primary_casing':   '#A88A20',
-        'road_secondary_tertiary':     '#C8A020',
-        'road_secondary_tertiary_casing': '#7A6010',
-        'road_minor':                  '#1E3A5F',
-        'road_minor_casing':           '#152A45',
-        'road_link':                   '#C8A020',
-        'road_link_casing':            '#7A6010',
-        'road_service_track':          '#1A3050',
-        'road_service_track_casing':   '#0F1F35',
-        'road_path_pedestrian':        '#1A3050',
-
-        // Bridges — same as roads
-        'bridge_motorway':             '#FFD60A',
-        'bridge_motorway_casing':      '#B8960A',
-        'bridge_trunk_primary':        '#F5C842',
-        'bridge_trunk_primary_casing': '#A88A20',
-        'bridge_secondary_tertiary':   '#C8A020',
-        'bridge_street':               '#1E3A5F',
-        'bridge_motorway_link':        '#FFD60A',
-        'bridge_link':                 '#C8A020',
-        'bridge_service_track':        '#1A3050',
-        'bridge_path_pedestrian':      '#1A3050',
-
-        // Tunnels
-        'tunnel_motorway':             '#B8960A',
-        'tunnel_trunk_primary':        '#A88A20',
-        'tunnel_secondary_tertiary':   '#7A6010',
-        'tunnel_minor':                '#152A45',
-
-        // Buildings — dark slate blue
-        'building':                    '#1A2E4A',
-
-        // Rail
-        'road_major_rail':             '#2A4A6A',
-        'road_transit_rail':           '#2A4A6A',
-        'bridge_major_rail':           '#2A4A6A',
-        'bridge_transit_rail':         '#2A4A6A',
-
-        // Boundaries
-        'boundary_2':                  '#FFD60A',
-        'boundary_3':                  '#C8A020',
-      };
+      final idPatches = dark
+          ? <String, String>{
+              // Dark: deep navy land
+              'background':                     '#0D1B2A',
+              'park':                           '#0F2A1E',
+              'landuse_residential':            '#111D2E',
+              'landcover_wood':                 '#0A2218',
+              'landcover_grass':                '#0D2318',
+              'landcover_wetland':              '#0A1F2A',
+              'landcover_sand':                 '#1A2A1A',
+              'landcover_ice':                  '#1A2A3A',
+              'landuse_cemetery':               '#0F1F2F',
+              'landuse_hospital':               '#0F1F2F',
+              'landuse_school':                 '#0F1F2F',
+              'landuse_pitch':                  '#0A2218',
+              'landuse_track':                  '#0A2218',
+              'aeroway_fill':                   '#0D1B2A',
+              'water':                          '#1565C0',
+              'waterway_river':                 '#1976D2',
+              'waterway_other':                 '#1565C0',
+              'waterway_tunnel':                '#0D47A1',
+              'road_motorway':                  '#FFD60A',
+              'road_motorway_casing':           '#B8960A',
+              'road_motorway_link':             '#FFD60A',
+              'road_motorway_link_casing':      '#B8960A',
+              'road_trunk_primary':             '#F5C842',
+              'road_trunk_primary_casing':      '#A88A20',
+              'road_secondary_tertiary':        '#C8A020',
+              'road_secondary_tertiary_casing': '#7A6010',
+              'road_minor':                     '#1E3A5F',
+              'road_minor_casing':              '#152A45',
+              'road_link':                      '#C8A020',
+              'road_link_casing':               '#7A6010',
+              'road_service_track':             '#1A3050',
+              'road_service_track_casing':      '#0F1F35',
+              'road_path_pedestrian':           '#1A3050',
+              'bridge_motorway':                '#FFD60A',
+              'bridge_motorway_casing':         '#B8960A',
+              'bridge_trunk_primary':           '#F5C842',
+              'bridge_trunk_primary_casing':    '#A88A20',
+              'bridge_secondary_tertiary':      '#C8A020',
+              'bridge_street':                  '#1E3A5F',
+              'bridge_motorway_link':           '#FFD60A',
+              'bridge_link':                    '#C8A020',
+              'bridge_service_track':           '#1A3050',
+              'bridge_path_pedestrian':         '#1A3050',
+              'tunnel_motorway':                '#B8960A',
+              'tunnel_trunk_primary':           '#A88A20',
+              'tunnel_secondary_tertiary':      '#7A6010',
+              'tunnel_minor':                   '#152A45',
+              'building':                       '#1A2E4A',
+              'road_major_rail':                '#2A4A6A',
+              'road_transit_rail':              '#2A4A6A',
+              'bridge_major_rail':              '#2A4A6A',
+              'bridge_transit_rail':            '#2A4A6A',
+              'boundary_2':                     '#FFD60A',
+              'boundary_3':                     '#C8A020',
+            }
+          : <String, String>{
+              // Light: warm parchment land
+              'background':                     '#F5EFD6',
+              'park':                           '#C8DBA0',
+              'landuse_residential':            '#EDE8D0',
+              'landcover_wood':                 '#A8C878',
+              'landcover_grass':                '#C8DBA0',
+              'landcover_wetland':              '#B0D4C0',
+              'landcover_sand':                 '#E8DFC0',
+              'landcover_ice':                  '#E0EEF5',
+              'landuse_cemetery':               '#D4CCA8',
+              'landuse_hospital':               '#F0E8D0',
+              'landuse_school':                 '#EAE0C0',
+              'landuse_pitch':                  '#B8D898',
+              'landuse_track':                  '#C8D8A0',
+              'aeroway_fill':                   '#E8E0C8',
+              'water':                          '#7AB8D4',
+              'waterway_river':                 '#5AA8C8',
+              'waterway_other':                 '#7AB8D4',
+              'waterway_tunnel':                '#A8D0E8',
+              'road_motorway':                  '#FFD60A',
+              'road_motorway_casing':           '#C8A000',
+              'road_motorway_link':             '#FFD60A',
+              'road_motorway_link_casing':      '#C8A000',
+              'road_trunk_primary':             '#F5C842',
+              'road_trunk_primary_casing':      '#C8A020',
+              'road_secondary_tertiary':        '#E8D080',
+              'road_secondary_tertiary_casing': '#C0A840',
+              'road_minor':                     '#E8E0C0',
+              'road_minor_casing':              '#C8C0A0',
+              'road_link':                      '#E8D080',
+              'road_link_casing':               '#C0A840',
+              'road_service_track':             '#EAE4CC',
+              'road_service_track_casing':      '#C8C0A8',
+              'road_path_pedestrian':           '#D4C890',
+              'bridge_motorway':                '#FFD60A',
+              'bridge_motorway_casing':         '#C8A000',
+              'bridge_trunk_primary':           '#F5C842',
+              'bridge_trunk_primary_casing':    '#C8A020',
+              'bridge_secondary_tertiary':      '#E8D080',
+              'bridge_street':                  '#E8E0C0',
+              'bridge_motorway_link':           '#FFD60A',
+              'bridge_link':                    '#E8D080',
+              'bridge_service_track':           '#EAE4CC',
+              'bridge_path_pedestrian':         '#D4C890',
+              'tunnel_motorway':                '#E8C000',
+              'tunnel_trunk_primary':           '#D8B030',
+              'tunnel_secondary_tertiary':      '#C8A040',
+              'tunnel_minor':                   '#D8D0B0',
+              'building':                       '#D4C8A0',
+              'road_major_rail':                '#B0A888',
+              'road_transit_rail':              '#B0A888',
+              'bridge_major_rail':              '#B0A888',
+              'bridge_transit_rail':            '#B0A888',
+              'boundary_2':                     '#C8A020',
+              'boundary_3':                     '#D4B840',
+            };
 
       for (final layer in layers) {
         final map = layer as Map<String, dynamic>;
@@ -198,9 +248,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
       }
 
       if (mounted) setState(() => _patchedStyle = jsonEncode(style));
-    } catch (_) {
-      // Fall back to default liberty style on any error.
-    }
+    } catch (_) {}
   }
 
   @override
@@ -285,9 +333,9 @@ class _IssueMapPageState extends State<IssueMapPage> {
           await controller.setLayerProperties(
             entry.key,
             SymbolLayerProperties(
-              textColor: '#FFD60A',
+              textColor: _isDark ? '#FFD60A' : '#1A1A1A',
               textSize: entry.value,
-              textHaloColor: '#0D1B2A',
+              textHaloColor: _isDark ? '#0D1B2A' : '#F5EFD6',
               textHaloWidth: 1.5,
               textHaloBlur: 0,
             ),
