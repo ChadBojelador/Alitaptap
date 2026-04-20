@@ -76,7 +76,10 @@ class _IssueMapPageState extends State<IssueMapPage> {
   double _bearing = 0.0;
   String? _patchedStyle;
 
-  bool get _isDark => AppTheme.of(context).themeMode == ThemeMode.dark;
+  bool _isDarkMode = true; // default, updated in didChangeDependencies
+  bool get _isDark => _isDarkMode;
+
+  ThemeMode? _lastThemeMode;
 
   @override
   void initState() {
@@ -84,7 +87,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
     if (widget.initialIdeaText != null) {
       _ideaController.text = widget.initialIdeaText!;
     }
-    _loadPatchedStyle(dark: AppTheme.of(context).themeMode == ThemeMode.dark);
     _resolveCurrentLocation();
     _loadIssues();
     if (widget.autoRun && (widget.initialIdeaText?.length ?? 0) >= 5) {
@@ -92,18 +94,17 @@ class _IssueMapPageState extends State<IssueMapPage> {
     }
   }
 
-  ThemeMode? _lastThemeMode;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final currentMode = AppTheme.of(context).themeMode;
-    if (_lastThemeMode != null && _lastThemeMode != currentMode) {
+    _isDarkMode = currentMode == ThemeMode.dark;
+    if (_lastThemeMode != currentMode) {
       _styleLoaded = false;
       _patchedStyle = null;
-      _loadPatchedStyle(dark: currentMode == ThemeMode.dark);
+      _loadPatchedStyle(dark: _isDarkMode);
+      _lastThemeMode = currentMode;
     }
-    _lastThemeMode = currentMode;
   }
 
   /// Fetches the liberty style JSON and patches layer colors.
