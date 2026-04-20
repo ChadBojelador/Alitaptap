@@ -307,22 +307,137 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                       color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
                     ),
                   ),
-                  child: MapLibreMap(
-                    styleString: _mapStyle,
-                    initialCameraPosition: CameraPosition(
-                      target: LatLng(
-                        _lat ?? _defaultCenter.latitude,
-                        _lng ?? _defaultCenter.longitude,
+                  child: Stack(
+                    children: [
+                      MapLibreMap(
+                        styleString: _mapStyle,
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(
+                            _lat ?? _defaultCenter.latitude,
+                            _lng ?? _defaultCenter.longitude,
+                          ),
+                          zoom: _defaultZoom,
+                        ),
+                        onMapCreated: _onMapCreated,
+                        onStyleLoadedCallback: _onStyleLoaded,
+                        onMapClick: _onMapTap,
+                        compassEnabled: false,
+                        myLocationEnabled: false,
+                        attributionButtonMargins: const Point(-100, -100),
+                        logoViewMargins: const Point(-100, -100),
                       ),
-                      zoom: _defaultZoom,
-                    ),
-                    onMapCreated: _onMapCreated,
-                    onStyleLoadedCallback: _onStyleLoaded,
-                    onMapClick: _onMapTap,
-                    compassEnabled: false,
-                    myLocationEnabled: false,
-                    attributionButtonMargins: const Point(-100, -100),
-                    logoViewMargins: const Point(-100, -100),
+
+                      // Use my location button
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: GestureDetector(
+                          onTap: () async {
+                            await _resolveCurrentLocation();
+                            if (_userPosition != null) {
+                              setState(() {
+                                _lat = _userPosition!.latitude;
+                                _lng = _userPosition!.longitude;
+                              });
+                              await _renderSelectedPin();
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFFFD60A).withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: const Icon(Icons.my_location_rounded,
+                                color: Color(0xFFFFD60A), size: 18),
+                          ),
+                        ),
+                      ),
+
+                      // Tap hint when no pin selected
+                      if (_lat == null)
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0D1B2A).withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.touch_app_rounded,
+                                    color: Color(0xFFFFD60A), size: 16),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Tap to pin location',
+                                  style: GoogleFonts.poppins(
+                                    color: const Color(0xFFF0F0F0),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      // Confirm pin button
+                      if (_lat != null)
+                        Positioned(
+                          bottom: 10,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: () => ScaffoldMessenger.of(context)
+                                  .showSnackBar(
+                                const SnackBar(
+                                    content: Text('Location pinned!')),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFD60A),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFFFD60A)
+                                          .withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded,
+                                        color: Color(0xFF1A1A1A), size: 16),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Location Confirmed',
+                                      style: GoogleFonts.poppins(
+                                        color: const Color(0xFF1A1A1A),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
