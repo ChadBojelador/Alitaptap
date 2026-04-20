@@ -66,6 +66,11 @@ class _IssueMapPageState extends State<IssueMapPage>
   static const _defaultZoom   = 6.0;
   static const _userZoom      = 16.5;
 
+  LatLngBounds get _philippinesBounds => LatLngBounds(
+        southwest: const LatLng(4.5, 116.0),
+        northeast: const LatLng(21.5, 127.5),
+      );
+
   final _issueRepository   = ApiIssueRepository();
   final _ideaController    = TextEditingController();
 
