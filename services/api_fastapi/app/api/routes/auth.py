@@ -30,3 +30,13 @@ def set_user_role(payload: RoleDecision) -> RoleDecision:
         merge=True,
     )
     return payload
+
+
+@router.get('/role/{user_id}')
+def get_user_role(user_id: str) -> dict:
+    """Get a user's role from Firestore."""
+    db = get_db()
+    doc = db.collection('users').document(user_id).get()
+    if not doc.exists:
+        return {'user_id': user_id, 'role': 'student'}
+    return {'user_id': user_id, 'role': doc.to_dict().get('role', 'student')}
