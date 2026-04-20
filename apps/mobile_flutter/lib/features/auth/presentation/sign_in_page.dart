@@ -196,18 +196,6 @@ class _SignInPageState extends State<SignInPage> {
                     isDark: isDark,
                     onTap: () => setState(() => _selectedRole = 'admin'),
                   ),
-                  const SizedBox(height: 14),
-
-                  // Admin role card
-                  _RoleCard(
-                    icon: Icons.admin_panel_settings_rounded,
-                    title: 'Admin',
-                    subtitle:
-                        'Validate or reject community problem reports.',
-                    selected: _selectedRole == 'admin',
-                    isDark: isDark,
-                    onTap: () => setState(() => _selectedRole = 'admin'),
-                  ),
 
                   const Spacer(),
 
