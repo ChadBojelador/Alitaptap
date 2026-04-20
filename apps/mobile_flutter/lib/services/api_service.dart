@@ -11,20 +11,36 @@ import '../core/models/title_suggestions.dart';
 /// HTTP client wrapper for calling the FastAPI backend.
 class ApiService {
   ApiService({String? baseUrl})
-      : _baseUrl = baseUrl ??
-            const String.fromEnvironment(
-              'API_BASE_URL',
-              defaultValue: kIsWeb
-                  ? 'http://127.0.0.1:8000/api/v1'
-                  : 'http://10.0.2.2:8000/api/v1',
-            );
+      : _baseUrl = baseUrl ?? _resolveDefaultBaseUrl();
 
   final String _baseUrl;
   static const _requestTimeout = Duration(seconds: 12);
 
+  static String _resolveDefaultBaseUrl() {
+    const envBaseUrl = String.fromEnvironment('API_BASE_URL');
+    if (envBaseUrl.isNotEmpty) {
+      return envBaseUrl;
+    }
+
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000/api/v1';
+    }
+
+    // Android emulators map host localhost via 10.0.2.2.
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000/api/v1';
+    }
+
+    return 'http://127.0.0.1:8000/api/v1';
+  }
+
   Future<http.Response> _sendWithTimeout(Future<http.Response> request) async {
     try {
       return await request.timeout(_requestTimeout);
+    } on http.ClientException catch (e) {
+      throw Exception(
+        'Network request failed (${e.message}). Ensure the API is running and API_BASE_URL points to a reachable host: $_baseUrl',
+      );
     } on TimeoutException {
       throw Exception(
         'Request timed out. Please check if the backend is running and reachable.',
