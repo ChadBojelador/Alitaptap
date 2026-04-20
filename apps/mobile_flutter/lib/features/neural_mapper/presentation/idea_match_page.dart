@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/issue.dart';
 import '../../../core/models/match_result.dart';
-import '../../../services/api_service.dart';
+import '../../civic_intelligence/application/usecases/get_issue_by_id_use_case.dart';
+import '../../civic_intelligence/data/repositories/api_issue_repository.dart';
+import '../application/usecases/match_idea_use_case.dart';
+import '../data/repositories/api_mapper_repository.dart';
 import '../../civic_intelligence/presentation/issue_detail_page.dart';
 
 /// Student flow for matching a research idea to validated community problems.
@@ -23,8 +26,14 @@ class IdeaMatchPage extends StatefulWidget {
 }
 
 class _IdeaMatchPageState extends State<IdeaMatchPage> {
-  final _api = ApiService();
+  final _mapperRepository = ApiMapperRepository();
+  final _issueRepository = ApiIssueRepository();
   final _ideaController = TextEditingController();
+
+  late final MatchIdeaUseCase _matchIdeaUseCase =
+      MatchIdeaUseCase(_mapperRepository);
+  late final GetIssueByIdUseCase _getIssueByIdUseCase =
+      GetIssueByIdUseCase(_issueRepository);
 
   bool _loading = false;
   String? _error;
@@ -68,14 +77,16 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
     });
 
     try {
-      final result = await _api.matchIdea(
-        studentId: widget.studentId,
-        ideaText: ideaText,
+      final result = await _matchIdeaUseCase(
+        MatchIdeaInput(
+          studentId: widget.studentId,
+          ideaText: ideaText,
+        ),
       );
 
       for (final match in result.matches) {
         try {
-          final issue = await _api.getIssue(match.issueId);
+          final issue = await _getIssueByIdUseCase(match.issueId);
           _issueById[match.issueId] = issue;
         } catch (_) {
           // Keep rendering match even if issue details fail to load.

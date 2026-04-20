@@ -10,7 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../core/models/issue.dart';
-import '../../../services/api_service.dart';
+import '../application/usecases/get_validated_issues_use_case.dart';
+import '../application/usecases/submit_issue_use_case.dart';
+import '../data/repositories/api_issue_repository.dart';
 import '../../neural_mapper/presentation/idea_match_page.dart';
 import '../../../app/app.dart' show AppTheme;
 import 'issue_detail_page.dart';
@@ -60,8 +62,13 @@ class _IssueMapPageState extends State<IssueMapPage> {
     northeast: LatLng(21.5, 127.0),
   );
 
-  final _api = ApiService();
+  final _issueRepository = ApiIssueRepository();
   final _ideaController = TextEditingController();
+
+  late final GetValidatedIssuesUseCase _getValidatedIssues =
+      GetValidatedIssuesUseCase(_issueRepository);
+  late final SubmitIssueUseCase _submitIssueUseCase =
+      SubmitIssueUseCase(_issueRepository);
 
   List<Issue> _issues = [];
   String? _errorMessage;
@@ -270,7 +277,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   Future<void> _loadIssues() async {
     try {
-      final issues = await _api.getIssues(status: 'validated');
+      final issues = await _getValidatedIssues();
       if (mounted) {
         setState(() {
           _issues = issues;
@@ -490,13 +497,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
     setState(() => _generatingDemoIssue = true);
     try {
-      await _api.submitIssue(
-        reporterId: 'demo-seed-user',
-        title: 'Generated Problem #$index',
-        description:
-            'Auto-generated problem pin from the current user location at ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}.',
-        lat: position.latitude,
-        lng: position.longitude,
+      await _submitIssueUseCase(
+        SubmitIssueInput(
+          reporterId: 'demo-seed-user',
+          title: 'Generated Problem #$index',
+          description:
+              'Auto-generated problem pin from the current user location at ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}.',
+          lat: position.latitude,
+          lng: position.longitude,
+        ),
       );
 
       if (!mounted) return;

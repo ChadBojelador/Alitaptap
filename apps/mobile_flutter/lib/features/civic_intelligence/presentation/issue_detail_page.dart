@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/issue.dart';
 import '../../../core/models/title_suggestions.dart';
-import '../../../services/api_service.dart';
+import '../application/usecases/get_issue_by_id_use_case.dart';
+import '../application/usecases/get_title_suggestions_use_case.dart';
+import '../data/repositories/api_issue_repository.dart';
 
 /// Detail page for a single community issue.
 class IssueDetailPage extends StatefulWidget {
@@ -17,7 +19,13 @@ class IssueDetailPage extends StatefulWidget {
 }
 
 class _IssueDetailPageState extends State<IssueDetailPage> {
-  final _api = ApiService();
+  final _issueRepository = ApiIssueRepository();
+
+  late final GetIssueByIdUseCase _getIssueByIdUseCase =
+      GetIssueByIdUseCase(_issueRepository);
+  late final GetTitleSuggestionsUseCase _getTitleSuggestionsUseCase =
+      GetTitleSuggestionsUseCase(_issueRepository);
+
   Issue? _issue;
   TitleSuggestions? _titleSuggestions;
   bool _loading = true;
@@ -32,7 +40,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
 
   Future<void> _load() async {
     try {
-      final issue = await _api.getIssue(widget.issueId);
+      final issue = await _getIssueByIdUseCase(widget.issueId);
       if (mounted) {
         setState(() {
           _issue = issue;
@@ -59,7 +67,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
     });
 
     try {
-      final suggestions = await _api.getTitleSuggestions(widget.issueId);
+      final suggestions = await _getTitleSuggestionsUseCase(widget.issueId);
       if (mounted) {
         setState(() {
           _titleSuggestions = suggestions;
