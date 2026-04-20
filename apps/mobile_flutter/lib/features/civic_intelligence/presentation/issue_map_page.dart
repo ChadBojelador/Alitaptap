@@ -1392,6 +1392,96 @@ class _SidebarIssueRowState extends State<_SidebarIssueRow> {
   }
 }
 
+/// Floating action button cluster — Report a Problem + Research Idea.
+class _MapFabCluster extends StatelessWidget {
+  const _MapFabCluster({
+    required this.onReport,
+    required this.onResearch,
+  });
+
+  final VoidCallback onReport;
+  final VoidCallback onResearch;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _FabButton(
+          icon: Icons.add_location_alt_rounded,
+          label: 'REPORT PROBLEM',
+          onTap: onReport,
+        ),
+        const SizedBox(height: 10),
+        _FabButton(
+          icon: Icons.auto_awesome_rounded,
+          label: 'RESEARCH IDEA',
+          onTap: onResearch,
+        ),
+      ],
+    );
+  }
+}
+
+class _FabButton extends StatelessWidget {
+  const _FabButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData     icon;
+  final String       label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color:        _darkPanel.withValues(alpha: 0.88),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: _cyberGreen.withValues(alpha: 0.35),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color:      _cyberGreen.withValues(alpha: 0.10),
+                  blurRadius: 12,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: _cyberGreen, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: GoogleFonts.robotoMono(
+                    color:         _cyberGreen,
+                    fontSize:      10,
+                    fontWeight:    FontWeight.w700,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Cyber-styled idea matching input dock.
 class _IdeaDock extends StatelessWidget {
   const _IdeaDock({
