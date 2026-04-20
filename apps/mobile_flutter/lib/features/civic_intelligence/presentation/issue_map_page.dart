@@ -321,6 +321,9 @@ class _IssueMapPageState extends State<IssueMapPage>
     await _moveCameraToUserLocation();
     await _renderIssuePins();
     await _updateIssueScreenPositions();
+    // Refresh blip position in case location resolved before style was ready.
+    await Future.delayed(const Duration(milliseconds: 400));
+    await _updateUserScreenPosition();
   }
 
   Future<void> _updateUserScreenPosition() async {
@@ -371,7 +374,8 @@ class _IssueMapPageState extends State<IssueMapPage>
     if (!force && _cameraMovedToUser) return;
     final controller = _mapController;
     final pos        = _userPosition;
-    if (!_styleLoaded || controller == null || pos == null) return;
+    if (controller == null || pos == null) return;
+    if (!_styleLoaded && !force) return;
 
     final userLatLng = LatLng(pos.latitude, pos.longitude);
 
@@ -386,6 +390,7 @@ class _IssueMapPageState extends State<IssueMapPage>
       ),
     );
 
+    await Future.delayed(const Duration(milliseconds: 600));
     await _updateUserScreenPosition();
     _cameraMovedToUser = true;
   }
