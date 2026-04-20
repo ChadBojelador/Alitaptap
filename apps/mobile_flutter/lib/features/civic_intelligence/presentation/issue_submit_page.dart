@@ -5,7 +5,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
-import '../../../services/api_service.dart';
+import '../application/usecases/submit_issue_use_case.dart';
+import '../data/repositories/api_issue_repository.dart';
 
 /// Full-screen form for community members to report a local problem.
 /// Includes a map picker for precise location selection and auto-detects
@@ -27,7 +28,10 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  final _api = ApiService();
+  final _issueRepository = ApiIssueRepository();
+
+  late final SubmitIssueUseCase _submitIssueUseCase =
+      SubmitIssueUseCase(_issueRepository);
 
   MapLibreMapController? _mapController;
   Circle? _selectedCircle;
@@ -136,12 +140,14 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     }
     setState(() => _submitting = true);
     try {
-      await _api.submitIssue(
-        reporterId: widget.reporterId,
-        title: _titleCtrl.text.trim(),
-        description: _descCtrl.text.trim(),
-        lat: _lat!,
-        lng: _lng!,
+      await _submitIssueUseCase(
+        SubmitIssueInput(
+          reporterId: widget.reporterId,
+          title: _titleCtrl.text.trim(),
+          description: _descCtrl.text.trim(),
+          lat: _lat!,
+          lng: _lng!,
+        ),
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

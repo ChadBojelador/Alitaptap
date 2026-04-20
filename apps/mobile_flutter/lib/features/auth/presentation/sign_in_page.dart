@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../services/auth_service.dart';
+import '../application/usecases/sign_in_anonymously_use_case.dart';
+import '../data/repositories/firebase_auth_repository.dart';
 
 /// Landing page where users pick their role before entering the app.
 /// Role is passed directly to the app without Firestore.
@@ -15,7 +16,9 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final _authService = AuthService();
+  final _authRepository = FirebaseAuthRepository();
+  late final SignInAnonymouslyUseCase _signInAnonymouslyUseCase =
+      SignInAnonymouslyUseCase(_authRepository);
   bool _loading = false;
   String? _selectedRole; // 'community' | 'student'
 
@@ -36,7 +39,7 @@ class _SignInPageState extends State<SignInPage> {
     if (_selectedRole == null || _loading) return;
     setState(() => _loading = true);
     try {
-      await _authService.signInAnonymously();
+      await _signInAnonymouslyUseCase();
       // TODO: uncomment once Firestore rules allow users/{uid} writes.
       // await _authService.setRole(_selectedRole!);
       widget.onRoleSelected(_selectedRole!);
