@@ -496,20 +496,20 @@ class _IssueMapPageState extends State<IssueMapPage> {
   /// Panel background: dark charcoal in dark mode, clean white in light mode.
   Color get _panelBg => _isDark
       ? const Color(0xFF1C1C1E).withValues(alpha: 0.78)
-      : const Color(0xFFFFFFFF).withValues(alpha: 0.88);
+      : const Color(0xFF1A3A5C).withValues(alpha: 0.88);
 
   /// Text color on panels.
   Color get _textColor =>
-      _isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A);
+      _isDark ? const Color(0xFFF0F0F0) : const Color(0xFFF0F0F0);
 
   /// Subtle text / hint color.
   Color get _subtleText =>
-      _isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666);
+      _isDark ? const Color(0xFF9E9E9E) : const Color(0xFFB0C4D8);
 
   /// Card background inside the bottom sheet.
   Color get _cardBg => _isDark
       ? const Color(0xFF242424).withValues(alpha: 0.95)
-      : const Color(0xFFF5F5F5).withValues(alpha: 0.95);
+      : const Color(0xFF1E3F60).withValues(alpha: 0.95);
 
   static const _yellow = Color(0xFFFFD60A);
 
