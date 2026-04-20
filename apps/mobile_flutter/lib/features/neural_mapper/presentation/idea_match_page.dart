@@ -38,6 +38,7 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
   bool _loading = false;
   String? _error;
   MapperRunResult? _runResult;
+  String? _connectedIssueId;
   final Map<String, Issue> _issueById = {};
 
   @override
@@ -73,6 +74,7 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
       _loading = true;
       _error = null;
       _runResult = null;
+      _connectedIssueId = null;
       _issueById.clear();
     });
 
@@ -96,8 +98,27 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
       if (mounted) {
         setState(() {
           _runResult = result;
+          _connectedIssueId =
+              result.matches.isNotEmpty ? result.matches.first.issueId : null;
           _loading = false;
         });
+
+        if (result.matches.isNotEmpty) {
+          final bestMatch = result.matches.first;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Connected to the most related community problem.',
+              ),
+            ),
+          );
+
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => IssueDetailPage(issueId: bestMatch.issueId),
+            ),
+          );
+        }
       }
     } catch (error) {
       if (mounted) {
@@ -168,6 +189,31 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
             ),
           if (matches.isNotEmpty && !_loading) ...[
             const SizedBox(height: 8),
+            if (_connectedIssueId != null)
+              Card(
+                color: theme.colorScheme.primaryContainer,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.link,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                  title: Text(
+                    'Connected Problem',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _issueById[_connectedIssueId!]?.title ??
+                        'Most related community problem selected',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+              ),
             Text(
               'Top Matches',
               style: theme.textTheme.titleLarge
@@ -179,6 +225,7 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
                 rank: index + 1,
                 match: matches[index],
                 issue: _issueById[matches[index].issueId],
+                isConnected: matches[index].issueId == _connectedIssueId,
               ),
           ],
         ],
@@ -192,23 +239,31 @@ class _MatchCard extends StatelessWidget {
     required this.rank,
     required this.match,
     required this.issue,
+    required this.isConnected,
   });
 
   final int rank;
   final MatchResult match;
   final Issue? issue;
+  final bool isConnected;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Card(
+      color: isConnected ? theme.colorScheme.secondaryContainer : null,
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
-        leading: CircleAvatar(
-          child: Text('$rank'),
-        ),
+        leading: isConnected
+            ? Icon(
+                Icons.link,
+                color: theme.colorScheme.onSecondaryContainer,
+              )
+            : CircleAvatar(
+                child: Text('$rank'),
+              ),
         title: Text(
           issue?.title ?? 'Community Problem',
           maxLines: 1,
