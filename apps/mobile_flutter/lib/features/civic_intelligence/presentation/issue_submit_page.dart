@@ -733,3 +733,48 @@ Widget _fieldLabel(String label, Color color) {
     ),
   );
 }
+
+class _PsgcRegion {
+  const _PsgcRegion({
+    required this.code,
+    required this.name,
+    required this.regionName,
+  });
+
+  final String code;
+  final String name;
+  final String regionName;
+
+  String get displayName {
+    final trimmedRegionName = regionName.trim();
+    if (trimmedRegionName.isEmpty || trimmedRegionName == name.trim()) {
+      return name.trim();
+    }
+    return '${name.trim()} ($trimmedRegionName)';
+  }
+
+  factory _PsgcRegion.fromJson(Map<String, dynamic> json) {
+    return _PsgcRegion(
+      code: (json['code'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      regionName: (json['regionName'] ?? '').toString(),
+    );
+  }
+}
+
+class _PsgcCityMunicipality {
+  const _PsgcCityMunicipality({
+    required this.code,
+    required this.name,
+  });
+
+  final String code;
+  final String name;
+
+  factory _PsgcCityMunicipality.fromJson(Map<String, dynamic> json) {
+    return _PsgcCityMunicipality(
+      code: (json['code'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+    );
+  }
+}
