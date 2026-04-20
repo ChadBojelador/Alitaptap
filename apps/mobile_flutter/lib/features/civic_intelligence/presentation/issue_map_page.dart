@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -73,8 +74,10 @@ class _IssueMapPageState extends State<IssueMapPage> {
   MapLibreMapController? _mapController;
   Circle? _userLocationCircle;
   Offset? _userScreenPosition;
+  final Map<String, Offset> _issueScreenPositions = {};
   double _bearing = 0.0;
   String? _patchedStyle;
+  bool _generatingDemoIssue = false;
 
   bool _isDarkMode = true; // default, updated in didChangeDependencies
   bool get _isDark => _isDarkMode;
@@ -275,6 +278,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
           _loading = false;
         });
         await _renderIssuePins();
+        await _updateIssueScreenPositions();
       }
     } catch (e) {
       if (mounted) {
@@ -362,6 +366,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
     }
     await _moveCameraToUserLocation();
     await _renderIssuePins();
+    await _updateIssueScreenPositions();
   }
 
   Future<void> _updateUserScreenPosition() async {
@@ -378,7 +383,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
   }
 
   void _onCameraMove() {
-    _updateUserScreenPosition();
+    unawaited(_updateUserScreenPosition());
+    unawaited(_updateIssueScreenPositions());
     final bearing = _mapController?.cameraPosition?.bearing ?? 0.0;
     if (mounted) setState(() => _bearing = bearing);
   }
@@ -431,16 +437,80 @@ class _IssueMapPageState extends State<IssueMapPage> {
     final controller = _mapController;
     if (!_styleLoaded || controller == null) return;
     await controller.clearCircles();
+  }
+
+  Future<void> _updateIssueScreenPositions() async {
+    final controller = _mapController;
+    if (!_styleLoaded || controller == null || _issues.isEmpty) {
+      if (_issueScreenPositions.isNotEmpty && mounted) {
+        setState(_issueScreenPositions.clear);
+      }
+      return;
+    }
+
+    final positions = <String, Offset>{};
     for (final issue in _issues) {
-      await controller.addCircle(
-        CircleOptions(
-          geometry: LatLng(issue.lat, issue.lng),
-          circleRadius: 7,
-          circleColor: '#E53935',
-          circleStrokeColor: '#FFFFFF',
-          circleStrokeWidth: 2,
-        ),
+      try {
+        final screenPoint =
+            await controller.toScreenLocation(LatLng(issue.lat, issue.lng));
+        positions[issue.issueId] =
+            Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
+      } catch (_) {
+        // Ignore off-screen conversion failures.
+      }
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _issueScreenPositions
+        ..clear()
+        ..addAll(positions);
+    });
+  }
+
+  Future<void> _generateProblemAtUserLocation() async {
+    if (_generatingDemoIssue) return;
+
+    Position? position = _userPosition;
+    if (position == null) {
+      await _resolveCurrentLocation();
+      position = _userPosition;
+    }
+
+    if (position == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location not available yet. Please allow location access.')),
       );
+      return;
+    }
+
+    final index = _issues.length + 1;
+    final now = DateTime.now();
+
+    setState(() => _generatingDemoIssue = true);
+    try {
+      await _api.submitIssue(
+        reporterId: 'demo-seed-user',
+        title: 'Generated Problem #$index',
+        description:
+            'Auto-generated problem pin from the current user location at ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}.',
+        lat: position.latitude,
+        lng: position.longitude,
+      );
+
+      if (!mounted) return;
+      await _loadIssues();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Problem generated and pinned on your location.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to generate demo problem: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _generatingDemoIssue = false);
     }
   }
 
@@ -552,6 +622,18 @@ class _IssueMapPageState extends State<IssueMapPage> {
               child: const _YouAreHereMarker(),
             ),
 
+          // ── Issue pin overlays (title inside each pinpoint) ──────────────
+          for (final issue in _issues)
+            if (_issueScreenPositions[issue.issueId] != null)
+              Positioned(
+                left: _issueScreenPositions[issue.issueId]!.dx - 58,
+                top: _issueScreenPositions[issue.issueId]!.dy - 74,
+                child: GestureDetector(
+                  onTap: () => _onPinTapped(issue),
+                  child: _IssuePinMarker(title: issue.title),
+                ),
+              ),
+
           // ── Floating header ───────────────────────────────────────────────
           Positioned(
             top: 0,
@@ -618,6 +700,12 @@ class _IssueMapPageState extends State<IssueMapPage> {
                               _errorMessage = null;
                               _loadIssues();
                             }),
+                          ),
+                          const SizedBox(width: 8),
+                          _HeaderBtn(
+                            icon: Icons.add_location_alt_rounded,
+                            onPressed:
+                                _generatingDemoIssue ? null : _generateProblemAtUserLocation,
                           ),
                         ],
                       ),
@@ -958,6 +1046,51 @@ class _MapCompass extends StatelessWidget {
           angle: -bearing * (3.141592653589793 / 180),
           child: CustomPaint(painter: _CompassPainter()),
         ),
+      ),
+    );
+  }
+}
+
+class _IssuePinMarker extends StatelessWidget {
+  const _IssuePinMarker({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 116,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1C1C1E).withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFE53935).withValues(alpha: 0.85),
+              ),
+            ),
+            child: Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          const Icon(
+            Icons.location_on_rounded,
+            size: 28,
+            color: Color(0xFFE53935),
+          ),
+        ],
       ),
     );
   }
