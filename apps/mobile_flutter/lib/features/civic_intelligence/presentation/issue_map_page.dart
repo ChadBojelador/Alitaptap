@@ -11,7 +11,10 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 import '../../../core/models/issue.dart';
 import '../../../services/api_service.dart';
 import '../../neural_mapper/presentation/idea_match_page.dart';
+import '../../../app/app.dart' show AppTheme;
 import 'issue_detail_page.dart';
+
+
 
 /// Full-screen map page showing validated community issues as pins.
 ///
@@ -73,7 +76,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
   double _bearing = 0.0;
   String? _patchedStyle;
 
-  bool get _isDark => widget.themeMode == ThemeMode.dark;
+  bool get _isDark => AppTheme.of(context).themeMode == ThemeMode.dark;
 
   @override
   void initState() {
@@ -81,7 +84,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
     if (widget.initialIdeaText != null) {
       _ideaController.text = widget.initialIdeaText!;
     }
-    _loadPatchedStyle(dark: widget.themeMode == ThemeMode.dark);
+    _loadPatchedStyle(dark: AppTheme.of(context).themeMode == ThemeMode.dark);
     _resolveCurrentLocation();
     _loadIssues();
     if (widget.autoRun && (widget.initialIdeaText?.length ?? 0) >= 5) {
@@ -89,15 +92,18 @@ class _IssueMapPageState extends State<IssueMapPage> {
     }
   }
 
+  ThemeMode? _lastThemeMode;
+
   @override
-  void didUpdateWidget(IssueMapPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Reload map style when theme mode changes.
-    if (oldWidget.themeMode != widget.themeMode) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentMode = AppTheme.of(context).themeMode;
+    if (_lastThemeMode != null && _lastThemeMode != currentMode) {
       _styleLoaded = false;
       _patchedStyle = null;
-      _loadPatchedStyle(dark: widget.themeMode == ThemeMode.dark);
+      _loadPatchedStyle(dark: currentMode == ThemeMode.dark);
     }
+    _lastThemeMode = currentMode;
   }
 
   /// Fetches the liberty style JSON and patches layer colors.
@@ -601,7 +607,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
                             icon: _isDark
                                 ? Icons.light_mode_rounded
                                 : Icons.dark_mode_rounded,
-                            onPressed: widget.onToggleTheme,
+                            onPressed: AppTheme.of(context).toggleTheme,
                           ),
                           const SizedBox(width: 8),
                           _HeaderBtn(
