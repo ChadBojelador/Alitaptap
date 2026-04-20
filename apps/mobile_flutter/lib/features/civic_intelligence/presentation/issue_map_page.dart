@@ -324,15 +324,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
       // Keep default black colors for readability, just increase sizes
       // per hierarchy. Poppins only applies to Flutter UI, not map tiles.
       const labelSizes = {
-        'label_country_1': 22.0,
-        'label_country_2': 20.0,
-        'label_country_3': 18.0,
-        'label_state':     15.0,
-        'label_city_capital': 14.0,
-        'label_city':      13.0,
-        'label_town':      12.0,
-        'label_village':   11.0,
-        'label_other':     10.0,
+        'label_country_1': 28.0,
+        'label_country_2': 26.0,
+        'label_country_3': 24.0,
+        'label_state':     20.0,
+        'label_city_capital': 18.0,
+        'label_city':      17.0,
+        'label_town':      15.0,
+        'label_village':   13.0,
+        'label_other':     12.0,
       };
 
       for (final entry in labelSizes.entries) {
@@ -343,7 +343,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
               textColor: _isDark ? '#FFD60A' : '#FFD60A',
               textSize: entry.value,
               textHaloColor: _isDark ? '#0D1B2A' : '#1A3A5C',
-              textHaloWidth: 1.5,
+              textHaloWidth: 2.5,
               textHaloBlur: 0,
             ),
           );
