@@ -70,10 +70,13 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) return;
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
       );
       if (!mounted) return;
       setState(() => _userPosition = position);
@@ -126,7 +129,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     if (!_formKey.currentState!.validate()) return;
     if (_lat == null || _lng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please tap the map to select a location.')),
+        const SnackBar(
+            content: Text('Please tap the map to select a location.')),
       );
       return;
     }
@@ -217,8 +221,9 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   icon: Icons.title_rounded,
                   isDark: isDark,
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Title is required'
+                    : null,
               ),
               const SizedBox(height: 20),
 
@@ -230,7 +235,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 maxLines: 4,
                 style: GoogleFonts.poppins(fontSize: 14, color: textColor),
                 decoration: _inputDecoration(
-                  hint: 'Describe the problem in detail — who is affected, how often, what impact...',
+                  hint:
+                      'Describe the problem in detail — who is affected, how often, what impact...',
                   icon: Icons.description_rounded,
                   isDark: isDark,
                 ),

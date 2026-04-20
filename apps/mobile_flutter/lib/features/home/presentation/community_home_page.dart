@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -63,10 +61,12 @@ class CommunityHomePage extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
+                            color:
+                                const Color(0xFFFFD60A).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+                              color: const Color(0xFFFFD60A)
+                                  .withValues(alpha: 0.3),
                             ),
                           ),
                           child: const Icon(Icons.arrow_back_ios_rounded,
@@ -77,10 +77,12 @@ class CommunityHomePage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFD60A).withValues(alpha: 0.15),
+                          color:
+                              const Color(0xFFFFD60A).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
+                            color:
+                                const Color(0xFFFFD60A).withValues(alpha: 0.4),
                           ),
                         ),
                         child: const Icon(Icons.people_alt_rounded,
@@ -207,7 +209,6 @@ class StudentHomePage extends StatelessWidget {
               ),
             ),
           ),
-
           Positioned(
             top: -60,
             right: -60,
@@ -220,7 +221,6 @@ class StudentHomePage extends StatelessWidget {
               ),
             ),
           ),
-
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -236,10 +236,12 @@ class StudentHomePage extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
+                            color:
+                                const Color(0xFFFFD60A).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+                              color: const Color(0xFFFFD60A)
+                                  .withValues(alpha: 0.3),
                             ),
                           ),
                           child: const Icon(Icons.arrow_back_ios_rounded,
@@ -250,10 +252,12 @@ class StudentHomePage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFD60A).withValues(alpha: 0.15),
+                          color:
+                              const Color(0xFFFFD60A).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
+                            color:
+                                const Color(0xFFFFD60A).withValues(alpha: 0.4),
                           ),
                         ),
                         child: const Icon(Icons.school_rounded,
@@ -567,9 +571,8 @@ class _IdeaMatchEntryPageState extends State<_IdeaMatchEntryPage> {
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
-                color: isDark
-                    ? const Color(0xFFF0F0F0)
-                    : const Color(0xFF1A1A1A),
+                color:
+                    isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A),
               ),
             ),
             const SizedBox(height: 8),

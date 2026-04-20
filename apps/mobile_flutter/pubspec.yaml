@@ -13,7 +13,13 @@ dependencies:
   google_fonts: ^6.2.1
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
-  cloud_firestore: ^5.6.12
+  # cloud_firestore: ^5.6.12
+  # BYPASSED: cloud_firestore removed from Android build because the Android
+  # Gradle plugin fails to compile it with the current Java 21 + AGP setup.
+  # Firestore calls in AuthService (setRole, getCurrentUserRole) are already
+  # commented out. Re-add this dependency once the Android build issue is
+  # resolved. Web (Chrome) build does not need it currently either since
+  # role persistence is bypassed. See auth_service.dart for full notes.
   maplibre_gl: ^0.23.0
   geolocator: ^13.0.2
   http: ^1.2.0

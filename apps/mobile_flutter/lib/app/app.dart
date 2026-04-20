@@ -5,7 +5,6 @@ import '../core/models/app_role.dart';
 import '../features/auth/presentation/sign_in_page.dart';
 import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/community_home_page.dart';
-import '../features/home/presentation/student_home_page.dart';
 
 /// Root application widget.
 ///
@@ -46,9 +45,8 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   ThemeMode _themeMode = ThemeMode.dark;
   final _navigatorKey = GlobalKey<NavigatorState>();
 
-  void toggleTheme() =>
-      setState(() => _themeMode =
-          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+  void toggleTheme() => setState(() => _themeMode =
+      _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
 
   // TODO: remove once Firestore rules are configured and role is persisted.
   // Role is passed directly from SignInPage to bypass Firestore permission.
@@ -63,7 +61,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
     ).push(MaterialPageRoute(builder: (_) => page));
   }
 
-ThemeData _buildTheme(Brightness brightness) {
+  ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     final poppins = GoogleFonts.poppinsTextTheme(
       isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
@@ -111,8 +109,7 @@ ThemeData _buildTheme(Brightness brightness) {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor:
-            isDark ? const Color(0xFF242424) : const Color(0xFFEEEEEE),
+        fillColor: isDark ? const Color(0xFF242424) : const Color(0xFFEEEEEE),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -125,8 +122,7 @@ ThemeData _buildTheme(Brightness brightness) {
         contentTextStyle: GoogleFonts.poppins(
           color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFFFFFFFF),
         ),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
