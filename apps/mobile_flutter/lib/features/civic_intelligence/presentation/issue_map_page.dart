@@ -508,15 +508,9 @@ class _IssueMapPageState extends State<IssueMapPage>
       );
       return;
     }
-    final studentId = widget.studentId;
-    if (studentId == null || studentId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Student session not found. Please sign in again.')),
-      );
-      return;
-    }
+    final studentId = widget.studentId ??
+        FirebaseAuth.instance.currentUser?.uid ??
+        'anon';
     setState(() => _matchingIdea = true);
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -663,7 +657,7 @@ class _IssueMapPageState extends State<IssueMapPage>
           // ── FAB cluster ───────────────────────────────────────────────────
           if (!_loading)
             Positioned(
-              bottom: 24,
+              bottom: 90,
               left:   16,
               child: _MapFabCluster(
                 onReport: () {
@@ -738,7 +732,7 @@ class _IssueMapPageState extends State<IssueMapPage>
             ),
 
           // ── Idea dock ──────────────────────────────────────────────────────
-          if (widget.showIdeaDock)
+          if (!_loading)
             Positioned(
               left:   16,
               right:  16,
