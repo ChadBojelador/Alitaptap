@@ -491,7 +491,6 @@ class _IdeaMatchEntryPage extends StatefulWidget {
 
 class _IdeaMatchEntryPageState extends State<_IdeaMatchEntryPage> {
   final _ctrl = TextEditingController();
-  final bool _isDark = true;
 
   @override
   void dispose() {

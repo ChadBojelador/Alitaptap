@@ -17,16 +17,24 @@ import '../../neural_mapper/presentation/idea_match_page.dart';
 import '../../../app/app.dart' show AppTheme;
 import 'issue_detail_page.dart';
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const _cyberGreen  = Color(0xFF00FFB2);
+const _cyberGreenD = Color(0xFF00CC8E); // dimmer variant
+const _cyberRed    = Color(0xFFFF2D55);
+const _darkBg      = Color(0xFF0A0E17);
+const _darkPanel   = Color(0xFF0D1320);
+const _gridLine    = Color(0xFF1A2A3A);
+const _textPrimary = Color(0xFFE0FFF8);
+const _textMuted   = Color(0xFF4A7A6A);
 
-
-/// Full-screen map page showing validated community issues as pins.
+/// Full-screen cyber-terminal map page.
 ///
-/// Always uses OpenFreeMap 'liberty' style so 3D buildings are visible in
-/// both light and dark mode. In dark mode a semi-transparent dark tint is
-/// layered over the map to reduce brightness without hiding buildings or labels.
-///
-/// UI overlays adapt to the current [ThemeMode] using [Theme.of(context)] so
-/// colors stay harmonious across both modes.
+/// Redesigned to match the aesthetic of phadmindownloader.vercel.app:
+/// - Near-black deep-space map with cyan/green neon accents
+/// - Scanline grid overlay for terminal feel
+/// - Left collapsible sidebar listing issues (replaces bottom sheet)
+/// - Radar-blip glowing issue pins
+/// - Monospace terminal-style top bar
 class IssueMapPage extends StatefulWidget {
   const IssueMapPage({
     super.key,
@@ -51,45 +59,65 @@ class IssueMapPage extends StatefulWidget {
   State<IssueMapPage> createState() => _IssueMapPageState();
 }
 
-class _IssueMapPageState extends State<IssueMapPage> {
-  // Liberty style base — fetched and patched at runtime with theme colors.
-  static const _mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
+class _IssueMapPageState extends State<IssueMapPage>
+    with TickerProviderStateMixin {
+  static const _mapStyleUrl =
+      'https://tiles.openfreemap.org/styles/liberty';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
-  static const _defaultZoom = 6.0;
-  static const _userZoom = 16.5;
+  static const _defaultZoom   = 6.0;
+  static const _userZoom      = 16.5;
   static final _philippinesBounds = LatLngBounds(
-    southwest: LatLng(4.5, 116.0),
+    southwest: LatLng(4.5,  116.0),
     northeast: LatLng(21.5, 127.0),
   );
 
-  final _issueRepository = ApiIssueRepository();
-  final _ideaController = TextEditingController();
+  final _issueRepository   = ApiIssueRepository();
+  final _ideaController    = TextEditingController();
+  final _sidebarKey        = GlobalKey();
 
   late final GetValidatedIssuesUseCase _getValidatedIssues =
       GetValidatedIssuesUseCase(_issueRepository);
   late final SubmitIssueUseCase _submitIssueUseCase =
       SubmitIssueUseCase(_issueRepository);
 
-  List<Issue> _issues = [];
-  String? _errorMessage;
-  Position? _userPosition;
+  List<Issue> _issues      = [];
+  String?     _errorMessage;
+  Position?   _userPosition;
 
-  bool _loading = true;
-  bool _styleLoaded = false;
-  bool _cameraMovedToUser = false;
-  bool _matchingIdea = false;
+  bool _loading            = true;
+  bool _styleLoaded        = false;
+  bool _cameraMovedToUser  = false;
+  bool _matchingIdea       = false;
+  bool _generatingDemoIssue= false;
+  bool _sidebarOpen        = false;
+
   MapLibreMapController? _mapController;
   Circle? _userLocationCircle;
   Offset? _userScreenPosition;
   final Map<String, Offset> _issueScreenPositions = {};
-  double _bearing = 0.0;
+  double  _bearing         = 0.0;
   String? _patchedStyle;
-  bool _generatingDemoIssue = false;
 
-  bool _isDarkMode = true; // default, updated in didChangeDependencies
-  bool get _isDark => _isDarkMode;
-
+  bool _isDarkMode         = true;
+  bool get _isDark         => _isDarkMode;
   ThemeMode? _lastThemeMode;
+
+  // Animations
+  late final AnimationController _sidebarAnim = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 320),
+  );
+  late final Animation<double> _sidebarSlide = CurvedAnimation(
+    parent: _sidebarAnim,
+    curve: Curves.easeOutExpo,
+  );
+
+  late final AnimationController _scanAnim = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  )..repeat();
+
+  // ── Lifecycle ───────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -100,7 +128,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
     _resolveCurrentLocation();
     _loadIssues();
     if (widget.autoRun && (widget.initialIdeaText?.length ?? 0) >= 5) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _submitIdea());
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _submitIdea());
     }
   }
 
@@ -110,153 +139,104 @@ class _IssueMapPageState extends State<IssueMapPage> {
     final currentMode = AppTheme.of(context).themeMode;
     _isDarkMode = currentMode == ThemeMode.dark;
     if (_lastThemeMode != currentMode) {
-      _styleLoaded = false;
+      _styleLoaded  = false;
       _patchedStyle = null;
-      _loadPatchedStyle(dark: _isDarkMode);
+      _loadPatchedStyle();
       _lastThemeMode = currentMode;
     }
   }
 
-  /// Fetches the liberty style JSON and patches layer colors.
-  /// Dark mode: deep navy + yellow roads + electric blue water.
-  /// Light mode: warm parchment + yellow roads + sky blue water.
-  Future<void> _loadPatchedStyle({required bool dark}) async {
+  @override
+  void dispose() {
+    _mapController?.removeListener(_onCameraMove);
+    _ideaController.dispose();
+    _sidebarAnim.dispose();
+    _scanAnim.dispose();
+    super.dispose();
+  }
+
+  // ── Map style patching ──────────────────────────────────────────────────────
+
+  /// Fetches and patches the liberty style to a deep-space cyber aesthetic.
+  Future<void> _loadPatchedStyle() async {
     try {
       final res = await http.get(Uri.parse(_mapStyleUrl));
       if (res.statusCode != 200) return;
-      final style = jsonDecode(res.body) as Map<String, dynamic>;
+      final style  = jsonDecode(res.body) as Map<String, dynamic>;
       final layers = style['layers'] as List<dynamic>;
 
-      final idPatches = dark
-          ? <String, String>{
-              // Dark: deep navy land
-              'background':                     '#0D1B2A',
-              'park':                           '#0F2A1E',
-              'landuse_residential':            '#111D2E',
-              'landcover_wood':                 '#0A2218',
-              'landcover_grass':                '#0D2318',
-              'landcover_wetland':              '#0A1F2A',
-              'landcover_sand':                 '#1A2A1A',
-              'landcover_ice':                  '#1A2A3A',
-              'landuse_cemetery':               '#0F1F2F',
-              'landuse_hospital':               '#0F1F2F',
-              'landuse_school':                 '#0F1F2F',
-              'landuse_pitch':                  '#0A2218',
-              'landuse_track':                  '#0A2218',
-              'aeroway_fill':                   '#0D1B2A',
-              'water':                          '#1565C0',
-              'waterway_river':                 '#1976D2',
-              'waterway_other':                 '#1565C0',
-              'waterway_tunnel':                '#0D47A1',
-              'road_motorway':                  '#FFD60A',
-              'road_motorway_casing':           '#B8960A',
-              'road_motorway_link':             '#FFD60A',
-              'road_motorway_link_casing':      '#B8960A',
-              'road_trunk_primary':             '#F5C842',
-              'road_trunk_primary_casing':      '#A88A20',
-              'road_secondary_tertiary':        '#C8A020',
-              'road_secondary_tertiary_casing': '#7A6010',
-              'road_minor':                     '#1E3A5F',
-              'road_minor_casing':              '#152A45',
-              'road_link':                      '#C8A020',
-              'road_link_casing':               '#7A6010',
-              'road_service_track':             '#1A3050',
-              'road_service_track_casing':      '#0F1F35',
-              'road_path_pedestrian':           '#1A3050',
-              'bridge_motorway':                '#FFD60A',
-              'bridge_motorway_casing':         '#B8960A',
-              'bridge_trunk_primary':           '#F5C842',
-              'bridge_trunk_primary_casing':    '#A88A20',
-              'bridge_secondary_tertiary':      '#C8A020',
-              'bridge_street':                  '#1E3A5F',
-              'bridge_motorway_link':           '#FFD60A',
-              'bridge_link':                    '#C8A020',
-              'bridge_service_track':           '#1A3050',
-              'bridge_path_pedestrian':         '#1A3050',
-              'tunnel_motorway':                '#B8960A',
-              'tunnel_trunk_primary':           '#A88A20',
-              'tunnel_secondary_tertiary':      '#7A6010',
-              'tunnel_minor':                   '#152A45',
-              'building':                       '#1A2E4A',
-              'road_major_rail':                '#2A4A6A',
-              'road_transit_rail':              '#2A4A6A',
-              'bridge_major_rail':              '#2A4A6A',
-              'bridge_transit_rail':            '#2A4A6A',
-              'boundary_2':                     '#FFD60A',
-              'boundary_3':                     '#C8A020',
-            }
-          : <String, String>{
-              // Light: brighter navy — same identity as dark but lighter
-              'background':                     '#1A3A5C',
-              'park':                           '#1A4A30',
-              'landuse_residential':            '#1E3F60',
-              'landcover_wood':                 '#1A4228',
-              'landcover_grass':                '#1E4A2E',
-              'landcover_wetland':              '#1A3A4A',
-              'landcover_sand':                 '#2A3A2A',
-              'landcover_ice':                  '#2A3A4A',
-              'landuse_cemetery':               '#1E3050',
-              'landuse_hospital':               '#1E3050',
-              'landuse_school':                 '#1E3050',
-              'landuse_pitch':                  '#1A4228',
-              'landuse_track':                  '#1A4228',
-              'aeroway_fill':                   '#1A3A5C',
-              'water':                          '#2196F3',
-              'waterway_river':                 '#42A5F5',
-              'waterway_other':                 '#2196F3',
-              'waterway_tunnel':                '#1565C0',
-              'road_motorway':                  '#FFD60A',
-              'road_motorway_casing':           '#C8A000',
-              'road_motorway_link':             '#FFD60A',
-              'road_motorway_link_casing':      '#C8A000',
-              'road_trunk_primary':             '#FFE040',
-              'road_trunk_primary_casing':      '#C8A820',
-              'road_secondary_tertiary':        '#D4A820',
-              'road_secondary_tertiary_casing': '#A07810',
-              'road_minor':                     '#2A5080',
-              'road_minor_casing':              '#1E3A60',
-              'road_link':                      '#D4A820',
-              'road_link_casing':               '#A07810',
-              'road_service_track':             '#244870',
-              'road_service_track_casing':      '#1A3458',
-              'road_path_pedestrian':           '#244870',
-              'bridge_motorway':                '#FFD60A',
-              'bridge_motorway_casing':         '#C8A000',
-              'bridge_trunk_primary':           '#FFE040',
-              'bridge_trunk_primary_casing':    '#C8A820',
-              'bridge_secondary_tertiary':      '#D4A820',
-              'bridge_street':                  '#2A5080',
-              'bridge_motorway_link':           '#FFD60A',
-              'bridge_link':                    '#D4A820',
-              'bridge_service_track':           '#244870',
-              'bridge_path_pedestrian':         '#244870',
-              'tunnel_motorway':                '#C8A000',
-              'tunnel_trunk_primary':           '#C8A820',
-              'tunnel_secondary_tertiary':      '#A07810',
-              'tunnel_minor':                   '#1E3A60',
-              'building':                       '#2A4A70',
-              'road_major_rail':                '#3A6090',
-              'road_transit_rail':              '#3A6090',
-              'bridge_major_rail':              '#3A6090',
-              'bridge_transit_rail':            '#3A6090',
-              'boundary_2':                     '#FFD60A',
-              'boundary_3':                     '#D4A820',
-            };
+      // Cyber-terminal dark palette — near-black land, deep cyan water.
+      const patches = <String, String>{
+        'background':                     '#080C14',
+        'park':                           '#081A10',
+        'landuse_residential':            '#0A1018',
+        'landcover_wood':                 '#061410',
+        'landcover_grass':                '#081610',
+        'landcover_wetland':              '#071218',
+        'landcover_sand':                 '#0C140C',
+        'landcover_ice':                  '#0C1420',
+        'landuse_cemetery':               '#090F18',
+        'landuse_hospital':               '#090F18',
+        'landuse_school':                 '#090F18',
+        'landuse_pitch':                  '#071410',
+        'landuse_track':                  '#071410',
+        'aeroway_fill':                   '#080C14',
+        'water':                          '#003A4A',
+        'waterway_river':                 '#004D5E',
+        'waterway_other':                 '#003A4A',
+        'waterway_tunnel':                '#002A36',
+        'road_motorway':                  '#00FFB2',
+        'road_motorway_casing':           '#009966',
+        'road_motorway_link':             '#00FFB2',
+        'road_motorway_link_casing':      '#009966',
+        'road_trunk_primary':             '#00CC8E',
+        'road_trunk_primary_casing':      '#007755',
+        'road_secondary_tertiary':        '#009977',
+        'road_secondary_tertiary_casing': '#005544',
+        'road_minor':                     '#0D2030',
+        'road_minor_casing':              '#091828',
+        'road_link':                      '#009977',
+        'road_link_casing':               '#005544',
+        'road_service_track':             '#0B1C2C',
+        'road_service_track_casing':      '#071420',
+        'road_path_pedestrian':           '#0B1C2C',
+        'bridge_motorway':                '#00FFB2',
+        'bridge_motorway_casing':         '#009966',
+        'bridge_trunk_primary':           '#00CC8E',
+        'bridge_trunk_primary_casing':    '#007755',
+        'bridge_secondary_tertiary':      '#009977',
+        'bridge_street':                  '#0D2030',
+        'bridge_motorway_link':           '#00FFB2',
+        'bridge_link':                    '#009977',
+        'bridge_service_track':           '#0B1C2C',
+        'bridge_path_pedestrian':         '#0B1C2C',
+        'tunnel_motorway':                '#009966',
+        'tunnel_trunk_primary':           '#007755',
+        'tunnel_secondary_tertiary':      '#005544',
+        'tunnel_minor':                   '#091828',
+        'building':                       '#0D1C30',
+        'road_major_rail':                '#1A3040',
+        'road_transit_rail':              '#1A3040',
+        'bridge_major_rail':              '#1A3040',
+        'bridge_transit_rail':            '#1A3040',
+        'boundary_2':                     '#00FFB2',
+        'boundary_3':                     '#00CC8E',
+      };
 
       for (final layer in layers) {
-        final map = layer as Map<String, dynamic>;
-        final id = map['id'] as String? ?? '';
-        final type = map['type'] as String? ?? '';
+        final map   = layer as Map<String, dynamic>;
+        final id    = map['id']   as String? ?? '';
+        final type  = map['type'] as String? ?? '';
         final paint = Map<String, dynamic>.from(
             map['paint'] as Map<String, dynamic>? ?? {});
 
-        if (idPatches.containsKey(id)) {
-          final color = idPatches[id]!;
+        if (patches.containsKey(id)) {
+          final color = patches[id]!;
           if (type == 'background') {
             paint['background-color'] = color;
           } else if (type == 'fill') {
-            paint['fill-color'] = color;
-            paint['fill-opacity'] = 1.0;
+            paint['fill-color']    = color;
+            paint['fill-opacity']  = 1.0;
           } else if (type == 'line') {
             paint['line-color'] = color;
           }
@@ -268,21 +248,16 @@ class _IssueMapPageState extends State<IssueMapPage> {
     } catch (_) {}
   }
 
-  @override
-  void dispose() {
-    _mapController?.removeListener(_onCameraMove);
-    _ideaController.dispose();
-    super.dispose();
-  }
+  // ── Data ────────────────────────────────────────────────────────────────────
 
   Future<void> _loadIssues() async {
     try {
       final issues = await _getValidatedIssues();
       if (mounted) {
         setState(() {
-          _issues = issues;
+          _issues       = issues;
           _errorMessage = null;
-          _loading = false;
+          _loading      = false;
         });
         await _renderIssuePins();
         await _updateIssueScreenPositions();
@@ -290,12 +265,14 @@ class _IssueMapPageState extends State<IssueMapPage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _loading = false;
+          _loading      = false;
           _errorMessage = e.toString();
         });
       }
     }
   }
+
+  // ── Map callbacks ───────────────────────────────────────────────────────────
 
   void _onMapCreated(MapLibreMapController controller) {
     _mapController = controller;
@@ -306,44 +283,16 @@ class _IssueMapPageState extends State<IssueMapPage> {
     _styleLoaded = true;
     final controller = _mapController;
     if (controller != null) {
-      // Exact layer IDs from the liberty style.
-      // Keep: place names, road names, water labels.
-      // Hide: all POI layers (gas stations, cafes, shops, etc).
-      const keepLayers = {
-        'label_other',
-        'label_village',
-        'label_town',
-        'label_state',
-        'label_city',
-        'label_city_capital',
-        'label_country_1',
-        'label_country_2',
-        'label_country_3',
-        'highway-name-path',
-        'highway-name-minor',
-        'highway-name-major',
-        'highway-shield-non-us',
-        'highway-shield-us-interstate',
-        'road_shield_us',
-        'waterway_line_label',
-        'water_name_point_label',
-        'water_name_line_label',
-        'road_one_way_arrow',
-        'road_one_way_arrow_opposite',
-      };
-
-      // Keep default black colors for readability, just increase sizes
-      // per hierarchy. Poppins only applies to Flutter UI, not map tiles.
       const labelSizes = {
-        'label_country_1': 28.0,
-        'label_country_2': 26.0,
-        'label_country_3': 24.0,
-        'label_state':     20.0,
-        'label_city_capital': 18.0,
-        'label_city':      17.0,
-        'label_town':      15.0,
-        'label_village':   13.0,
-        'label_other':     12.0,
+        'label_country_1':   26.0,
+        'label_country_2':   24.0,
+        'label_country_3':   22.0,
+        'label_state':       18.0,
+        'label_city_capital':16.0,
+        'label_city':        15.0,
+        'label_town':        13.0,
+        'label_village':     11.0,
+        'label_other':       10.0,
       };
 
       for (final entry in labelSizes.entries) {
@@ -351,24 +300,21 @@ class _IssueMapPageState extends State<IssueMapPage> {
           await controller.setLayerProperties(
             entry.key,
             SymbolLayerProperties(
-              textColor: _isDark ? '#FFD60A' : '#FFD60A',
-              textSize: entry.value,
-              textHaloColor: _isDark ? '#0D1B2A' : '#1A3A5C',
-              textHaloWidth: 2.5,
-              textHaloBlur: 0,
+              textColor:      '#00FFB2',
+              textSize:       entry.value,
+              textHaloColor:  '#080C14',
+              textHaloWidth:  2.5,
+              textHaloBlur:   0,
             ),
           );
         } catch (_) {}
       }
 
-      // Hide all symbol layers not in the keep list.
       const hideLayers = [
         'poi_r20', 'poi_r7', 'poi_r1', 'poi_transit', 'airport',
       ];
       for (final layer in hideLayers) {
-        try {
-          await controller.setLayerVisibility(layer, false);
-        } catch (_) {}
+        try { await controller.setLayerVisibility(layer, false); } catch (_) {}
       }
     }
     await _moveCameraToUserLocation();
@@ -378,7 +324,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   Future<void> _updateUserScreenPosition() async {
     final controller = _mapController;
-    final pos = _userPosition;
+    final pos        = _userPosition;
     if (controller == null || pos == null) return;
     final point = await controller.toScreenLocation(
       LatLng(pos.latitude, pos.longitude),
@@ -409,7 +355,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
           permission == LocationPermission.deniedForever) return;
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
       );
       if (!mounted) return;
       setState(() => _userPosition = position);
@@ -420,7 +367,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
   Future<void> _moveCameraToUserLocation({bool force = false}) async {
     if (!force && _cameraMovedToUser) return;
     final controller = _mapController;
-    final pos = _userPosition;
+    final pos        = _userPosition;
     if (!_styleLoaded || controller == null || pos == null) return;
 
     final userLatLng = LatLng(pos.latitude, pos.longitude);
@@ -458,13 +405,11 @@ class _IssueMapPageState extends State<IssueMapPage> {
     final positions = <String, Offset>{};
     for (final issue in _issues) {
       try {
-        final screenPoint =
-            await controller.toScreenLocation(LatLng(issue.lat, issue.lng));
+        final screenPoint = await controller
+            .toScreenLocation(LatLng(issue.lat, issue.lng));
         positions[issue.issueId] =
             Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
-      } catch (_) {
-        // Ignore off-screen conversion failures.
-      }
+      } catch (_) {}
     }
 
     if (!mounted) return;
@@ -487,22 +432,24 @@ class _IssueMapPageState extends State<IssueMapPage> {
     if (position == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location not available yet. Please allow location access.')),
+        const SnackBar(
+            content: Text('Location not available. Allow location access.')),
       );
       return;
     }
 
     final index = _issues.length + 1;
-    final now = DateTime.now();
+    final now   = DateTime.now();
 
     setState(() => _generatingDemoIssue = true);
     try {
       await _submitIssueUseCase(
         SubmitIssueInput(
-          reporterId: 'demo-seed-user',
-          title: 'Generated Problem #$index',
-          description:
-              'Auto-generated problem pin from the current user location at ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}.',
+          reporterId:  'demo-seed-user',
+          title:       'Generated Problem #$index',
+          description: 'Auto-generated pin at '
+              '${now.hour.toString().padLeft(2, '0')}:'
+              '${now.minute.toString().padLeft(2, '0')}.',
           lat: position.latitude,
           lng: position.longitude,
         ),
@@ -511,12 +458,12 @@ class _IssueMapPageState extends State<IssueMapPage> {
       if (!mounted) return;
       await _loadIssues();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Problem generated and pinned on your location.')),
+        const SnackBar(content: Text('Problem pinned on map.')),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to generate demo problem: $e')),
+        SnackBar(content: Text('Failed: $e')),
       );
     } finally {
       if (mounted) setState(() => _generatingDemoIssue = false);
@@ -536,7 +483,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   void _onPinTapped(Issue issue) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => IssueDetailPage(issueId: issue.issueId)),
+      MaterialPageRoute(
+          builder: (_) => IssueDetailPage(issueId: issue.issueId)),
     );
   }
 
@@ -551,7 +499,9 @@ class _IssueMapPageState extends State<IssueMapPage> {
     final studentId = widget.studentId;
     if (studentId == null || studentId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Student session not found. Please sign in again.')),
+        const SnackBar(
+            content:
+                Text('Student session not found. Please sign in again.')),
       );
       return;
     }
@@ -559,42 +509,30 @@ class _IssueMapPageState extends State<IssueMapPage> {
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => IdeaMatchPage(
-          studentId: studentId,
+          studentId:       studentId,
           initialIdeaText: idea,
-          autoRun: true,
+          autoRun:         true,
         ),
       ),
     );
     if (mounted) setState(() => _matchingIdea = false);
   }
 
-  // ---------------------------------------------------------------------------
-  // Theme helpers — all overlay colors derived from these so they stay in sync.
-  // ---------------------------------------------------------------------------
+  void _toggleSidebar() {
+    setState(() => _sidebarOpen = !_sidebarOpen);
+    if (_sidebarOpen) {
+      _sidebarAnim.forward();
+    } else {
+      _sidebarAnim.reverse();
+    }
+  }
 
-  /// Panel background: dark charcoal in dark mode, clean white in light mode.
-  Color get _panelBg => _isDark
-      ? const Color(0xFF1C1C1E).withValues(alpha: 0.78)
-      : const Color(0xFF1A3A5C).withValues(alpha: 0.88);
-
-  /// Text color on panels.
-  Color get _textColor =>
-      _isDark ? const Color(0xFFF0F0F0) : const Color(0xFFF0F0F0);
-
-  /// Subtle text / hint color.
-  Color get _subtleText =>
-      _isDark ? const Color(0xFF9E9E9E) : const Color(0xFFB0C4D8);
-
-  /// Card background inside the bottom sheet.
-  Color get _cardBg => _isDark
-      ? const Color(0xFF242424).withValues(alpha: 0.95)
-      : const Color(0xFF1E3F60).withValues(alpha: 0.95);
-
-  static const _yellow = Color(0xFFFFD60A);
+  // ── Build ───────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _darkBg,
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: Size.zero,
@@ -602,143 +540,119 @@ class _IssueMapPageState extends State<IssueMapPage> {
       ),
       body: Stack(
         children: [
-          // ── Map (liberty style — 3D buildings always on) ──────────────────
+          // ── Base map ───────────────────────────────────────────────────────
           MapLibreMap(
             styleString: _patchedStyle ?? _mapStyleUrl,
             initialCameraPosition: const CameraPosition(
               target: _defaultCenter,
-              zoom: _defaultZoom,
-              tilt: 60,
+              zoom:   _defaultZoom,
+              tilt:   60,
             ),
-            cameraTargetBounds: CameraTargetBounds(_philippinesBounds),
-            minMaxZoomPreference: const MinMaxZoomPreference(5.5, 20.0),
-            onMapCreated: _onMapCreated,
+            cameraTargetBounds:
+                CameraTargetBounds(_philippinesBounds),
+            minMaxZoomPreference:
+                const MinMaxZoomPreference(5.5, 20.0),
+            onMapCreated:          _onMapCreated,
             onStyleLoadedCallback: _onStyleLoaded,
-            onMapClick: _onMapTap,
-            compassEnabled: false,
-            myLocationEnabled: false,
+            onMapClick:            _onMapTap,
+            compassEnabled:        false,
+            myLocationEnabled:     false,
             attributionButtonMargins: const Point(-100, -100),
-            logoViewMargins: const Point(-100, -100),
+            logoViewMargins:          const Point(-100, -100),
           ),
 
-          // ── Dark mode tint removed — map is already dark themed ─────────
+          // ── Scanline overlay ───────────────────────────────────────────────
+          IgnorePointer(
+            child: CustomPaint(
+              painter: _ScanlinePainter(_scanAnim),
+              child: const SizedBox.expand(),
+            ),
+          ),
 
-          // ── You're Here marker ────────────────────────────────────────────
+          // ── User location blip ─────────────────────────────────────────────
           if (_userScreenPosition != null)
             Positioned(
-              left: _userScreenPosition!.dx - 40,
-              top: _userScreenPosition!.dy - 72,
-              child: const _YouAreHereMarker(),
+              left: _userScreenPosition!.dx - 32,
+              top:  _userScreenPosition!.dy - 32,
+              child: const _UserBlip(),
             ),
 
-          // ── Issue pin overlays (title inside each pinpoint) ──────────────
+          // ── Issue pin overlays ─────────────────────────────────────────────
           for (final issue in _issues)
             if (_issueScreenPositions[issue.issueId] != null)
               Positioned(
-                left: _issueScreenPositions[issue.issueId]!.dx - 58,
-                top: _issueScreenPositions[issue.issueId]!.dy - 74,
+                left: _issueScreenPositions[issue.issueId]!.dx - 10,
+                top:  _issueScreenPositions[issue.issueId]!.dy - 10,
                 child: GestureDetector(
                   onTap: () => _onPinTapped(issue),
-                  child: _IssuePinMarker(title: issue.title),
+                  child: const _RadarBlip(),
                 ),
               ),
 
-          // ── Floating header ───────────────────────────────────────────────
+          // ── Top terminal bar ───────────────────────────────────────────────
           Positioned(
-            top: 0,
-            left: 0,
+            top:   0,
+            left:  0,
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: _panelBg,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: _yellow.withValues(alpha: 0.45),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          if (Navigator.of(context).canPop()) ...[
-                            _HeaderBtn(
-                              icon: Icons.arrow_back_ios_rounded,
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                            const SizedBox(width: 4),
-                          ],
-                          const Icon(Icons.map_rounded,
-                              color: _yellow, size: 17),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Community Problems Map',
-                              style: GoogleFonts.poppins(
-                                color: _textColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          _HeaderBtn(
-                            icon: Icons.my_location_rounded,
-                            onPressed: () async {
-                              await _resolveCurrentLocation();
-                              await _moveCameraToUserLocation(force: true);
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          _HeaderBtn(
-                            icon: _isDark
-                                ? Icons.light_mode_rounded
-                                : Icons.dark_mode_rounded,
-                            onPressed: AppTheme.of(context).toggleTheme,
-                          ),
-                          const SizedBox(width: 8),
-                          _HeaderBtn(
-                            icon: Icons.refresh_rounded,
-                            onPressed: () => setState(() {
-                              _loading = true;
-                              _errorMessage = null;
-                              _loadIssues();
-                            }),
-                          ),
-                          const SizedBox(width: 8),
-                          _HeaderBtn(
-                            icon: Icons.add_location_alt_rounded,
-                            onPressed:
-                                _generatingDemoIssue ? null : _generateProblemAtUserLocation,
-                          ),
-                        ],
-                      ),
-                    ),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: _TerminalTopBar(
+                  issueCount:       _issues.length,
+                  isDark:           _isDark,
+                  sidebarOpen:      _sidebarOpen,
+                  onToggleSidebar:  _toggleSidebar,
+                  onLocate: () async {
+                    await _resolveCurrentLocation();
+                    await _moveCameraToUserLocation(force: true);
+                  },
+                  onRefresh: () => setState(() {
+                    _loading      = true;
+                    _errorMessage = null;
+                    _loadIssues();
+                  }),
+                  onAddPin: _generatingDemoIssue
+                      ? null
+                      : _generateProblemAtUserLocation,
+                  onBack: Navigator.of(context).canPop()
+                      ? () => Navigator.of(context).pop()
+                      : null,
+                ),
+              ),
+            ),
+          ),
+
+          // ── Left sidebar ───────────────────────────────────────────────────
+          if (!_loading)
+            Positioned(
+              top:    0,
+              bottom: 0,
+              left:   0,
+              child: SafeArea(
+                child: AnimatedBuilder(
+                  animation: _sidebarSlide,
+                  builder: (context, child) {
+                    const w = 280.0;
+                    final dx = -w * (1 - _sidebarSlide.value);
+                    return Transform.translate(
+                      offset: Offset(dx, 0),
+                      child: child,
+                    );
+                  },
+                  child: _IssueSidebar(
+                    issues:    _issues,
+                    onTap:     _onPinTapped,
+                    onClose:   _toggleSidebar,
                   ),
                 ),
               ),
             ),
-          ),
 
-          // ── Loading overlay ───────────────────────────────────────────────
-          if (_loading)
-            Container(
-              color: Colors.black26,
-              child: Center(
-                child: CircularProgressIndicator(color: _yellow),
-              ),
-            ),
-
-          // ── Issue count badge ─────────────────────────────────────────────
+          // ── Compass ────────────────────────────────────────────────────────
           if (!_loading)
             Positioned(
-              bottom: 16,
-              right: 16,
+              bottom: widget.showIdeaDock ? 96 : 24,
+              right:  16,
               child: _MapCompass(
                 bearing: _bearing,
                 onTap: () => _mapController?.animateCamera(
@@ -746,7 +660,8 @@ class _IssueMapPageState extends State<IssueMapPage> {
                     CameraPosition(
                       target: _mapController?.cameraPosition?.target ??
                           _defaultCenter,
-                      zoom: _mapController?.cameraPosition?.zoom ?? _defaultZoom,
+                      zoom: _mapController?.cameraPosition?.zoom ??
+                          _defaultZoom,
                       tilt: _mapController?.cameraPosition?.tilt ?? 60,
                       bearing: 0,
                     ),
@@ -755,139 +670,47 @@ class _IssueMapPageState extends State<IssueMapPage> {
               ),
             ),
 
-          // ── Issue count badge ─────────────────────────────────────────────
-          if (!_loading)
-            Positioned(
-              bottom: 16,
-              left: 16,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _panelBg,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                          color: _yellow.withValues(alpha: 0.45)),
+          // ── Loading overlay ────────────────────────────────────────────────
+          if (_loading)
+            Container(
+              color: _darkBg.withValues(alpha: 0.85),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width:  48,
+                      height: 48,
+                      child: CircularProgressIndicator(
+                        color:       _cyberGreen,
+                        strokeWidth: 1.5,
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.pin_drop,
-                            size: 16, color: _yellow),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${_issues.length} validated issues',
-                          style: GoogleFonts.poppins(
-                            color: _textColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    Text(
+                      'LOADING CIVIC DATA...',
+                      style: GoogleFonts.robotoMono(
+                        color:     _cyberGreen,
+                        fontSize:  11,
+                        letterSpacing: 2.4,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
 
-          // ── Issue list sheet ──────────────────────────────────────────────
-          if (!_loading && _issues.isNotEmpty)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _IssueListSheet(
-                issues: _issues,
-                onTap: _onPinTapped,
-                panelBg: _panelBg,
-                cardBg: _cardBg,
-                textColor: _textColor,
-                subtleText: _subtleText,
-              ),
-            ),
-
-          // ── Idea dock ─────────────────────────────────────────────────────
+          // ── Idea dock ──────────────────────────────────────────────────────
           if (widget.showIdeaDock)
             Positioned(
-              left: 16,
-              right: 16,
-              bottom: _issues.isNotEmpty ? 120 : 16,
+              left:   16,
+              right:  16,
+              bottom: 16,
               child: SafeArea(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: _panelBg,
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: _yellow.withValues(alpha: 0.4),
-                          width: 1.1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _yellow.withValues(alpha: 0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 14),
-                          const Icon(Icons.search, color: _yellow),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _ideaController,
-                              textInputAction: TextInputAction.search,
-                              onSubmitted: (_) => _submitIdea(),
-                              style: GoogleFonts.poppins(
-                                color: _textColor,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Match your ideas',
-                                hintStyle: GoogleFonts.poppins(
-                                  color: _subtleText,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                border: InputBorder.none,
-                                filled: false,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: IconButton.filled(
-                              style: IconButton.styleFrom(
-                                backgroundColor: _yellow,
-                                foregroundColor: const Color(0xFF1C1C1E),
-                              ),
-                              onPressed: _matchingIdea ? null : _submitIdea,
-                              icon: _matchingIdea
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFF1C1C1E),
-                                      ),
-                                    )
-                                  : const Icon(Icons.arrow_upward_rounded),
-                              tooltip: 'Match idea',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                child: _IdeaDock(
+                  controller:  _ideaController,
+                  isMatching:  _matchingIdea,
+                  onSubmit:    _submitIdea,
                 ),
               ),
             ),
@@ -897,45 +720,178 @@ class _IssueMapPageState extends State<IssueMapPage> {
   }
 }
 
-/// Small icon button used in the floating header.
-class _HeaderBtn extends StatelessWidget {
-  const _HeaderBtn({required this.icon, this.onPressed});
-  final IconData icon;
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Horizontal scanline grid drawn over the entire screen.
+class _ScanlinePainter extends CustomPainter {
+  _ScanlinePainter(this.animation) : super(repaint: animation);
+  final Animation<double> animation;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF00FFB2).withValues(alpha: 0.028)
+      ..strokeWidth = 1;
+
+    const spacing = 4.0;
+    final rows = (size.height / spacing).ceil();
+    for (var i = 0; i < rows; i++) {
+      final y = i * spacing;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    // Animated sweep line
+    final sweepY = size.height * animation.value;
+    canvas.drawLine(
+      Offset(0, sweepY),
+      Offset(size.width, sweepY),
+      Paint()
+        ..color = const Color(0xFF00FFB2).withValues(alpha: 0.12)
+        ..strokeWidth = 1.5,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ScanlinePainter old) => true;
+}
+
+/// Terminal-style top navigation bar.
+class _TerminalTopBar extends StatelessWidget {
+  const _TerminalTopBar({
+    required this.issueCount,
+    required this.isDark,
+    required this.sidebarOpen,
+    required this.onToggleSidebar,
+    required this.onLocate,
+    required this.onRefresh,
+    this.onAddPin,
+    this.onBack,
+  });
+
+  final int      issueCount;
+  final bool     isDark;
+  final bool     sidebarOpen;
+  final VoidCallback  onToggleSidebar;
+  final VoidCallback  onLocate;
+  final VoidCallback  onRefresh;
+  final VoidCallback? onAddPin;
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color:        _darkPanel.withValues(alpha: 0.88),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: _cyberGreen.withValues(alpha: 0.30),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Back
+              if (onBack != null) ...[
+                _TBtn(
+                    icon: Icons.arrow_back_ios_rounded,
+                    onPressed: onBack),
+                const SizedBox(width: 4),
+              ],
+
+              // Sidebar toggle
+              _TBtn(
+                icon: sidebarOpen
+                    ? Icons.menu_open_rounded
+                    : Icons.menu_rounded,
+                onPressed: onToggleSidebar,
+              ),
+              const SizedBox(width: 10),
+
+              // Title
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'ALITAPTAP // CIVIC-INTEL',
+                      style: GoogleFonts.robotoMono(
+                        color:         _cyberGreen,
+                        fontSize:      10,
+                        fontWeight:    FontWeight.w700,
+                        letterSpacing: 1.8,
+                      ),
+                    ),
+                    Text(
+                      '${issueCount.toString().padLeft(4, '0')} ISSUES LOADED',
+                      style: GoogleFonts.robotoMono(
+                        color:         _textMuted,
+                        fontSize:      8,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Controls
+              _TBtn(icon: Icons.my_location_rounded,  onPressed: onLocate),
+              const SizedBox(width: 8),
+              _TBtn(icon: Icons.refresh_rounded,       onPressed: onRefresh),
+              const SizedBox(width: 8),
+              _TBtn(
+                  icon: Icons.add_location_alt_rounded,
+                  onPressed: onAddPin),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small icon button used in the terminal top bar.
+class _TBtn extends StatelessWidget {
+  const _TBtn({required this.icon, this.onPressed});
+  final IconData     icon;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onPressed,
-      child: Icon(icon, color: const Color(0xFFFFD60A), size: 18),
+      child: Icon(
+        icon,
+        color: onPressed == null
+            ? _textMuted
+            : _cyberGreen,
+        size: 18,
+      ),
     );
   }
 }
 
-/// Glowing yellow "You're here" location pin overlay with pulse animation.
-class _YouAreHereMarker extends StatefulWidget {
-  const _YouAreHereMarker();
+/// Glowing user location blip (cyan ripple).
+class _UserBlip extends StatefulWidget {
+  const _UserBlip();
 
   @override
-  State<_YouAreHereMarker> createState() => _YouAreHereMarkerState();
+  State<_UserBlip> createState() => _UserBlipState();
 }
 
-class _YouAreHereMarkerState extends State<_YouAreHereMarker>
+class _UserBlipState extends State<_UserBlip>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _anim;
-  late final Animation<double> _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat(reverse: true);
-    _pulse = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _anim, curve: Curves.easeInOut),
-    );
-  }
+  late final AnimationController _anim = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  )..repeat();
 
   @override
   void dispose() {
@@ -945,83 +901,134 @@ class _YouAreHereMarkerState extends State<_YouAreHereMarker>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 80,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E).withValues(alpha: 0.88),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: const Color(0xFFFFD60A).withValues(alpha: 0.65)),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  spreadRadius: 1,
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final t = _anim.value;
+        return SizedBox(
+          width:  64,
+          height: 64,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Pulse ring
+              Container(
+                width:  64 * t,
+                height: 64 * t,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _cyberGreen.withValues(alpha: 0.5 * (1 - t)),
+                    width: 1.5,
+                  ),
                 ),
-              ],
-            ),
-            child: Text(
-              "You're here",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                color: const Color(0xFFFFD60A),
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
               ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          AnimatedBuilder(
-            animation: _pulse,
-            builder: (_, __) => Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 36 * _pulse.value,
-                  height: 36 * _pulse.value,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFFFD60A)
-                        .withValues(alpha: 0.22 * _pulse.value),
-                  ),
+              // Core dot
+              Container(
+                width:  14,
+                height: 14,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _cyberGreen,
+                  boxShadow: [
+                    BoxShadow(
+                      color:       _cyberGreen.withValues(alpha: 0.7),
+                      blurRadius:  10,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
-                Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFFFD60A),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFFD60A).withValues(alpha: 0.65),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.location_on,
-                      size: 12, color: Color(0xFF1C1C1E)),
+              ),
+              // Inner dot
+              Container(
+                width:  6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _darkBg,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-/// Small compass rose that rotates with the map bearing.
-/// Tapping it snaps the map back to north.
+/// Radar blip for issue pins — small red glowing dot with pulse.
+class _RadarBlip extends StatefulWidget {
+  const _RadarBlip();
+
+  @override
+  State<_RadarBlip> createState() => _RadarBlipState();
+}
+
+class _RadarBlipState extends State<_RadarBlip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _anim = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final t = _anim.value;
+        return SizedBox(
+          width:  32,
+          height: 32,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Pulse ring
+              Container(
+                width:  32 * t,
+                height: 32 * t,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _cyberRed.withValues(alpha: 0.55 * (1 - t)),
+                    width: 1,
+                  ),
+                ),
+              ),
+              // Core
+              Container(
+                width:  10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _cyberRed,
+                  boxShadow: [
+                    BoxShadow(
+                      color:       _cyberRed.withValues(alpha: 0.6),
+                      blurRadius:  8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Compass rose that rotates with map bearing, snaps north on tap.
 class _MapCompass extends StatelessWidget {
   const _MapCompass({required this.bearing, required this.onTap});
-  final double bearing;
+  final double       bearing;
   final VoidCallback onTap;
 
   @override
@@ -1029,77 +1036,27 @@ class _MapCompass extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 52,
-        height: 52,
+        width:  48,
+        height: 48,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF1C1C1E),
+          color: _darkPanel,
           border: Border.all(
-            color: const Color(0xFFFFD60A),
-            width: 1.8,
+            color: _cyberGreen.withValues(alpha: 0.4),
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFFD60A).withValues(alpha: 0.35),
-              blurRadius: 14,
-              spreadRadius: 2,
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+              color:       _cyberGreen.withValues(alpha: 0.20),
+              blurRadius:  12,
+              spreadRadius: 1,
             ),
           ],
         ),
         child: Transform.rotate(
-          angle: -bearing * (3.141592653589793 / 180),
+          angle: -bearing * (pi / 180),
           child: CustomPaint(painter: _CompassPainter()),
         ),
-      ),
-    );
-  }
-}
-
-class _IssuePinMarker extends StatelessWidget {
-  const _IssuePinMarker({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 116,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E).withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFE53935).withValues(alpha: 0.85),
-              ),
-            ),
-            child: Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
-          const Icon(
-            Icons.location_on_rounded,
-            size: 28,
-            color: Color(0xFFE53935),
-          ),
-        ],
       ),
     );
   }
@@ -1108,166 +1065,396 @@ class _IssuePinMarker extends StatelessWidget {
 class _CompassPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
+    final cx = size.width  / 2;
     final cy = size.height / 2;
-    final r = size.width * 0.32;
+    final r  = size.width  * 0.30;
 
-    // North — bright yellow
-    final northPaint = Paint()..color = const Color(0xFFFFD60A);
-    final northPath = Path()
-      ..moveTo(cx, cy - r * 1.5)
-      ..lineTo(cx - r * 0.55, cy + r * 0.2)
-      ..lineTo(cx + r * 0.55, cy + r * 0.2)
-      ..close();
-    canvas.drawPath(northPath, northPaint);
+    // North — cyber green
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx, cy - r * 1.5)
+        ..lineTo(cx - r * 0.5, cy + r * 0.25)
+        ..lineTo(cx + r * 0.5, cy + r * 0.25)
+        ..close(),
+      Paint()..color = _cyberGreen,
+    );
 
-    // South — white
-    final southPaint = Paint()..color = Colors.white.withValues(alpha: 0.85);
-    final southPath = Path()
-      ..moveTo(cx, cy + r * 1.5)
-      ..lineTo(cx - r * 0.55, cy - r * 0.2)
-      ..lineTo(cx + r * 0.55, cy - r * 0.2)
-      ..close();
-    canvas.drawPath(southPath, southPaint);
+    // South — muted
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx, cy + r * 1.5)
+        ..lineTo(cx - r * 0.5, cy - r * 0.25)
+        ..lineTo(cx + r * 0.5, cy - r * 0.25)
+        ..close(),
+      Paint()..color = _textMuted,
+    );
 
-    // Center dot
+    // Center
     canvas.drawCircle(
       Offset(cx, cy),
-      r * 0.3,
-      Paint()..color = Colors.white,
+      r * 0.28,
+      Paint()..color = _darkPanel,
     );
 
     // N label
     final tp = TextPainter(
-      text: const TextSpan(
-        text: 'N',
-        style: TextStyle(
-          color: Color(0xFF1C1C1E),
-          fontSize: 9,
+      text: TextSpan(
+        text:  'N',
+        style: GoogleFonts.robotoMono(
+          color:      _darkBg,
+          fontSize:   8,
           fontWeight: FontWeight.w900,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(
-      canvas,
-      Offset(cx - tp.width / 2, cy - r * 1.5 + 2),
-    );
+    tp.paint(canvas, Offset(cx - tp.width / 2, cy - r * 1.5 + 2));
   }
 
   @override
   bool shouldRepaint(_CompassPainter old) => false;
 }
 
-/// Draggable bottom sheet listing issues for quick browsing.
-/// Colors are passed in from [_IssueMapPageState] so they adapt to theme mode.
-class _IssueListSheet extends StatelessWidget {
-  const _IssueListSheet({
+/// Left collapsible sidebar listing all validated issues.
+class _IssueSidebar extends StatelessWidget {
+  const _IssueSidebar({
     required this.issues,
     required this.onTap,
-    required this.panelBg,
-    required this.cardBg,
-    required this.textColor,
-    required this.subtleText,
+    required this.onClose,
   });
 
-  final List<Issue> issues;
+  final List<Issue>        issues;
   final ValueChanged<Issue> onTap;
-  final Color panelBg;
-  final Color cardBg;
-  final Color textColor;
-  final Color subtleText;
+  final VoidCallback        onClose;
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.15,
-      minChildSize: 0.08,
-      maxChildSize: 0.55,
-      builder: (context, scrollController) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: panelBg,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border.all(
-                    color: const Color(0xFFFFD60A).withValues(alpha: 0.25)),
+    return Container(
+      width: 280,
+      decoration: BoxDecoration(
+        color: _darkPanel.withValues(alpha: 0.94),
+        border: Border(
+          right: BorderSide(
+            color: _cyberGreen.withValues(alpha: 0.22),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 52, 16, 12),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: _cyberGreen.withValues(alpha: 0.15),
+                  width: 1,
+                ),
               ),
-              child: ListView.builder(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: issues.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return Column(
-                      children: [
-                        const SizedBox(height: 8),
-                        Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFD60A)
-                                .withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Reported Issues',
-                          style: GoogleFonts.poppins(
-                            color: textColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    );
-                  }
-                  final issue = issues[index - 1];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                          color: const Color(0xFFFFD60A)
-                              .withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.radar, color: _cyberGreen, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'ISSUE DATASETS',
+                    style: GoogleFonts.robotoMono(
+                      color:         _cyberGreen,
+                      fontSize:      11,
+                      fontWeight:    FontWeight.w700,
+                      letterSpacing: 1.6,
                     ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor:
-                            const Color(0xFFFFD60A).withValues(alpha: 0.18),
-                        child: const Icon(Icons.warning_amber_rounded,
-                            color: Color(0xFFFFD60A)),
-                      ),
-                      title: Text(issue.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                              color: textColor,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 13)),
-                      subtitle: Text(issue.description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                              color: subtleText, fontSize: 11)),
-                      trailing: const Icon(Icons.chevron_right,
-                          color: Color(0xFFFFD60A)),
-                      onTap: () => onTap(issue),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: onClose,
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: _textMuted,
+                    size: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Issue count chip
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color:        _cyberGreen.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _cyberGreen.withValues(alpha: 0.30),
                     ),
-                  );
-                },
+                  ),
+                  child: Text(
+                    '${issues.length} ACTIVE',
+                    style: GoogleFonts.robotoMono(
+                      color:         _cyberGreen,
+                      fontSize:      9,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // List
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 4),
+              itemCount: issues.length,
+              itemBuilder: (context, i) {
+                final issue = issues[i];
+                return _SidebarIssueRow(
+                  issue:  issue,
+                  index:  i,
+                  onTap:  () => onTap(issue),
+                );
+              },
+            ),
+          ),
+
+          // Footer
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: _cyberGreen.withValues(alpha: 0.12),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Text(
+              'ALITAPTAP CIVIC-INTEL v2.0',
+              style: GoogleFonts.robotoMono(
+                color:         _textMuted,
+                fontSize:      8,
+                letterSpacing: 1.2,
               ),
             ),
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+}
+
+class _SidebarIssueRow extends StatefulWidget {
+  const _SidebarIssueRow({
+    required this.issue,
+    required this.index,
+    required this.onTap,
+  });
+
+  final Issue        issue;
+  final int          index;
+  final VoidCallback onTap;
+
+  @override
+  State<_SidebarIssueRow> createState() => _SidebarIssueRowState();
+}
+
+class _SidebarIssueRowState extends State<_SidebarIssueRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => setState(() => _hovered = true),
+      onTapUp:   (_) => setState(() => _hovered = false),
+      onTapCancel: ()  => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration:     const Duration(milliseconds: 120),
+        margin:       const EdgeInsets.only(bottom: 6),
+        padding:      const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: _hovered
+              ? _cyberGreen.withValues(alpha: 0.08)
+              : _darkBg.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _hovered
+                ? _cyberGreen.withValues(alpha: 0.45)
+                : _gridLine,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Index badge
+            Container(
+              width:  28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color:        _cyberRed.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                    color: _cyberRed.withValues(alpha: 0.35)),
+              ),
+              child: Text(
+                '${(widget.index + 1).toString().padLeft(2, '0')}',
+                style: GoogleFonts.robotoMono(
+                  color:      _cyberRed,
+                  fontSize:   9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.issue.title,
+                    maxLines:  1,
+                    overflow:  TextOverflow.ellipsis,
+                    style: GoogleFonts.robotoMono(
+                      color:      _textPrimary,
+                      fontSize:   10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.issue.description,
+                    maxLines:  2,
+                    overflow:  TextOverflow.ellipsis,
+                    style: GoogleFonts.robotoMono(
+                      color:    _textMuted,
+                      fontSize: 9,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: _hovered ? _cyberGreen : _textMuted,
+              size:  14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Cyber-styled idea matching input dock.
+class _IdeaDock extends StatelessWidget {
+  const _IdeaDock({
+    required this.controller,
+    required this.isMatching,
+    required this.onSubmit,
+  });
+
+  final TextEditingController controller;
+  final bool                  isMatching;
+  final VoidCallback          onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          decoration: BoxDecoration(
+            color:        _darkPanel.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _cyberGreen.withValues(alpha: 0.35),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color:       _cyberGreen.withValues(alpha: 0.08),
+                blurRadius:  20,
+                spreadRadius: 0,
+                offset:      const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 14),
+              Text(
+                '> ',
+                style: GoogleFonts.robotoMono(
+                  color:    _cyberGreen,
+                  fontSize: 14,
+                ),
+              ),
+              Expanded(
+                child: TextField(
+                  controller:      controller,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted:     (_) => onSubmit(),
+                  style: GoogleFonts.robotoMono(
+                    color:    _textPrimary,
+                    fontSize: 13,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'ENTER RESEARCH IDEA...',
+                    hintStyle: GoogleFonts.robotoMono(
+                      color:         _textMuted,
+                      fontSize:      12,
+                      letterSpacing: 0.8,
+                    ),
+                    border:  InputBorder.none,
+                    filled:  false,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: isMatching
+                    ? SizedBox(
+                        width:  20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color:       _cyberGreen,
+                          strokeWidth: 1.5,
+                        ),
+                      )
+                    : GestureDetector(
+                        onTap: onSubmit,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color:        _cyberGreen.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: _cyberGreen.withValues(alpha: 0.45),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward_rounded,
+                            color: _cyberGreen,
+                            size:  16,
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

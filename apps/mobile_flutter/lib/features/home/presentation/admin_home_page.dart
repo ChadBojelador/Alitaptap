@@ -82,7 +82,10 @@ class _AdminHomePageState extends State<AdminHomePage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: Text(
+          'Admin Dashboard',
+          style: theme.textTheme.titleLarge,
+        ),
         centerTitle: true,
         actions: [
           IconButton(
