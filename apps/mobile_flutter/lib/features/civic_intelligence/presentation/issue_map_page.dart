@@ -270,6 +270,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   @override
   void dispose() {
+    _cameraDebounce?.cancel();
     _mapController?.removeListener(_onCameraMove);
     _ideaController.dispose();
     super.dispose();
@@ -389,11 +390,16 @@ class _IssueMapPageState extends State<IssueMapPage> {
     }
   }
 
+  Timer? _cameraDebounce;
+
   void _onCameraMove() {
-    unawaited(_updateUserScreenPosition());
-    // Throttle issue position updates to avoid blocking map gestures.
     final bearing = _mapController?.cameraPosition?.bearing ?? 0.0;
     if (mounted) setState(() => _bearing = bearing);
+    // Debounce position updates to avoid layout thrashing during pan/zoom.
+    _cameraDebounce?.cancel();
+    _cameraDebounce = Timer(const Duration(milliseconds: 150), () {
+      if (mounted) unawaited(_updateUserScreenPosition());
+    });
   }
 
   Future<void> _resolveCurrentLocation() async {
