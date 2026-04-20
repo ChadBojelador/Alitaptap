@@ -19,7 +19,6 @@ import 'issue_detail_page.dart';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const _cyberGreen  = Color(0xFF00FFB2);
-const _cyberGreenD = Color(0xFF00CC8E); // dimmer variant
 const _cyberRed    = Color(0xFFFF2D55);
 const _darkBg      = Color(0xFF0A0E17);
 const _darkPanel   = Color(0xFF0D1320);
@@ -67,13 +66,12 @@ class _IssueMapPageState extends State<IssueMapPage>
   static const _defaultZoom   = 6.0;
   static const _userZoom      = 16.5;
   static final _philippinesBounds = LatLngBounds(
-    southwest: LatLng(4.5,  116.0),
-    northeast: LatLng(21.5, 127.0),
+    southwest: const LatLng(4.5,  116.0),
+    northeast: const LatLng(21.5, 127.0),
   );
 
   final _issueRepository   = ApiIssueRepository();
   final _ideaController    = TextEditingController();
-  final _sidebarKey        = GlobalKey();
 
   late final GetValidatedIssuesUseCase _getValidatedIssues =
       GetValidatedIssuesUseCase(_issueRepository);
@@ -81,7 +79,6 @@ class _IssueMapPageState extends State<IssueMapPage>
       SubmitIssueUseCase(_issueRepository);
 
   List<Issue> _issues      = [];
-  String?     _errorMessage;
   Position?   _userPosition;
 
   bool _loading            = true;
@@ -339,7 +336,9 @@ class _IssueMapPageState extends State<IssueMapPage>
     unawaited(_updateUserScreenPosition());
     unawaited(_updateIssueScreenPositions());
     final bearing = _mapController?.cameraPosition?.bearing ?? 0.0;
-    if (mounted) setState(() => _bearing = bearing);
+    if (mounted) {
+      setState(() => _bearing = bearing);
+    }
   }
 
   Future<void> _resolveCurrentLocation() async {
@@ -457,6 +456,7 @@ class _IssueMapPageState extends State<IssueMapPage>
 
       if (!mounted) return;
       await _loadIssues();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Problem pinned on map.')),
       );
@@ -681,7 +681,7 @@ class _IssueMapPageState extends State<IssueMapPage>
                     SizedBox(
                       width:  48,
                       height: 48,
-                      child: CircularProgressIndicator(
+                      child: const CircularProgressIndicator(
                         color:       _cyberGreen,
                         strokeWidth: 1.5,
                       ),
@@ -1306,7 +1306,7 @@ class _SidebarIssueRowState extends State<_SidebarIssueRow> {
                     color: _cyberRed.withValues(alpha: 0.35)),
               ),
               child: Text(
-                '${(widget.index + 1).toString().padLeft(2, '0')}',
+                (widget.index + 1).toString().padLeft(2, '0'),
                 style: GoogleFonts.robotoMono(
                   color:      _cyberRed,
                   fontSize:   9,
@@ -1424,7 +1424,7 @@ class _IdeaDock extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: isMatching
-                    ? SizedBox(
+                  ? const SizedBox(
                         width:  20,
                         height: 20,
                         child: CircularProgressIndicator(

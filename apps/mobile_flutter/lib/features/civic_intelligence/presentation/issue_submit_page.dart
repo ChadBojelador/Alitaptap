@@ -217,7 +217,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               const SizedBox(height: 24),
 
               // Title field
-              _FieldLabel('Problem Title', textColor),
+              _fieldLabel('Problem Title', textColor),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _titleCtrl,
@@ -234,7 +234,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               const SizedBox(height: 20),
 
               // Description field
-              _FieldLabel('Description', textColor),
+              _fieldLabel('Description', textColor),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descCtrl,
@@ -253,7 +253,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               const SizedBox(height: 24),
 
               // Map picker
-              _FieldLabel('Pin the Location', textColor),
+              _fieldLabel('Pin the Location', textColor),
               const SizedBox(height: 4),
               Text(
                 'Tap the map to mark exactly where the problem is.',
@@ -537,7 +537,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   }
 }
 
-Widget _FieldLabel(String label, Color color) {
+Widget _fieldLabel(String label, Color color) {
   return Text(
     label,
     style: GoogleFonts.poppins(

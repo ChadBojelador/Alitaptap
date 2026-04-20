@@ -4,7 +4,3 @@ linter:
   rules:
     avoid_print: true
     prefer_single_quotes: true
-    # Temporarily disabled to allow CI to pass while addressing remaining analyzer issues
-    unused_local_variable: false
-    unused_field: false
-    unused_import: false
