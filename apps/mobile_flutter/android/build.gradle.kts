@@ -15,8 +15,18 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+// NOTE: evaluationDependsOn(":app") removed — causes provider resolution
+// failure with Firebase plugins on Java 21 + AGP 8.x.
+// See docs/06-bypasses/android-firebase-bypasses.md
+
+// Force compileSdk on all Android library subprojects (e.g. firebase_auth)
+// so their provider has a value when Gradle resolves dependencies.
 subprojects {
-    project.evaluationDependsOn(":app")
+    afterEvaluate {
+        extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)?.apply {
+            compileSdk = 36
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {

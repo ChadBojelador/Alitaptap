@@ -391,7 +391,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
 
   void _onCameraMove() {
     unawaited(_updateUserScreenPosition());
-    unawaited(_updateIssueScreenPositions());
+    // Throttle issue position updates to avoid blocking map gestures.
     final bearing = _mapController?.cameraPosition?.bearing ?? 0.0;
     if (mounted) setState(() => _bearing = bearing);
   }
@@ -421,7 +421,9 @@ class _IssueMapPageState extends State<IssueMapPage> {
     if (!force && _cameraMovedToUser) return;
     final controller = _mapController;
     final pos = _userPosition;
-    if (!_styleLoaded || controller == null || pos == null) return;
+    // Wait for style to load if not ready yet.
+    if (controller == null || pos == null) return;
+    if (!_styleLoaded && !force) return;
 
     final userLatLng = LatLng(pos.latitude, pos.longitude);
 
@@ -690,8 +692,11 @@ class _IssueMapPageState extends State<IssueMapPage> {
                           _HeaderBtn(
                             icon: Icons.my_location_rounded,
                             onPressed: () async {
-                              await _resolveCurrentLocation();
-                              await _moveCameraToUserLocation(force: true);
+                              if (_userPosition != null) {
+                                await _moveCameraToUserLocation(force: true);
+                              } else {
+                                await _resolveCurrentLocation();
+                              }
                             },
                           ),
                           const SizedBox(width: 8),

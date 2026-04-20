@@ -57,11 +57,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDIrowIjEgFyNKSrmPcdWEX-0TP34suTfc',
-    appId: '1:834578953953:android:6f4a058832e492c0e9e9a0',
-    messagingSenderId: '834578953953',
-    projectId: 'alitaptap-500c9',
-    storageBucket: 'alitaptap-500c9.firebasestorage.app',
+    apiKey: 'AIzaSyAZGp8YUZ5gIIwqINiHOkMkesEcnR1LckY',
+    appId: '1:495341256327:android:160c9d60a961bed5368222',
+    messagingSenderId: '495341256327',
+    projectId: 'alitaptap-dev',
+    storageBucket: 'alitaptap-dev.firebasestorage.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
