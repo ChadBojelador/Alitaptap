@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -16,6 +17,22 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     application = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+    # Allow Flutter web (Chrome) to call the API from localhost.
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            'http://localhost',
+            'http://localhost:*',
+            'http://127.0.0.1',
+            'http://127.0.0.1:*',
+        ],
+        allow_origin_regex=r'http://localhost:\d+',
+        allow_credentials=True,
+        allow_methods=['*'],
+        allow_headers=['*'],
+    )
+
     application.include_router(api_router)
     return application
 
