@@ -57,18 +57,14 @@ class IssueMapPage extends StatefulWidget {
   @override
   State<IssueMapPage> createState() => _IssueMapPageState();
 }
-
 class _IssueMapPageState extends State<IssueMapPage>
     with TickerProviderStateMixin {
+
   static const _mapStyleUrl =
       'https://tiles.openfreemap.org/styles/liberty';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom   = 6.0;
   static const _userZoom      = 16.5;
-  static final _philippinesBounds = LatLngBounds(
-    southwest: const LatLng(4.5,  116.0),
-    northeast: const LatLng(21.5, 127.0),
-  );
 
   final _issueRepository   = ApiIssueRepository();
   final _ideaController    = TextEditingController();
@@ -87,6 +83,9 @@ class _IssueMapPageState extends State<IssueMapPage>
   bool _matchingIdea       = false;
   bool _generatingDemoIssue= false;
   bool _sidebarOpen        = false;
+
+  // ✅🔥 THIS IS THE FIX (missing variable)
+  String? _errorMessage;
 
   MapLibreMapController? _mapController;
   Circle? _userLocationCircle;
