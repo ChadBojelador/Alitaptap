@@ -11,7 +11,10 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 import '../../../core/models/issue.dart';
 import '../../../services/api_service.dart';
 import '../../neural_mapper/presentation/idea_match_page.dart';
+import '../../../app/app.dart' show AppTheme;
 import 'issue_detail_page.dart';
+
+
 
 /// Full-screen map page showing validated community issues as pins.
 ///
@@ -73,7 +76,10 @@ class _IssueMapPageState extends State<IssueMapPage> {
   double _bearing = 0.0;
   String? _patchedStyle;
 
-  bool get _isDark => widget.themeMode == ThemeMode.dark;
+  bool _isDarkMode = true; // default, updated in didChangeDependencies
+  bool get _isDark => _isDarkMode;
+
+  ThemeMode? _lastThemeMode;
 
   @override
   void initState() {
@@ -81,7 +87,6 @@ class _IssueMapPageState extends State<IssueMapPage> {
     if (widget.initialIdeaText != null) {
       _ideaController.text = widget.initialIdeaText!;
     }
-    _loadPatchedStyle();
     _resolveCurrentLocation();
     _loadIssues();
     if (widget.autoRun && (widget.initialIdeaText?.length ?? 0) >= 5) {
@@ -89,64 +94,168 @@ class _IssueMapPageState extends State<IssueMapPage> {
     }
   }
 
-  /// Fetches the liberty style JSON and patches layer colors to match
-  /// the Alitaptap yellow/dark theme while keeping realistic map details.
-  Future<void> _loadPatchedStyle() async {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentMode = AppTheme.of(context).themeMode;
+    _isDarkMode = currentMode == ThemeMode.dark;
+    if (_lastThemeMode != currentMode) {
+      _styleLoaded = false;
+      _patchedStyle = null;
+      _loadPatchedStyle(dark: _isDarkMode);
+      _lastThemeMode = currentMode;
+    }
+  }
+
+  /// Fetches the liberty style JSON and patches layer colors.
+  /// Dark mode: deep navy + yellow roads + electric blue water.
+  /// Light mode: warm parchment + yellow roads + sky blue water.
+  Future<void> _loadPatchedStyle({required bool dark}) async {
     try {
       final res = await http.get(Uri.parse(_mapStyleUrl));
       if (res.statusCode != 200) return;
       final style = jsonDecode(res.body) as Map<String, dynamic>;
       final layers = style['layers'] as List<dynamic>;
 
-      // Color map: layer id substring → fill/line/background color override.
-      // We keep natural greens, realistic water blues, and warm road tones
-      // while adding subtle yellow highlights on key features.
-      final colorPatches = <String, String>{
-        'background':        '#F5EFD6', // warm parchment land
-        'landcover-grass':   '#C8DBA0', // natural green
-        'landcover-wood':    '#A8C878',
-        'landcover-scrub':   '#BFCF90',
-        'landuse-residential': '#EDE8D0',
-        'landuse-commercial':  '#E8DFC0',
-        'landuse-industrial':  '#D8CFA8',
-        'water':             '#7AB8D4', // realistic water blue
-        'waterway':          '#7AB8D4',
-        'road-motorway':     '#FFD60A', // yellow primary roads
-        'road-trunk':        '#FFD60A',
-        'road-primary':      '#FFDF4D',
-        'road-secondary':    '#F5C842',
-        'road-tertiary':     '#E8E0B0',
-        'road-minor':        '#EDE8D0',
-        'road-path':         '#D4C890',
-        'building':          '#D4C8A0', // warm sandstone buildings
-        'building-top':      '#C8BC94',
-      };
+      final idPatches = dark
+          ? <String, String>{
+              // Dark: deep navy land
+              'background':                     '#0D1B2A',
+              'park':                           '#0F2A1E',
+              'landuse_residential':            '#111D2E',
+              'landcover_wood':                 '#0A2218',
+              'landcover_grass':                '#0D2318',
+              'landcover_wetland':              '#0A1F2A',
+              'landcover_sand':                 '#1A2A1A',
+              'landcover_ice':                  '#1A2A3A',
+              'landuse_cemetery':               '#0F1F2F',
+              'landuse_hospital':               '#0F1F2F',
+              'landuse_school':                 '#0F1F2F',
+              'landuse_pitch':                  '#0A2218',
+              'landuse_track':                  '#0A2218',
+              'aeroway_fill':                   '#0D1B2A',
+              'water':                          '#1565C0',
+              'waterway_river':                 '#1976D2',
+              'waterway_other':                 '#1565C0',
+              'waterway_tunnel':                '#0D47A1',
+              'road_motorway':                  '#FFD60A',
+              'road_motorway_casing':           '#B8960A',
+              'road_motorway_link':             '#FFD60A',
+              'road_motorway_link_casing':      '#B8960A',
+              'road_trunk_primary':             '#F5C842',
+              'road_trunk_primary_casing':      '#A88A20',
+              'road_secondary_tertiary':        '#C8A020',
+              'road_secondary_tertiary_casing': '#7A6010',
+              'road_minor':                     '#1E3A5F',
+              'road_minor_casing':              '#152A45',
+              'road_link':                      '#C8A020',
+              'road_link_casing':               '#7A6010',
+              'road_service_track':             '#1A3050',
+              'road_service_track_casing':      '#0F1F35',
+              'road_path_pedestrian':           '#1A3050',
+              'bridge_motorway':                '#FFD60A',
+              'bridge_motorway_casing':         '#B8960A',
+              'bridge_trunk_primary':           '#F5C842',
+              'bridge_trunk_primary_casing':    '#A88A20',
+              'bridge_secondary_tertiary':      '#C8A020',
+              'bridge_street':                  '#1E3A5F',
+              'bridge_motorway_link':           '#FFD60A',
+              'bridge_link':                    '#C8A020',
+              'bridge_service_track':           '#1A3050',
+              'bridge_path_pedestrian':         '#1A3050',
+              'tunnel_motorway':                '#B8960A',
+              'tunnel_trunk_primary':           '#A88A20',
+              'tunnel_secondary_tertiary':      '#7A6010',
+              'tunnel_minor':                   '#152A45',
+              'building':                       '#1A2E4A',
+              'road_major_rail':                '#2A4A6A',
+              'road_transit_rail':              '#2A4A6A',
+              'bridge_major_rail':              '#2A4A6A',
+              'bridge_transit_rail':            '#2A4A6A',
+              'boundary_2':                     '#FFD60A',
+              'boundary_3':                     '#C8A020',
+            }
+          : <String, String>{
+              // Light: brighter navy — same identity as dark but lighter
+              'background':                     '#1A3A5C',
+              'park':                           '#1A4A30',
+              'landuse_residential':            '#1E3F60',
+              'landcover_wood':                 '#1A4228',
+              'landcover_grass':                '#1E4A2E',
+              'landcover_wetland':              '#1A3A4A',
+              'landcover_sand':                 '#2A3A2A',
+              'landcover_ice':                  '#2A3A4A',
+              'landuse_cemetery':               '#1E3050',
+              'landuse_hospital':               '#1E3050',
+              'landuse_school':                 '#1E3050',
+              'landuse_pitch':                  '#1A4228',
+              'landuse_track':                  '#1A4228',
+              'aeroway_fill':                   '#1A3A5C',
+              'water':                          '#2196F3',
+              'waterway_river':                 '#42A5F5',
+              'waterway_other':                 '#2196F3',
+              'waterway_tunnel':                '#1565C0',
+              'road_motorway':                  '#FFD60A',
+              'road_motorway_casing':           '#C8A000',
+              'road_motorway_link':             '#FFD60A',
+              'road_motorway_link_casing':      '#C8A000',
+              'road_trunk_primary':             '#FFE040',
+              'road_trunk_primary_casing':      '#C8A820',
+              'road_secondary_tertiary':        '#D4A820',
+              'road_secondary_tertiary_casing': '#A07810',
+              'road_minor':                     '#2A5080',
+              'road_minor_casing':              '#1E3A60',
+              'road_link':                      '#D4A820',
+              'road_link_casing':               '#A07810',
+              'road_service_track':             '#244870',
+              'road_service_track_casing':      '#1A3458',
+              'road_path_pedestrian':           '#244870',
+              'bridge_motorway':                '#FFD60A',
+              'bridge_motorway_casing':         '#C8A000',
+              'bridge_trunk_primary':           '#FFE040',
+              'bridge_trunk_primary_casing':    '#C8A820',
+              'bridge_secondary_tertiary':      '#D4A820',
+              'bridge_street':                  '#2A5080',
+              'bridge_motorway_link':           '#FFD60A',
+              'bridge_link':                    '#D4A820',
+              'bridge_service_track':           '#244870',
+              'bridge_path_pedestrian':         '#244870',
+              'tunnel_motorway':                '#C8A000',
+              'tunnel_trunk_primary':           '#C8A820',
+              'tunnel_secondary_tertiary':      '#A07810',
+              'tunnel_minor':                   '#1E3A60',
+              'building':                       '#2A4A70',
+              'road_major_rail':                '#3A6090',
+              'road_transit_rail':              '#3A6090',
+              'bridge_major_rail':              '#3A6090',
+              'bridge_transit_rail':            '#3A6090',
+              'boundary_2':                     '#FFD60A',
+              'boundary_3':                     '#D4A820',
+            };
 
       for (final layer in layers) {
         final map = layer as Map<String, dynamic>;
-        final id = (map['id'] as String? ?? '').toLowerCase();
+        final id = map['id'] as String? ?? '';
         final type = map['type'] as String? ?? '';
-        final paint = map['paint'] as Map<String, dynamic>? ?? {};
+        final paint = Map<String, dynamic>.from(
+            map['paint'] as Map<String, dynamic>? ?? {});
 
-        for (final entry in colorPatches.entries) {
-          if (id.contains(entry.key)) {
-            if (type == 'background') {
-              paint['background-color'] = entry.value;
-            } else if (type == 'fill') {
-              paint['fill-color'] = entry.value;
-            } else if (type == 'line') {
-              paint['line-color'] = entry.value;
-            }
-            map['paint'] = paint;
-            break;
+        if (idPatches.containsKey(id)) {
+          final color = idPatches[id]!;
+          if (type == 'background') {
+            paint['background-color'] = color;
+          } else if (type == 'fill') {
+            paint['fill-color'] = color;
+            paint['fill-opacity'] = 1.0;
+          } else if (type == 'line') {
+            paint['line-color'] = color;
           }
+          map['paint'] = paint;
         }
       }
 
       if (mounted) setState(() => _patchedStyle = jsonEncode(style));
-    } catch (_) {
-      // Fall back to default liberty style on any error.
-    }
+    } catch (_) {}
   }
 
   @override
@@ -215,15 +324,15 @@ class _IssueMapPageState extends State<IssueMapPage> {
       // Keep default black colors for readability, just increase sizes
       // per hierarchy. Poppins only applies to Flutter UI, not map tiles.
       const labelSizes = {
-        'label_country_1': 22.0,
-        'label_country_2': 20.0,
-        'label_country_3': 18.0,
-        'label_state':     15.0,
-        'label_city_capital': 14.0,
-        'label_city':      13.0,
-        'label_town':      12.0,
-        'label_village':   11.0,
-        'label_other':     10.0,
+        'label_country_1': 28.0,
+        'label_country_2': 26.0,
+        'label_country_3': 24.0,
+        'label_state':     20.0,
+        'label_city_capital': 18.0,
+        'label_city':      17.0,
+        'label_town':      15.0,
+        'label_village':   13.0,
+        'label_other':     12.0,
       };
 
       for (final entry in labelSizes.entries) {
@@ -231,9 +340,10 @@ class _IssueMapPageState extends State<IssueMapPage> {
           await controller.setLayerProperties(
             entry.key,
             SymbolLayerProperties(
+              textColor: _isDark ? '#FFD60A' : '#FFD60A',
               textSize: entry.value,
-              textHaloColor: '#FFFFFF',
-              textHaloWidth: 1.0,
+              textHaloColor: _isDark ? '#0D1B2A' : '#1A3A5C',
+              textHaloWidth: 2.5,
               textHaloBlur: 0,
             ),
           );
@@ -386,20 +496,20 @@ class _IssueMapPageState extends State<IssueMapPage> {
   /// Panel background: dark charcoal in dark mode, clean white in light mode.
   Color get _panelBg => _isDark
       ? const Color(0xFF1C1C1E).withValues(alpha: 0.78)
-      : const Color(0xFFFFFFFF).withValues(alpha: 0.88);
+      : const Color(0xFF1A3A5C).withValues(alpha: 0.88);
 
   /// Text color on panels.
   Color get _textColor =>
-      _isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A);
+      _isDark ? const Color(0xFFF0F0F0) : const Color(0xFFF0F0F0);
 
   /// Subtle text / hint color.
   Color get _subtleText =>
-      _isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666);
+      _isDark ? const Color(0xFF9E9E9E) : const Color(0xFFB0C4D8);
 
   /// Card background inside the bottom sheet.
   Color get _cardBg => _isDark
       ? const Color(0xFF242424).withValues(alpha: 0.95)
-      : const Color(0xFFF5F5F5).withValues(alpha: 0.95);
+      : const Color(0xFF1E3F60).withValues(alpha: 0.95);
 
   static const _yellow = Color(0xFFFFD60A);
 
@@ -432,13 +542,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
             logoViewMargins: const Point(-100, -100),
           ),
 
-          // ── Dark mode tint — subtle overlay, keeps 3D buildings visible ───
-          if (_isDark)
-            IgnorePointer(
-              child: Container(
-                color: const Color(0xFF0A0A0A).withValues(alpha: 0.08),
-              ),
-            ),
+          // ── Dark mode tint removed — map is already dark themed ─────────
 
           // ── You're Here marker ────────────────────────────────────────────
           if (_userScreenPosition != null)
@@ -504,7 +608,7 @@ class _IssueMapPageState extends State<IssueMapPage> {
                             icon: _isDark
                                 ? Icons.light_mode_rounded
                                 : Icons.dark_mode_rounded,
-                            onPressed: widget.onToggleTheme,
+                            onPressed: AppTheme.of(context).toggleTheme,
                           ),
                           const SizedBox(width: 8),
                           _HeaderBtn(

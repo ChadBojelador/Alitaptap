@@ -6,6 +6,26 @@ import '../features/auth/presentation/sign_in_page.dart';
 import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/community_home_page.dart';
 
+/// Provides [themeMode] and [toggleTheme] to the entire widget tree so any
+/// page can toggle the theme without prop drilling.
+class AppTheme extends InheritedWidget {
+  const AppTheme({
+    super.key,
+    required this.themeMode,
+    required this.toggleTheme,
+    required super.child,
+  });
+
+  final ThemeMode themeMode;
+  final VoidCallback toggleTheme;
+
+  static AppTheme of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AppTheme>()!;
+
+  @override
+  bool updateShouldNotify(AppTheme old) => old.themeMode != themeMode;
+}
+
 /// Root application widget.
 ///
 /// ## Theme
@@ -129,14 +149,18 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      title: 'ALITAPTAP',
-      debugShowCheckedModeBanner: false,
+    return AppTheme(
       themeMode: _themeMode,
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
-      home: SignInPage(onRoleSelected: _onRoleSelected),
+      toggleTheme: toggleTheme,
+      child: MaterialApp(
+        navigatorKey: _navigatorKey,
+        title: 'ALITAPTAP',
+        debugShowCheckedModeBanner: false,
+        themeMode: _themeMode,
+        theme: _buildTheme(Brightness.light),
+        darkTheme: _buildTheme(Brightness.dark),
+        home: SignInPage(onRoleSelected: _onRoleSelected),
+      ),
     );
   }
 }
