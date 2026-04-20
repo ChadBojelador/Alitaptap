@@ -62,6 +62,7 @@ class _AdminHomePageState extends State<AdminHomePage>
   Future<void> _updateStatus(String issueId, String status) async {
     try {
       await _api.updateIssueStatus(issueId: issueId, status: status);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Issue ${status == 'validated' ? 'approved' : 'rejected'}'),
@@ -70,6 +71,7 @@ class _AdminHomePageState extends State<AdminHomePage>
       );
       _loadAll();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -82,7 +84,10 @@ class _AdminHomePageState extends State<AdminHomePage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: Text(
+          'Admin Dashboard',
+          style: theme.textTheme.titleLarge,
+        ),
         centerTitle: true,
         actions: [
           IconButton(

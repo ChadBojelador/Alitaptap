@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../application/usecases/submit_issue_use_case.dart';
@@ -21,6 +23,7 @@ class IssueSubmitPage extends StatefulWidget {
 
 class _IssueSubmitPageState extends State<IssueSubmitPage> {
   static const _mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+  static const _psgcBaseUrl = 'https://psgc.gitlab.io/api';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom = 12.0;
   static const _userZoom = 16.0;
@@ -38,6 +41,13 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   bool _styleLoaded = false;
   bool _cameraMovedToUser = false;
   Position? _userPosition;
+  List<_PsgcRegion> _regions = const [];
+  List<_PsgcCityMunicipality> _citiesMunicipalities = const [];
+  String? _selectedRegionCode;
+  String? _selectedCityMunicipalityCode;
+  bool _loadingRegions = false;
+  bool _loadingCitiesMunicipalities = false;
+  String? _psgcError;
 
   double? _lat;
   double? _lng;
@@ -47,6 +57,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   void initState() {
     super.initState();
     _resolveCurrentLocation();
+    _loadRegions();
   }
 
   @override
@@ -164,6 +175,95 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     }
   }
 
+  Future<void> _loadRegions() async {
+    setState(() {
+      _loadingRegions = true;
+      _psgcError = null;
+    });
+    try {
+      final res = await http.get(Uri.parse('$_psgcBaseUrl/regions.json'));
+      if (res.statusCode != 200) {
+        throw Exception('Failed to load regions (${res.statusCode}).');
+      }
+      final json = jsonDecode(res.body);
+      if (json is! List) {
+        throw Exception('Unexpected PSGC regions response format.');
+      }
+      final regions = json
+          .whereType<Map<String, dynamic>>()
+          .map(_PsgcRegion.fromJson)
+          .toList()
+        ..sort((a, b) => a.displayName.compareTo(b.displayName));
+
+      if (!mounted) return;
+      setState(() {
+        _regions = regions;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _psgcError = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingRegions = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadCitiesMunicipalities(String regionCode) async {
+    setState(() {
+      _loadingCitiesMunicipalities = true;
+      _psgcError = null;
+      _citiesMunicipalities = const [];
+      _selectedCityMunicipalityCode = null;
+    });
+
+    try {
+      final res = await http.get(
+        Uri.parse(
+          '$_psgcBaseUrl/regions/$regionCode/cities-municipalities.json',
+        ),
+      );
+      if (res.statusCode != 200) {
+        throw Exception(
+          'Failed to load cities/municipalities (${res.statusCode}).',
+        );
+      }
+
+      final json = jsonDecode(res.body);
+      if (json is! List) {
+        throw Exception(
+          'Unexpected PSGC cities/municipalities response format.',
+        );
+      }
+
+      final items = json
+          .whereType<Map<String, dynamic>>()
+          .map(_PsgcCityMunicipality.fromJson)
+          .toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
+
+      if (!mounted) return;
+      setState(() {
+        _citiesMunicipalities = items;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _psgcError = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingCitiesMunicipalities = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -217,7 +317,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               const SizedBox(height: 24),
 
               // Title field
-              _FieldLabel('Problem Title', textColor),
+              _fieldLabel('Problem Title', textColor),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _titleCtrl,
@@ -234,7 +334,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               const SizedBox(height: 20),
 
               // Description field
-              _FieldLabel('Description', textColor),
+              _fieldLabel('Description', textColor),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descCtrl,
@@ -252,8 +352,94 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               ),
               const SizedBox(height: 24),
 
+              // Optional PSGC location metadata
+              _fieldLabel('Region (PSGC, optional)', textColor),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedRegionCode,
+                isExpanded: true,
+                decoration: _inputDecoration(
+                  hint: _loadingRegions
+                      ? 'Loading regions...'
+                      : 'Select region',
+                  icon: Icons.public_rounded,
+                  isDark: isDark,
+                ),
+                items: _regions
+                    .map(
+                      (region) => DropdownMenuItem<String>(
+                        value: region.code,
+                        child: Text(
+                          region.displayName,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _loadingRegions
+                    ? null
+                    : (value) {
+                        if (value == null) return;
+                        setState(() => _selectedRegionCode = value);
+                        _loadCitiesMunicipalities(value);
+                      },
+              ),
+              const SizedBox(height: 14),
+
+              _fieldLabel('City / Municipality (PSGC, optional)', textColor),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedCityMunicipalityCode,
+                isExpanded: true,
+                decoration: _inputDecoration(
+                  hint: _selectedRegionCode == null
+                      ? 'Select region first'
+                      : _loadingCitiesMunicipalities
+                          ? 'Loading cities/municipalities...'
+                          : 'Select city or municipality',
+                  icon: Icons.location_city_rounded,
+                  isDark: isDark,
+                ),
+                items: _citiesMunicipalities
+                    .map(
+                      (item) => DropdownMenuItem<String>(
+                        value: item.code,
+                        child: Text(
+                          item.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _selectedRegionCode == null ||
+                        _loadingCitiesMunicipalities
+                    ? null
+                    : (value) {
+                        setState(() => _selectedCityMunicipalityCode = value);
+                      },
+              ),
+              if (_psgcError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'PSGC data unavailable: $_psgcError',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: Colors.redAccent,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+
               // Map picker
-              _FieldLabel('Pin the Location', textColor),
+              _fieldLabel('Pin the Location', textColor),
               const SizedBox(height: 4),
               Text(
                 'Tap the map to mark exactly where the problem is.',
@@ -537,7 +723,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   }
 }
 
-Widget _FieldLabel(String label, Color color) {
+Widget _fieldLabel(String label, Color color) {
   return Text(
     label,
     style: GoogleFonts.poppins(
@@ -546,4 +732,49 @@ Widget _FieldLabel(String label, Color color) {
       color: color,
     ),
   );
+}
+
+class _PsgcRegion {
+  const _PsgcRegion({
+    required this.code,
+    required this.name,
+    required this.regionName,
+  });
+
+  final String code;
+  final String name;
+  final String regionName;
+
+  String get displayName {
+    final trimmedRegionName = regionName.trim();
+    if (trimmedRegionName.isEmpty || trimmedRegionName == name.trim()) {
+      return name.trim();
+    }
+    return '${name.trim()} ($trimmedRegionName)';
+  }
+
+  factory _PsgcRegion.fromJson(Map<String, dynamic> json) {
+    return _PsgcRegion(
+      code: (json['code'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      regionName: (json['regionName'] ?? '').toString(),
+    );
+  }
+}
+
+class _PsgcCityMunicipality {
+  const _PsgcCityMunicipality({
+    required this.code,
+    required this.name,
+  });
+
+  final String code;
+  final String name;
+
+  factory _PsgcCityMunicipality.fromJson(Map<String, dynamic> json) {
+    return _PsgcCityMunicipality(
+      code: (json['code'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+    );
+  }
 }

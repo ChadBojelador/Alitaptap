@@ -20,6 +20,7 @@
 | T-11 | Apply feature-layered Flutter architecture | Platform | M5 | Team | P1 | Done | 2026-04-21 | 2026-04-21 | T-03, T-05 | Features expose repository + use case layers and UI consumes use cases | apps/mobile_flutter/lib/features/ |
 | T-12 | Add backend + mobile automated tests | QA | M5 | Team | P1 | Done | 2026-04-21 | 2026-04-21 | T-11 | FastAPI route/helper tests and Flutter model/use-case tests added | services/api_fastapi/tests/ |
 | T-13 | Add CI workflows for app and API | Platform | M5 | Team | P1 | Done | 2026-04-21 | 2026-04-21 | T-12 | PR/push triggers run Flutter analyze/tests and FastAPI pytest | .github/workflows/ |
+| T-14 | Auto-connect idea to best problem match | Neural Mapper | M5 | Team | P1 | Done | 2026-04-21 | 2026-04-21 | T-05 | After idea matching, app connects user to top-ranked problem detail automatically | apps/mobile_flutter/lib/features/neural_mapper/presentation/idea_match_page.dart |
 
 ## Kanban
 ### Backlog
@@ -53,3 +54,4 @@
 - T-11 (apps/mobile_flutter/lib/features/)
 - T-12 (services/api_fastapi/tests/)
 - T-13 (.github/workflows/)
+- T-14 (apps/mobile_flutter/lib/features/neural_mapper/presentation/idea_match_page.dart)
