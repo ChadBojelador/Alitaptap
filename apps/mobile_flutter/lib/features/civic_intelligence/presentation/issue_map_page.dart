@@ -13,9 +13,12 @@ import '../../../core/models/issue.dart';
 import '../application/usecases/get_validated_issues_use_case.dart';
 import '../application/usecases/submit_issue_use_case.dart';
 import '../data/repositories/api_issue_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../neural_mapper/presentation/idea_match_page.dart';
 import '../../../app/app.dart' show AppTheme;
 import 'issue_detail_page.dart';
+import 'issue_submit_page.dart';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const _cyberGreen  = Color(0xFFFFD60A);
@@ -657,10 +660,35 @@ class _IssueMapPageState extends State<IssueMapPage>
               ),
             ),
 
+          // ── FAB cluster ───────────────────────────────────────────────────
+          if (!_loading)
+            Positioned(
+              bottom: 24,
+              left:   16,
+              child: _MapFabCluster(
+                onReport: () {
+                  final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => IssueSubmitPage(reporterId: uid),
+                  ));
+                },
+                onResearch: () {
+                  final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => IdeaMatchPage(
+                      studentId: uid,
+                      initialIdeaText: '',
+                      autoRun: false,
+                    ),
+                  ));
+                },
+              ),
+            ),
+
           // ── Compass ────────────────────────────────────────────────────────
           if (!_loading)
             Positioned(
-              bottom: widget.showIdeaDock ? 96 : 24,
+              bottom: 24,
               right:  16,
               child: _MapCompass(
                 bearing: _bearing,

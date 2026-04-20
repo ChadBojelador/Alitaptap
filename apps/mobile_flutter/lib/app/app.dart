@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../core/models/app_role.dart';
-import '../features/auth/presentation/sign_in_page.dart';
-import '../features/home/presentation/admin_home_page.dart';
-import '../features/home/presentation/community_home_page.dart';
+import '../features/civic_intelligence/presentation/issue_map_page.dart';
 
 /// Provides [themeMode] and [toggleTheme] to the entire widget tree so any
 /// page can toggle the theme without prop drilling.
@@ -27,33 +24,6 @@ class AppTheme extends InheritedWidget {
 }
 
 /// Root application widget.
-///
-/// ## Theme
-/// - Uses Poppins font globally via [GoogleFonts].
-/// - Primary accent: #FFD60A (yellow). Supports light and dark mode toggle.
-/// - Dark: deep charcoal surfaces. Light: clean white surfaces.
-///
-/// ## Role Routing (BYPASSED — see note below)
-/// Originally, this widget bootstrapped Firebase Auth anonymously, then read
-/// the user's role from Firestore (`users/{uid}.role`) to decide which home
-/// screen to show. That flow was removed because:
-///
-///   1. Firestore security rules were not yet configured, causing
-///      "permission-denied" errors on every launch.
-///   2. The `_bootstrapRole` method and `FirebaseAuthException` handling
-///      were deleted to unblock development.
-///
-/// CURRENT BEHAVIOUR: [SignInPage] collects the role from the user directly
-/// and calls [_onRoleSelected], which pushes the correct home page onto the
-/// navigator stack. The role is NOT persisted — every app launch shows the
-/// sign-in screen again.
-///
-/// TO RESTORE PERSISTENCE:
-///   1. Set Firestore rules to allow authenticated users to read/write their
-///      own `users/{uid}` document (see docs/00-governance/firebase-setup.md).
-///   2. Re-enable `AuthService.setRole()` call in [SignInPage._proceed].
-///   3. Re-add `_bootstrapRole()` here to read the role on launch and skip
-///      the sign-in screen for returning users.
 class AlitaptapApp extends StatefulWidget {
   const AlitaptapApp({super.key});
 
@@ -67,19 +37,6 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
 
   void toggleTheme() => setState(() => _themeMode =
       _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
-
-  // TODO: remove once Firestore rules are configured and role is persisted.
-  // Role is passed directly from SignInPage to bypass Firestore permission.
-  void _onRoleSelected(String role) {
-    final page = switch (AppRoleX.fromString(role)) {
-      AppRole.community => const CommunityHomePage(),
-      AppRole.student => const StudentHomePage(),
-      AppRole.admin => const AdminHomePage(),
-    };
-    Navigator.of(
-      _navigatorKey.currentContext!,
-    ).push(MaterialPageRoute(builder: (_) => page));
-  }
 
   ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
@@ -159,7 +116,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
         themeMode: _themeMode,
         theme: _buildTheme(Brightness.light),
         darkTheme: _buildTheme(Brightness.dark),
-        home: SignInPage(onRoleSelected: _onRoleSelected),
+        home: IssueMapPage(onToggleTheme: toggleTheme),
       ),
     );
   }
