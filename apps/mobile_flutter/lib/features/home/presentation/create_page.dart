@@ -74,7 +74,7 @@ class _CreatePageState extends State<CreatePage> {
     super.dispose();
   }
 
-  void _saveProject(String title, String description, String sdg, {bool isAIGuided = false}) {
+  void _saveProject(String title, String description, String sdg, {bool isAIGuided = false, ResearchBackbone? backbone}) {
     setState(() {
       if (_editingProjectIndex != null) {
         _savedProjects[_editingProjectIndex!] = {
@@ -83,6 +83,9 @@ class _CreatePageState extends State<CreatePage> {
           'sdg': sdg,
           'date': _savedProjects[_editingProjectIndex!]['date']!,
           'mode': isAIGuided ? 'ai' : 'manual',
+          'methodology': backbone?.methodology ?? '',
+          'impact': backbone?.communityImpactLevel ?? '',
+          'feasibility': backbone != null ? 'Cost: ${backbone.feasibilityScore.cost} | Time: ${backbone.feasibilityScore.time} | Data: ${backbone.feasibilityScore.dataAvailability}' : '',
         };
         _editingProjectIndex = null;
       } else {
@@ -92,6 +95,9 @@ class _CreatePageState extends State<CreatePage> {
           'sdg': sdg,
           'date': DateTime.now().toString().split(' ')[0],
           'mode': isAIGuided ? 'ai' : 'manual',
+          'methodology': backbone?.methodology ?? '',
+          'impact': backbone?.communityImpactLevel ?? '',
+          'feasibility': backbone != null ? 'Cost: ${backbone.feasibilityScore.cost} | Time: ${backbone.feasibilityScore.time} | Data: ${backbone.feasibilityScore.dataAvailability}' : '',
         });
       }
     });
@@ -104,6 +110,24 @@ class _CreatePageState extends State<CreatePage> {
       _titleCtrl.text = project['title']!;
       _descriptionCtrl.text = project['description']!;
       _sdgCtrl.text = project['sdg']!;
+      
+      if (isAI) {
+        _titleEditCtrl.text = project['title']!;
+        _methodologyEditCtrl.text = project['methodology'] ?? '';
+        _impactEditCtrl.text = project['impact'] ?? '';
+        _generatedBackbone = ResearchBackbone(
+          researchTitle: project['title']!,
+          methodology: project['methodology'] ?? '',
+          sdgAlignment: project['sdg']!.split(', '),
+          feasibilityScore: FeasibilityScore(
+            cost: 'Medium',
+            time: '6-12 months',
+            dataAvailability: 'Moderate',
+          ),
+          communityImpactLevel: project['impact'] ?? 'Medium',
+        );
+      }
+      
       _editingProjectIndex = index;
       _showModeSelection = false;
       _isAIGuided = isAI;
@@ -792,7 +816,7 @@ class _CreatePageState extends State<CreatePage> {
                     );
                     return;
                   }
-              _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text, isAIGuided: false);
+              _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text, isAIGuided: false, backbone: null);
                   _titleCtrl.clear();
                   _descriptionCtrl.clear();
                   _sdgCtrl.clear();
@@ -1184,7 +1208,7 @@ class _CreatePageState extends State<CreatePage> {
           const SizedBox(height: 24),
           GestureDetector(
             onTap: () {
-              _saveProject(_titleEditCtrl.text, _methodologyEditCtrl.text, _generatedBackbone!.sdgAlignment.join(', '), isAIGuided: true);
+              _saveProject(_titleEditCtrl.text, _methodologyEditCtrl.text, _generatedBackbone!.sdgAlignment.join(', '), isAIGuided: true, backbone: _generatedBackbone);
               _problemCtrl.clear();
               _ideaCtrl.clear();
               _approachCtrl.clear();
