@@ -1,4 +1,4 @@
-"""Mapper API â€” semantic matching of student ideas to community problems."""
+"""Mapper API – semantic matching of student ideas to community problems."""
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -22,6 +22,16 @@ class MatchResult(BaseModel):
 
 class IdeaMatchResponse(BaseModel):
     run_id: str
+    matches: list[MatchResult]
+
+
+class NearestIssuesRequest(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+    max_results: int = Field(default=5, ge=1, le=20)
+
+
+class NearestIssuesResponse(BaseModel):
     matches: list[MatchResult]
 
 
@@ -53,3 +63,25 @@ def match_idea(payload: IdeaMatchRequest) -> IdeaMatchResponse:
         ],
     )
 
+
+@router.post('/nearest', response_model=NearestIssuesResponse)
+def find_nearest_issues(payload: NearestIssuesRequest) -> NearestIssuesResponse:
+    """Find validated issues nearest to the given location."""
+    try:
+        matches = _mapper_service.find_nearest_issues(
+            lat=payload.lat,
+            lng=payload.lng,
+            max_results=payload.max_results,
+        )
+    except RuntimeError as error:
+        raise HTTPException(
+            status_code=500,
+            detail='Database not initialized',
+        ) from error
+
+    return NearestIssuesResponse(
+        matches=[
+            MatchResult(issue_id=item.issue_id, score=item.score, reason=item.reason)
+            for item in matches
+        ],
+    )

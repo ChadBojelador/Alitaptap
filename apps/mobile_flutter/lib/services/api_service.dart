@@ -208,10 +208,6 @@ class ApiService {
   }
 
   // -----------------------------------------------------------------------
-  // Neural Mapper
-  // -----------------------------------------------------------------------
-
-  // -----------------------------------------------------------------------
   // Expo / Research Posts
   // -----------------------------------------------------------------------
 
@@ -367,5 +363,34 @@ class ApiService {
     return MapperRunResult.fromJson(
       jsonDecode(response.body) as Map<String, dynamic>,
     );
+  }
+
+  /// Find nearest issues to a given location.
+  Future<List<MatchResult>> findNearestIssues({
+    required double lat,
+    required double lng,
+    int maxResults = 5,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/mapper/nearest'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'lat': lat,
+          'lng': lng,
+          'max_results': maxResults,
+        }),
+      ),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to find nearest issues: ${response.body}');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final matches = data['matches'] as List<dynamic>;
+    return matches
+        .map((e) => MatchResult.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

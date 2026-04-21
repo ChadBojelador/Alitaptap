@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/models/issue.dart';
 import '../../../services/api_service.dart';
 import 'issue_map_page.dart';
 
@@ -16,14 +18,49 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
   final _ideaCtrl = TextEditingController();
   final _api = ApiService();
   bool _matching = false;
-  List<Map<String, String>> _matches = [];
-  String? _selectedLocation;
-  Map<String, bool> _expandedDetails = {};
+  bool _searchingNearest = false;
+  bool _useLocationSearch = false;
+  List<Map<String, dynamic>> _nearestMatches = [];
+  String? _selectedIssueId;
+  final Map<String, Issue> _issueById = {};
 
   @override
   void dispose() {
     _ideaCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _searchNearestProblems() async {
+    setState(() => _searchingNearest = true);
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+
+      final nearest = await _api.findNearestIssues(
+        lat: position.latitude,
+        lng: position.longitude,
+        maxResults: 5,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _nearestMatches = nearest
+            .map((m) => {
+              'issueId': m.issueId,
+              'score': m.score,
+              'reason': m.reason,
+            })
+            .toList();
+        _searchingNearest = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _searchingNearest = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error getting location: $e')),
+      );
+    }
   }
 
   Future<void> _submitIdea() async {
@@ -37,33 +74,18 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
 
     setState(() => _matching = true);
     try {
-      // Call the matcher API
       await _api.matchIdea(
         studentId: widget.studentId,
         ideaText: idea,
         maxResults: 5,
       );
 
-      // Simulate finding matches (in real app, this comes from API)
-      setState(() {
-        _matches = [
-          {
-            'location': 'Batangas City',
-            'problem': 'Recurring flooding in coastal areas',
-            'submittedBy': 'Maria Santos',
-            'submittedDate': '2 days ago',
-            'details': 'The coastal barangays experience severe flooding during monsoon season, affecting over 500 households. Infrastructure damage costs approximately ₱2M annually.',
-          },
-          {
-            'location': 'Pagbilao, Quezon',
-            'problem': 'Drainage system overflow during monsoon',
-            'submittedBy': 'Juan Dela Cruz',
-            'submittedDate': '5 days ago',
-            'details': 'Municipal drainage system lacks capacity during heavy rainfall, causing waterlogging in commercial and residential areas. Affects local businesses and transportation.',
-          },
-        ];
-        _matching = false;
-      });
+      if (!mounted) return;
+      setState(() => _matching = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Idea matched successfully!')),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -74,16 +96,15 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
   }
 
   Future<void> _proceedToMap() async {
-    if (_selectedLocation == null) {
+    if (_selectedIssueId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a location')),
+        const SnackBar(content: Text('Please select a problem')),
       );
       return;
     }
 
     if (!mounted) return;
 
-    // Navigate to map with the idea
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => IssueMapPage(
@@ -104,11 +125,9 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
     final subtleColor =
         isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666);
     final bgColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFFAFAFA);
-    
-    // Yellow color hierarchy
-    const accentYellowBright = Color(0xFFFFD60A); // Primary - bright yellow
-    const accentYellowMuted = Color(0xFFFFC700); // Secondary - muted yellow
-    const accentYellowDark = Color(0xFFFFB700); // Tertiary - dark yellow
+
+    const accentYellowBright = Color(0xFFFFD60A);
+    const accentYellowMuted = Color(0xFFFFC700);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -124,7 +143,6 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Info banner - Primary yellow
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -141,7 +159,7 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Enter your research idea. AI will match it with real community problems and suggest research directions.',
+                      'Describe your research idea or find problems near you.',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: textColor,
@@ -153,119 +171,168 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Idea input label
-            Text(
-              'Your Research Idea',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Idea input field - Secondary yellow
-            TextFormField(
-              controller: _ideaCtrl,
-              maxLines: 5,
-              style: GoogleFonts.poppins(fontSize: 14, color: textColor),
-              decoration: InputDecoration(
-                hintText:
-                    'e.g. Low-cost flood warning system for urban neighborhoods using IoT sensors and mobile alerts',
-                hintStyle: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: isDark
-                      ? const Color(0xFF616161)
-                      : const Color(0xFF9E9E9E),
-                ),
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Icon(Icons.auto_awesome_rounded,
-                      color: accentYellowMuted, size: 20),
-                ),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF242424) : const Color(0xFFF5F5F5),
-                border: OutlineInputBorder(
+            // Toggle button for location search
+            GestureDetector(
+              onTap: () {
+                if (!_useLocationSearch) {
+                  _searchNearestProblems();
+                }
+                setState(() => _useLocationSearch = !_useLocationSearch);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _useLocationSearch
+                      ? accentYellowBright.withValues(alpha: 0.15)
+                      : accentYellowMuted.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: accentYellowMuted.withValues(alpha: 0.2),
+                  border: Border.all(
+                    color: _useLocationSearch
+                        ? accentYellowBright
+                        : accentYellowMuted.withValues(alpha: 0.2),
+                    width: _useLocationSearch ? 2 : 1,
                   ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: accentYellowMuted.withValues(alpha: 0.2),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: accentYellowBright,
+                          width: 2,
+                        ),
+                        color: _useLocationSearch
+                            ? accentYellowBright
+                            : Colors.transparent,
+                      ),
+                      child: _useLocationSearch
+                          ? const Icon(Icons.check_rounded,
+                              color: Color(0xFF1A1A1A), size: 14)
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Find Nearest Problems',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Search for problems near your location',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: subtleColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.location_on_rounded,
+                      color: accentYellowBright,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Loading state for nearest problems
+            if (_searchingNearest)
+              Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: accentYellowBright.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: accentYellowBright.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation(accentYellowBright),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Looking for nearest problems...',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Scanning your location for community issues',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: subtleColor,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                      color: accentYellowMuted, width: 1.5),
-                ),
+                  const SizedBox(height: 24),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-
-            // Helper text
-            Text(
-              'Be specific about the problem you want to solve, the approach, and the impact you hope to achieve.',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: subtleColor,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // AI Insights - Matches found
-            if (_matches.isNotEmpty)
+            // Display nearest problems
+            if (_useLocationSearch && _nearestMatches.isNotEmpty && !_searchingNearest)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.auto_awesome_rounded,
-                          color: accentYellowBright, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        'AI Found ${_matches.length} Matching Problems',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: textColor,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Nearest Problems',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  ..._matches.asMap().entries.map((entry) {
+                  const SizedBox(height: 12),
+                  ..._nearestMatches.asMap().entries.map((entry) {
                     final match = entry.value;
-                    final location = match['location'] ?? '';
-                    final isSelected = _selectedLocation == location;
-                    final isExpanded = _expandedDetails[location] ?? false;
-
+                    final issueId = match['issueId'] as String;
+                    final isSelected = _selectedIssueId == issueId;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        children: [
-                          GestureDetector(
-                            onTap: () => setState(() => _selectedLocation = location),
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? accentYellowBright.withValues(alpha: 0.15)
-                                    : accentYellowMuted.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? accentYellowBright
-                                      : accentYellowMuted.withValues(alpha: 0.2),
-                                  width: isSelected ? 2 : 1,
-                                ),
-                              ),
-                              child: Row(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedIssueId = issueId),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? accentYellowBright.withValues(alpha: 0.15)
+                                : accentYellowMuted.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? accentYellowBright
+                                  : accentYellowMuted.withValues(alpha: 0.2),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
                                 children: [
                                   Container(
                                     width: 24,
@@ -285,163 +352,59 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
                                             color: Color(0xFF1A1A1A), size: 14)
                                         : null,
                                   ),
-                                  const SizedBox(width: 14),
+                                  const SizedBox(width: 12),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          match['location']!,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: textColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          match['problem']!,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 13,
-                                            color: subtleColor,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ],
+                                    child: Text(
+                                      match['reason'] as String,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        color: textColor,
+                                        height: 1.4,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: accentYellowBright.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${((match['score'] as double) * 100).toStringAsFixed(0)}% proximity',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: accentYellowBright,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          // Expandable details section (only show if selected)
-                          if (isSelected)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Column(
-                                children: [
-                                  // Submission info dropdown - Tertiary yellow
-                                  GestureDetector(
-                                    onTap: () => setState(() {
-                                      _expandedDetails[location] = !isExpanded;
-                                    }),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 14, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: accentYellowDark
-                                            .withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: accentYellowDark
-                                              .withValues(alpha: 0.25),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.info_outline_rounded,
-                                            color: accentYellowDark,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Submitted by ${match['submittedBy'] ?? 'Unknown'}',
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: textColor,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  match['submittedDate']!,
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 11,
-                                                    color: subtleColor,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Icon(
-                                            isExpanded
-                                                ? Icons.expand_less_rounded
-                                                : Icons.expand_more_rounded,
-                                            color: accentYellowDark,
-                                            size: 18,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  // Expanded details - Secondary yellow
-                                  if (isExpanded)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(14),
-                                        decoration: BoxDecoration(
-                                          color: accentYellowMuted
-                                              .withValues(alpha: 0.05),
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(
-                                            color: accentYellowMuted
-                                                .withValues(alpha: 0.15),
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Problem Details',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: textColor,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              match['details']!,
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 12,
-                                                color: subtleColor,
-                                                height: 1.6,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
                     );
                   }),
                   const SizedBox(height: 20),
                   GestureDetector(
-                    onTap: _selectedLocation == null ? null : _proceedToMap,
+                    onTap: _selectedIssueId == null ? null : _proceedToMap,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: _selectedLocation == null
+                        color: _selectedIssueId == null
                             ? accentYellowBright.withValues(alpha: 0.4)
                             : accentYellowBright,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: _selectedLocation == null
+                        boxShadow: _selectedIssueId == null
                             ? []
                             : [
                                 BoxShadow(
-                                  color: accentYellowBright
-                                      .withValues(alpha: 0.3),
+                                  color: accentYellowBright.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -468,9 +431,66 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
                   const SizedBox(height: 24),
                 ],
               ),
-
-            // Submit button (only show if no matches yet) - Primary yellow
-            if (_matches.isEmpty)
+            // Show idea input only if not using location search
+            if (!_useLocationSearch) ...[
+              Text(
+                'Your Research Idea',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _ideaCtrl,
+                maxLines: 5,
+                style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+                decoration: InputDecoration(
+                  hintText:
+                      'e.g. Low-cost flood warning system for urban neighborhoods using IoT sensors and mobile alerts',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: isDark
+                        ? const Color(0xFF616161)
+                        : const Color(0xFF9E9E9E),
+                  ),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Icon(Icons.auto_awesome_rounded,
+                        color: accentYellowMuted, size: 20),
+                  ),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF242424) : const Color(0xFFF5F5F5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: accentYellowMuted.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: accentYellowMuted.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                        color: accentYellowMuted, width: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Be specific about the problem you want to solve, the approach, and the impact you hope to achieve.',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: subtleColor,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
               GestureDetector(
                 onTap: _matching ? null : _submitIdea,
                 child: Container(
@@ -516,6 +536,7 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
                   ),
                 ),
               ),
+            ],
             const SizedBox(height: 24),
           ],
         ),

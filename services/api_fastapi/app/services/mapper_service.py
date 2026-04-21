@@ -169,6 +169,71 @@ class MapperService:
 
         return run_id, matches
 
+    def find_nearest_issues(
+        self,
+        lat: float,
+        lng: float,
+        max_results: int = 5,
+    ) -> list[MatchItem]:
+        """Find validated issues nearest to the given location.
+
+        Returns:
+            List of MatchItem sorted by distance (nearest first).
+        """
+        db: Client = get_db()
+
+        # Fetch all validated issues
+        docs = (
+            db.collection('issues')
+            .where('status', '==', 'validated')
+            .stream()
+        )
+
+        issues: list[dict] = []
+        for doc in docs:
+            data = doc.to_dict()
+            data['_id'] = doc.id
+            issues.append(data)
+
+        if not issues:
+            return []
+
+        # Calculate distances using Haversine formula
+        def haversine_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+            """Calculate distance in km between two coordinates."""
+            from math import radians, cos, sin, asin, sqrt
+            lon1, lat1, lon2, lat2 = map(radians, [lng1, lat1, lng2, lat2])
+            dlon = lon2 - lon1
+            dlat = lat2 - lat1
+            a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+            c = 2 * asin(sqrt(a))
+            r = 6371  # Radius of earth in kilometers
+            return c * r
+
+        # Calculate distance for each issue
+        issues_with_distance = []
+        for issue in issues:
+            issue_lat = issue.get('lat')
+            issue_lng = issue.get('lng')
+            if issue_lat is not None and issue_lng is not None:
+                distance = haversine_distance(lat, lng, issue_lat, issue_lng)
+                issues_with_distance.append((issue, distance))
+
+        # Sort by distance and take top-N
+        issues_with_distance.sort(key=lambda x: x[1])
+        nearest = issues_with_distance[:max_results]
+
+        matches: list[MatchItem] = []
+        for rank, (issue, distance) in enumerate(nearest, start=1):
+            reason = f"Located {distance:.1f} km away from your location."
+            matches.append(MatchItem(
+                issue_id=issue['_id'],
+                score=max(0.0, 1.0 - (distance / 100.0)),  # Score based on proximity
+                reason=reason,
+            ))
+
+        return matches
+
 
 # ---------------------------------------------------------------------------
 # Helpers
