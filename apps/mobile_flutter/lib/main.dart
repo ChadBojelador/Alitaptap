@@ -76,7 +76,7 @@ class _SplashScreenState extends State<_SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: const Color(0xFFF7F8FA),
       body: Stack(
         children: [
           // Background glow top-left
@@ -90,8 +90,8 @@ class _SplashScreenState extends State<_SplashScreen>
                 height: 350,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFFFD60A)
-                      .withValues(alpha: 0.06 * _pulse.value),
+                  color: const Color(0xFFFFA726)
+                      .withValues(alpha: 0.10 * _pulse.value),
                 ),
               ),
             ),
@@ -108,8 +108,8 @@ class _SplashScreenState extends State<_SplashScreen>
                 height: 260,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFFFD60A)
-                      .withValues(alpha: 0.04 * _pulse.value),
+                  color: const Color(0xFFFFA726)
+                      .withValues(alpha: 0.07 * _pulse.value),
                 ),
               ),
             ),
@@ -129,17 +129,12 @@ class _SplashScreenState extends State<_SplashScreen>
                       width: 88,
                       height: 88,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
+                        color: const Color(0xFFFFA726),
                         borderRadius: BorderRadius.circular(26),
-                        border: Border.all(
-                          color: const Color(0xFFFFD60A)
-                              .withValues(alpha: 0.5 * _pulse.value),
-                          width: 1.5,
-                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFD60A)
-                                .withValues(alpha: 0.2 * _pulse.value),
+                            color: const Color(0xFFFFA726)
+                                .withValues(alpha: 0.4 * _pulse.value),
                             blurRadius: 32,
                             spreadRadius: 4,
                           ),
@@ -147,7 +142,7 @@ class _SplashScreenState extends State<_SplashScreen>
                       ),
                       child: const Icon(
                         Icons.lightbulb_rounded,
-                        color: Color(0xFFFFD60A),
+                        color: Color(0xFF1A1A1A),
                         size: 44,
                       ),
                     ),
@@ -164,7 +159,7 @@ class _SplashScreenState extends State<_SplashScreen>
                     child: Text(
                       'ALITAPTAP',
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFFFFD60A),
+                        color: const Color(0xFF1A1A1A),
                         fontSize: 30,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 4,
@@ -186,21 +181,20 @@ class _SplashScreenState extends State<_SplashScreen>
 
                 const SizedBox(height: 48),
 
-                // Loading indicator or error
                 if (!widget.error)
                   SizedBox(
                     width: 32,
                     height: 32,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      color: const Color(0xFFFFD60A).withValues(alpha: 0.7),
+                      color: const Color(0xFFFFA726).withValues(alpha: 0.8),
                     ),
                   )
                 else
                   Column(
                     children: [
                       const Icon(Icons.wifi_off_rounded,
-                          color: Color(0xFFFFD60A), size: 24),
+                          color: Color(0xFFFFA726), size: 24),
                       const SizedBox(height: 8),
                       Text(
                         'Failed to connect. Check your network.',

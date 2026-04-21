@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'issue_map_page.dart';
 
-const _bg = Color(0xFF080C14);
-const _green = Color(0xFFFFD60A);
-const _yellow = Color(0xFFFFD60A);
-const _muted = Color(0xFF6B7280);
+const _bg = Color(0xFFF7F8FA);
+const _green = Color(0xFFFFA726);
+const _yellow = Color(0xFFFFA726);
+const _muted = Color(0xFF9E9E9E);
 
 class PhilippinesIntroScreen extends StatefulWidget {
   final VoidCallback? onToggleTheme;
-  const PhilippinesIntroScreen({super.key, this.onToggleTheme});
+  final Widget? destination;
+  const PhilippinesIntroScreen({super.key, this.onToggleTheme, this.destination});
 
   @override
   State<PhilippinesIntroScreen> createState() => _PhilippinesIntroScreenState();
@@ -26,11 +27,6 @@ class _PhilippinesIntroScreenState extends State<PhilippinesIntroScreen>
     vsync: this,
     duration: const Duration(milliseconds: 1800),
   )..repeat(reverse: true);
-
-  late final AnimationController _scan = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 3),
-  )..repeat();
 
   late final AnimationController _teleport = AnimationController(
     vsync: this,
@@ -54,7 +50,7 @@ class _PhilippinesIntroScreenState extends State<PhilippinesIntroScreen>
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (_, __, ___) =>
-            IssueMapPage(onToggleTheme: widget.onToggleTheme),
+            widget.destination ?? IssueMapPage(onToggleTheme: widget.onToggleTheme),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
@@ -65,7 +61,6 @@ class _PhilippinesIntroScreenState extends State<PhilippinesIntroScreen>
   void dispose() {
     _fadeIn.dispose();
     _pulse.dispose();
-    _scan.dispose();
     _teleport.dispose();
     super.dispose();
   }
@@ -78,9 +73,9 @@ class _PhilippinesIntroScreenState extends State<PhilippinesIntroScreen>
         .animate(CurvedAnimation(parent: _teleport, curve: Curves.easeIn));
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: const Color(0xFFF7F8FA),
       body: AnimatedBuilder(
-        animation: Listenable.merge([_fadeIn, _pulse, _scan, _teleport]),
+        animation: Listenable.merge([_fadeIn, _pulse, _teleport]),
         builder: (context, _) {
           return FadeTransition(
             opacity: _fadeIn,
@@ -90,14 +85,6 @@ class _PhilippinesIntroScreenState extends State<PhilippinesIntroScreen>
                 opacity: _teleporting ? fadeOut.value : 1.0,
                 child: Stack(
                   children: [
-                    // Scanline overlay
-                    IgnorePointer(
-                      child: CustomPaint(
-                        painter: _ScanPainter(_scan.value),
-                        child: const SizedBox.expand(),
-                      ),
-                    ),
-
                     Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -109,7 +96,6 @@ class _PhilippinesIntroScreenState extends State<PhilippinesIntroScreen>
                             child: CustomPaint(
                               painter: _PhilippinesPainter(
                                 glowIntensity: _pulse.value,
-                                scanProgress: _scan.value,
                               ),
                             ),
                           ),
@@ -186,34 +172,6 @@ class _PhilippinesIntroScreenState extends State<PhilippinesIntroScreen>
   }
 }
 
-// ── Scanline painter ──────────────────────────────────────────────────────────
-
-class _ScanPainter extends CustomPainter {
-  final double progress;
-  _ScanPainter(this.progress);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..color = _green.withValues(alpha: 0.025)
-      ..strokeWidth = 1;
-    for (var y = 0.0; y < size.height; y += 4) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
-    }
-    final sweepY = size.height * progress;
-    canvas.drawLine(
-      Offset(0, sweepY),
-      Offset(size.width, sweepY),
-      Paint()
-        ..color = _green.withValues(alpha: 0.10)
-        ..strokeWidth = 1.5,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ScanPainter old) => old.progress != progress;
-}
-
 // ── Philippines outline painter ───────────────────────────────────────────────
 //
 // Simplified polygon approximation of the Philippine archipelago's major
@@ -221,11 +179,9 @@ class _ScanPainter extends CustomPainter {
 
 class _PhilippinesPainter extends CustomPainter {
   final double glowIntensity;
-  final double scanProgress;
 
   _PhilippinesPainter({
     required this.glowIntensity,
-    required this.scanProgress,
   });
 
   // Normalised (0–1) outline points for the major island groups.
@@ -317,13 +273,6 @@ class _PhilippinesPainter extends CustomPainter {
       canvas.drawPath(path, borderPaint);
     }
 
-    // Scan sweep highlight
-    final sweepY = size.height * scanProgress;
-    final sweepPaint = Paint()
-      ..color = _green.withValues(alpha: 0.18)
-      ..strokeWidth = 1.5;
-    canvas.drawLine(Offset(0, sweepY), Offset(size.width, sweepY), sweepPaint);
-
     // Dot markers on major cities
     final cities = [
       Offset(0.50 * size.width, 0.20 * size.height), // Manila
@@ -387,5 +336,5 @@ class _PhilippinesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_PhilippinesPainter old) =>
-      old.glowIntensity != glowIntensity || old.scanProgress != scanProgress;
+      old.glowIntensity != glowIntensity;
 }

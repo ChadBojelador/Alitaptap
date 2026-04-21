@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 import 'dart:async';
@@ -6,7 +5,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../core/models/issue.dart';
@@ -57,10 +55,10 @@ class IssueMapPage extends StatefulWidget {
 
 class _IssueMapPageState extends State<IssueMapPage>
     with TickerProviderStateMixin {
-  static const _mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
+  static const _mapStyleUrl = '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256,"attribution":"\u00a9 OpenStreetMap contributors"}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom = 6.0;
-  static const _userZoom = 16.5;
+  static const _userZoom = 15.0;
 
   LatLngBounds get _philippinesBounds => LatLngBounds(
         southwest: const LatLng(4.5, 116.0),
@@ -80,10 +78,12 @@ class _IssueMapPageState extends State<IssueMapPage>
 
   bool _loading = true;
   bool _styleLoaded = false;
+  bool _mapReady = false;
   bool _cameraMovedToUser = false;
   bool _matchingIdea = false;
   bool _generatingDemoIssue = false;
   bool _sidebarOpen = false;
+
 
   // ✅🔥 THIS IS THE FIX (missing variable)
   String? _errorMessage;
@@ -93,7 +93,6 @@ class _IssueMapPageState extends State<IssueMapPage>
   Offset? _userScreenPosition;
   final Map<String, Offset> _issueScreenPositions = {};
   double _bearing = 0.0;
-  String? _patchedStyle;
 
   bool _isDarkMode = true;
   bool get _isDark => _isDarkMode;
@@ -108,11 +107,6 @@ class _IssueMapPageState extends State<IssueMapPage>
     parent: _sidebarAnim,
     curve: Curves.easeOutExpo,
   );
-
-  late final AnimationController _scanAnim = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 4),
-  )..repeat();
 
   // ── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -134,12 +128,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     super.didChangeDependencies();
     final currentMode = AppTheme.of(context).themeMode;
     _isDarkMode = currentMode == ThemeMode.dark;
-    if (_lastThemeMode != currentMode) {
-      _styleLoaded = false;
-      _patchedStyle = null;
-      _loadPatchedStyle();
-      _lastThemeMode = currentMode;
-    }
+    _lastThemeMode = currentMode;
   }
 
   @override
@@ -147,101 +136,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     _mapController?.removeListener(_onCameraMove);
     _ideaController.dispose();
     _sidebarAnim.dispose();
-    _scanAnim.dispose();
     super.dispose();
-  }
-
-  // ── Map style patching ──────────────────────────────────────────────────────
-
-  /// Fetches and patches the liberty style to a soft pastel aesthetic.
-  Future<void> _loadPatchedStyle() async {
-    try {
-      final res = await http.get(Uri.parse(_mapStyleUrl));
-      if (res.statusCode != 200) return;
-      final style = jsonDecode(res.body) as Map<String, dynamic>;
-      final layers = style['layers'] as List<dynamic>;
-
-      // Soft warm pastel palette.
-      const patches = <String, String>{
-        'background': '#FFF8E7',
-        'park': '#D4EDDA',
-        'landuse_residential': '#FFF3CD',
-        'landcover_wood': '#C8E6C9',
-        'landcover_grass': '#DCEDC8',
-        'landcover_wetland': '#B2EBF2',
-        'landcover_sand': '#FFF9C4',
-        'landcover_ice': '#E3F2FD',
-        'landuse_cemetery': '#F3E5F5',
-        'landuse_hospital': '#FCE4EC',
-        'landuse_school': '#FFF8E1',
-        'landuse_pitch': '#C8E6C9',
-        'landuse_track': '#DCEDC8',
-        'aeroway_fill': '#F5F5F5',
-        'water': '#B3E5FC',
-        'waterway_river': '#81D4FA',
-        'waterway_other': '#B3E5FC',
-        'waterway_tunnel': '#90CAF9',
-        'road_motorway': '#FFD60A',
-        'road_motorway_casing': '#FFC107',
-        'road_motorway_link': '#FFD60A',
-        'road_motorway_link_casing': '#FFC107',
-        'road_trunk_primary': '#FFCC02',
-        'road_trunk_primary_casing': '#FFB300',
-        'road_secondary_tertiary': '#FFE082',
-        'road_secondary_tertiary_casing': '#FFD54F',
-        'road_minor': '#EEEEEE',
-        'road_minor_casing': '#E0E0E0',
-        'road_link': '#FFE082',
-        'road_link_casing': '#FFD54F',
-        'road_service_track': '#F5F5F5',
-        'road_service_track_casing': '#EEEEEE',
-        'road_path_pedestrian': '#F5F5F5',
-        'bridge_motorway': '#FFD60A',
-        'bridge_motorway_casing': '#FFC107',
-        'bridge_trunk_primary': '#FFCC02',
-        'bridge_trunk_primary_casing': '#FFB300',
-        'bridge_secondary_tertiary': '#FFE082',
-        'bridge_street': '#EEEEEE',
-        'bridge_motorway_link': '#FFD60A',
-        'bridge_link': '#FFE082',
-        'bridge_service_track': '#F5F5F5',
-        'bridge_path_pedestrian': '#F5F5F5',
-        'tunnel_motorway': '#FFC107',
-        'tunnel_trunk_primary': '#FFB300',
-        'tunnel_secondary_tertiary': '#FFD54F',
-        'tunnel_minor': '#E0E0E0',
-        'building': '#FFE0B2',
-        'road_major_rail': '#BDBDBD',
-        'road_transit_rail': '#BDBDBD',
-        'bridge_major_rail': '#BDBDBD',
-        'bridge_transit_rail': '#BDBDBD',
-        'boundary_2': '#FF8A65',
-        'boundary_3': '#FFAB91',
-      };
-
-      for (final layer in layers) {
-        final map = layer as Map<String, dynamic>;
-        final id = map['id'] as String? ?? '';
-        final type = map['type'] as String? ?? '';
-        final paint = Map<String, dynamic>.from(
-            map['paint'] as Map<String, dynamic>? ?? {});
-
-        if (patches.containsKey(id)) {
-          final color = patches[id]!;
-          if (type == 'background') {
-            paint['background-color'] = color;
-          } else if (type == 'fill') {
-            paint['fill-color'] = color;
-            paint['fill-opacity'] = 1.0;
-          } else if (type == 'line') {
-            paint['line-color'] = color;
-          }
-          map['paint'] = paint;
-        }
-      }
-
-      if (mounted) setState(() => _patchedStyle = jsonEncode(style));
-    } catch (_) {}
   }
 
   // ── Data ────────────────────────────────────────────────────────────────────
@@ -255,8 +150,12 @@ class _IssueMapPageState extends State<IssueMapPage>
           _errorMessage = null;
           _loading = false;
         });
-        await _renderIssuePins();
-        await _updateIssueScreenPositions();
+        // Wait for map to be ready before projecting coordinates
+        if (_styleLoaded && _mapReady) {
+          await _renderIssuePins();
+          await Future.delayed(const Duration(milliseconds: 300));
+          await _updateIssueScreenPositions();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -273,71 +172,31 @@ class _IssueMapPageState extends State<IssueMapPage>
   void _onMapCreated(MapLibreMapController controller) {
     _mapController = controller;
     controller.addListener(_onCameraMove);
+    setState(() => _mapReady = true);
   }
 
   Future<void> _onStyleLoaded() async {
     _styleLoaded = true;
-    final controller = _mapController;
-    if (controller != null) {
-      const labelSizes = {
-        'label_country_1': 26.0,
-        'label_country_2': 24.0,
-        'label_country_3': 22.0,
-        'label_state': 18.0,
-        'label_city_capital': 16.0,
-        'label_city': 15.0,
-        'label_town': 13.0,
-        'label_village': 11.0,
-        'label_other': 10.0,
-      };
-
-      for (final entry in labelSizes.entries) {
-        try {
-          await controller.setLayerProperties(
-            entry.key,
-            SymbolLayerProperties(
-              textColor: '#FFD60A',
-              textSize: entry.value,
-              textHaloColor: '#080C14',
-              textHaloWidth: 2.5,
-              textHaloBlur: 0,
-            ),
-          );
-        } catch (_) {}
-      }
-
-      const hideLayers = [
-        'poi_r20',
-        'poi_r7',
-        'poi_r1',
-        'poi_transit',
-        'airport',
-      ];
-      for (final layer in hideLayers) {
-        try {
-          await controller.setLayerVisibility(layer, false);
-        } catch (_) {}
-      }
-    }
     await _moveCameraToUserLocation();
     await _renderIssuePins();
+    await Future.delayed(const Duration(milliseconds: 600));
     await _updateIssueScreenPositions();
-    // Refresh blip position in case location resolved before style was ready.
-    await Future.delayed(const Duration(milliseconds: 400));
     await _updateUserScreenPosition();
   }
 
   Future<void> _updateUserScreenPosition() async {
     final controller = _mapController;
     final pos = _userPosition;
-    if (controller == null || pos == null) return;
-    final point = await controller.toScreenLocation(
-      LatLng(pos.latitude, pos.longitude),
-    );
-    if (mounted) {
-      setState(() =>
-          _userScreenPosition = Offset(point.x.toDouble(), point.y.toDouble()));
-    }
+    if (controller == null || pos == null || !_styleLoaded) return;
+    try {
+      final point = await controller.toScreenLocation(
+        LatLng(pos.latitude, pos.longitude),
+      );
+      if (mounted) {
+        setState(() => _userScreenPosition =
+            Offset(point.x.toDouble(), point.y.toDouble()));
+      }
+    } catch (_) {}
   }
 
   void _onCameraMove() {
@@ -389,7 +248,7 @@ class _IssueMapPageState extends State<IssueMapPage>
 
     await controller.animateCamera(
       CameraUpdate.newCameraPosition(
-        CameraPosition(target: userLatLng, zoom: _userZoom, tilt: 60),
+        CameraPosition(target: userLatLng, zoom: _userZoom, tilt: 0),
       ),
     );
 
@@ -406,7 +265,7 @@ class _IssueMapPageState extends State<IssueMapPage>
 
   Future<void> _updateIssueScreenPositions() async {
     final controller = _mapController;
-    if (!_styleLoaded || controller == null || _issues.isEmpty) {
+    if (!_styleLoaded || !_mapReady || controller == null || _issues.isEmpty) {
       if (_issueScreenPositions.isNotEmpty && mounted) {
         setState(_issueScreenPositions.clear);
       }
@@ -418,8 +277,11 @@ class _IssueMapPageState extends State<IssueMapPage>
       try {
         final screenPoint =
             await controller.toScreenLocation(LatLng(issue.lat, issue.lng));
-        positions[issue.issueId] =
-            Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
+        final offset = Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
+        // Only keep positions that are actually on-screen (non-zero)
+        if (offset.dx != 0 || offset.dy != 0) {
+          positions[issue.issueId] = offset;
+        }
       } catch (_) {}
     }
 
@@ -547,11 +409,11 @@ class _IssueMapPageState extends State<IssueMapPage>
         children: [
           // ── Base map ───────────────────────────────────────────────────────
           MapLibreMap(
-            styleString: _patchedStyle ?? _mapStyleUrl,
+            styleString: _mapStyleUrl,
             initialCameraPosition: const CameraPosition(
               target: _defaultCenter,
               zoom: _defaultZoom,
-              tilt: 60,
+              tilt: 0,
             ),
             cameraTargetBounds: CameraTargetBounds(_philippinesBounds),
             minMaxZoomPreference: const MinMaxZoomPreference(5.5, 20.0),
@@ -562,14 +424,6 @@ class _IssueMapPageState extends State<IssueMapPage>
             myLocationEnabled: false,
             attributionButtonMargins: const Point(-100, -100),
             logoViewMargins: const Point(-100, -100),
-          ),
-
-          // ── Scanline overlay ───────────────────────────────────────────────
-          IgnorePointer(
-            child: CustomPaint(
-              painter: _ScanlinePainter(_scanAnim),
-              child: const SizedBox.expand(),
-            ),
           ),
 
           // ── User location blip ─────────────────────────────────────────────
@@ -690,7 +544,7 @@ class _IssueMapPageState extends State<IssueMapPage>
                           _defaultCenter,
                       zoom:
                           _mapController?.cameraPosition?.zoom ?? _defaultZoom,
-                      tilt: _mapController?.cameraPosition?.tilt ?? 60,
+                      tilt: 0,
                       bearing: 0,
                     ),
                   ),
@@ -752,39 +606,6 @@ class _IssueMapPageState extends State<IssueMapPage>
 // Sub-widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Horizontal scanline grid drawn over the entire screen.
-class _ScanlinePainter extends CustomPainter {
-  _ScanlinePainter(this.animation) : super(repaint: animation);
-  final Animation<double> animation;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFFFD60A).withValues(alpha: 0.028)
-      ..strokeWidth = 1;
-
-    const spacing = 4.0;
-    final rows = (size.height / spacing).ceil();
-    for (var i = 0; i < rows; i++) {
-      final y = i * spacing;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    // Animated sweep line
-    final sweepY = size.height * animation.value;
-    canvas.drawLine(
-      Offset(0, sweepY),
-      Offset(size.width, sweepY),
-      Paint()
-        ..color = const Color(0xFFFFD60A).withValues(alpha: 0.12)
-        ..strokeWidth = 1.5,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ScanlinePainter old) => true;
-}
-
 /// Terminal-style top navigation bar.
 class _TerminalTopBar extends StatelessWidget {
   const _TerminalTopBar({
@@ -816,10 +637,10 @@ class _TerminalTopBar extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: _darkPanel.withValues(alpha: 0.88),
+            color: Colors.white.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: _cyberGreen.withValues(alpha: 0.30),
+              color: const Color(0xFFFFD60A).withValues(alpha: 0.45),
               width: 1,
             ),
           ),
@@ -1426,16 +1247,16 @@ class _FabButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: _darkPanel.withValues(alpha: 0.88),
+              color: const Color(0xFFFFD60A).withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: _cyberGreen.withValues(alpha: 0.35),
+                color: const Color(0xFFFFD60A).withValues(alpha: 0.50),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: _cyberGreen.withValues(alpha: 0.10),
-                  blurRadius: 12,
+                  color: const Color(0xFFFFD60A).withValues(alpha: 0.15),
+                  blurRadius: 16,
                 ),
               ],
             ),
@@ -1482,16 +1303,16 @@ class _IdeaDock extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           decoration: BoxDecoration(
-            color: _darkPanel.withValues(alpha: 0.9),
+            color: Colors.white.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: _cyberGreen.withValues(alpha: 0.35),
+              color: const Color(0xFFFFD60A).withValues(alpha: 0.45),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: _cyberGreen.withValues(alpha: 0.08),
-                blurRadius: 20,
+                color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
+                blurRadius: 24,
                 spreadRadius: 0,
                 offset: const Offset(0, 4),
               ),

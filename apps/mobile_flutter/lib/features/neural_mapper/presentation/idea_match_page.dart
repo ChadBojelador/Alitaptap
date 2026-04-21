@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -91,8 +92,8 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
         try {
           final issue = await _getIssueByIdUseCase(match.issueId);
           _issueById[match.issueId] = issue;
-        } catch (_) {
-          // Keep rendering match even if issue details fail to load.
+        } catch (e) {
+          debugPrint('Failed to load issue ${match.issueId}: $e');
         }
       }
 

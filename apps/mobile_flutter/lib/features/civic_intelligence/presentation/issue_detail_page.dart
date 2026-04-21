@@ -107,7 +107,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
         elevation: 0,
         title: Text(
           'Issue Details',
-          style: GoogleFonts.sfProDisplay(
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
             fontSize: 17,
           ),
@@ -120,7 +120,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
               ? Center(
                   child: Text(
                     'Issue not found',
-                    style: GoogleFonts.sfProText(
+                    style: GoogleFonts.inter(
                       fontSize: 15,
                       color: isDark
                           ? const Color(0xFF8E8E93)
@@ -143,7 +143,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                           ),
                           child: Text(
                             _issue!.status.toUpperCase(),
-                            style: GoogleFonts.sfProText(
+                            style: GoogleFonts.inter(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                               fontSize: 12,
@@ -162,7 +162,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                         const SizedBox(width: 6),
                         Text(
                           _issue!.createdAt.split('T').first,
-                          style: GoogleFonts.sfProText(
+                          style: GoogleFonts.inter(
                             fontSize: 13,
                             color: isDark
                                 ? const Color(0xFF8E8E93)
@@ -176,7 +176,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                     // Title
                     Text(
                       _issue!.title,
-                      style: GoogleFonts.sfProDisplay(
+                      style: GoogleFonts.inter(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
                         color: isDark
@@ -190,7 +190,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                     // Description
                     Text(
                       _issue!.description,
-                      style: GoogleFonts.sfProText(
+                      style: GoogleFonts.inter(
                         fontSize: 17,
                         color: isDark
                             ? const Color(0xFFE5E5EA)
@@ -231,7 +231,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                               children: [
                                 Text(
                                   'Location',
-                                  style: GoogleFonts.sfProText(
+                                  style: GoogleFonts.inter(
                                     fontSize: 13,
                                     color: isDark
                                         ? const Color(0xFF8E8E93)
@@ -241,7 +241,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                                 const SizedBox(height: 2),
                                 Text(
                                   '${_issue!.lat.toStringAsFixed(5)}, ${_issue!.lng.toStringAsFixed(5)}',
-                                  style: GoogleFonts.sfProText(
+                                  style: GoogleFonts.inter(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                     color: isDark
@@ -275,7 +275,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                                 ),
                                 child: Text(
                                   tag,
-                                  style: GoogleFonts.sfProText(
+                                  style: GoogleFonts.inter(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                     color: isDark
@@ -296,7 +296,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                       children: [
                         Text(
                           'Research Title Suggestions',
-                          style: GoogleFonts.sfProDisplay(
+                          style: GoogleFonts.inter(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: isDark
@@ -331,7 +331,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                                 const SizedBox(width: 4),
                                 Text(
                                   'Regenerate',
-                                  style: GoogleFonts.sfProText(
+                                  style: GoogleFonts.inter(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                     color: isDark
@@ -372,7 +372,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                             Expanded(
                               child: Text(
                                 _suggestionError!,
-                                style: GoogleFonts.sfProText(
+                                style: GoogleFonts.inter(
                                   fontSize: 14,
                                   color: Colors.red,
                                 ),
@@ -387,7 +387,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Text(
                             'No suggestions yet.',
-                            style: GoogleFonts.sfProText(
+                            style: GoogleFonts.inter(
                               fontSize: 15,
                               color: isDark
                                   ? const Color(0xFF8E8E93)
@@ -425,7 +425,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                                     ),
                                     child: Text(
                                       '${i + 1}',
-                                      style: GoogleFonts.sfProText(
+                                      style: GoogleFonts.inter(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
                                         color: const Color(0xFFFFD60A),
@@ -436,7 +436,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                                   Expanded(
                                     child: Text(
                                       _titleSuggestions!.suggestions[i],
-                                      style: GoogleFonts.sfProText(
+                                      style: GoogleFonts.inter(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,
                                         color: isDark
@@ -452,7 +452,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                           const SizedBox(height: 8),
                           Text(
                             'Generated: ${_titleSuggestions!.generatedAt.split('T').first}',
-                            style: GoogleFonts.sfProText(
+                            style: GoogleFonts.inter(
                               fontSize: 13,
                               color: isDark
                                   ? const Color(0xFF8E8E93)

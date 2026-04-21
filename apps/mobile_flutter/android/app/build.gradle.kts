@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.alitaptap.alitaptap_mobile"
-    compileSdk = 36
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
