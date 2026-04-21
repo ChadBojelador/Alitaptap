@@ -32,8 +32,8 @@ const _barBg        = Color(0xFF1A1A2E);
 const _barBorder    = Color(0xFF2D2D4A);
 const _barIcon      = Color(0xFFF1F1F1);
 const _barIconMuted = Color(0xFF9CA3AF);
-const _barTitle     = Color(0xFFFFFFFF);
-const _barSubtitle  = Color(0xFFB0B8C8);
+const _barTitle     = Color(0xFFFFC700);
+const _barSubtitle  = Color(0xFFFFE066);
 
 /// Full-screen cutesy map page for Alitaptap.
 /// Warm pastel palette, rounded cards, friendly Nunito font.
