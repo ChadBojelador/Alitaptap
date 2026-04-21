@@ -32,6 +32,7 @@ class _CreatePageState extends State<CreatePage> {
   final _problemCtrl = TextEditingController();
   final _ideaCtrl = TextEditingController();
   final _approachCtrl = TextEditingController();
+  final _aiDescriptionCtrl = TextEditingController();
   
   bool _aiGenerating = false;
   ResearchBackbone? _generatedBackbone;
@@ -66,6 +67,7 @@ class _CreatePageState extends State<CreatePage> {
     _titleEditCtrl.dispose();
     _methodologyEditCtrl.dispose();
     _impactEditCtrl.dispose();
+    _aiDescriptionCtrl.dispose();
     for (var ctrl in _sdgEditCtrls) {
       ctrl.dispose();
     }
@@ -142,7 +144,7 @@ class _CreatePageState extends State<CreatePage> {
                     color: PdfColors.grey,
                   ),
                 ),
-                pw.Divider(margin: const pw.EdgeInsets.symmetric(vertical: 16)),
+                pw.SizedBox(height: 16),
                 pw.Text(
                   'Project Title',
                   style: pw.TextStyle(
@@ -233,7 +235,9 @@ class _CreatePageState extends State<CreatePage> {
     setState(() => _aiGenerating = true);
 
     try {
-      final backbone = await ApiService.generateResearchBackbone(
+      final apiService = ApiService();
+      final backbone = await apiService.generateResearchBackbone(
+        studentId: 'user_id',
         problem: problem,
         sdgOrIdea: idea,
         approach: approach,

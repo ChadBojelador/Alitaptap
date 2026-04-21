@@ -1,12 +1,6 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'research_backbone.g.dart';
-
-@JsonSerializable()
 class FeasibilityScore {
   final String cost;
   final String time;
-  @JsonKey(name: 'data_availability')
   final String dataAvailability;
 
   FeasibilityScore({
@@ -15,22 +9,26 @@ class FeasibilityScore {
     required this.dataAvailability,
   });
 
-  factory FeasibilityScore.fromJson(Map<String, dynamic> json) =>
-      _$FeasibilityScoreFromJson(json);
+  factory FeasibilityScore.fromJson(Map<String, dynamic> json) {
+    return FeasibilityScore(
+      cost: json['cost'] as String,
+      time: json['time'] as String,
+      dataAvailability: json['data_availability'] as String,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$FeasibilityScoreToJson(this);
+  Map<String, dynamic> toJson() => {
+        'cost': cost,
+        'time': time,
+        'data_availability': dataAvailability,
+      };
 }
 
-@JsonSerializable()
 class ResearchBackbone {
-  @JsonKey(name: 'research_title')
   final String researchTitle;
   final String methodology;
-  @JsonKey(name: 'sdg_alignment')
   final List<String> sdgAlignment;
-  @JsonKey(name: 'feasibility_score')
   final FeasibilityScore feasibilityScore;
-  @JsonKey(name: 'community_impact_level')
   final String communityImpactLevel;
 
   ResearchBackbone({
@@ -41,8 +39,23 @@ class ResearchBackbone {
     required this.communityImpactLevel,
   });
 
-  factory ResearchBackbone.fromJson(Map<String, dynamic> json) =>
-      _$ResearchBackboneFromJson(json);
+  factory ResearchBackbone.fromJson(Map<String, dynamic> json) {
+    return ResearchBackbone(
+      researchTitle: json['research_title'] as String,
+      methodology: json['methodology'] as String,
+      sdgAlignment: List<String>.from(json['sdg_alignment'] as List),
+      feasibilityScore: FeasibilityScore.fromJson(
+        json['feasibility_score'] as Map<String, dynamic>,
+      ),
+      communityImpactLevel: json['community_impact_level'] as String,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$ResearchBackboneToJson(this);
+  Map<String, dynamic> toJson() => {
+        'research_title': researchTitle,
+        'methodology': methodology,
+        'sdg_alignment': sdgAlignment,
+        'feasibility_score': feasibilityScore.toJson(),
+        'community_impact_level': communityImpactLevel,
+      };
 }
