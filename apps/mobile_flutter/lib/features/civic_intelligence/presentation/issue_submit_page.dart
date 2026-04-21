@@ -102,7 +102,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   }
 
   Future<void> _onMapTap(Point<double> point, LatLng latLng) async {
-    setState(() {\n      _lat = latLng.latitude;
+    setState(() {
+      _lat = latLng.latitude;
       _lng = latLng.longitude;
     });
     await _renderSelectedPin();
