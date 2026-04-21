@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     # Add to .env: HUGGINGFACE_API_KEY=hf_...
     huggingface_api_key: str = ''
 
+    # NewsAPI key — for fetching news articles.
+    # Get key from https://newsapi.org
+    # Add to .env: NEWSAPI_KEY=...
+    newsapi_key: str = ''
+
     # AI feature flags — set to True in .env to enable each AI service.
     # When False, services fall back to stubs/heuristics.
     # Add to .env: AI_TITLE_SUGGESTIONS_ENABLED=true
