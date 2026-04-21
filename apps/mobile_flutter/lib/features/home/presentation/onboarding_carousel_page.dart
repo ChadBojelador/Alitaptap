@@ -59,7 +59,7 @@ class _OnboardingCarouselPageState extends State<OnboardingCarouselPage> {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 420),
-        pageBuilder: (_, __, ___) => MainShell(onToggleTheme: widget.onToggleTheme),
+        pageBuilder: (_, __, ___) => MainShell(role: 'student', onToggleTheme: widget.onToggleTheme),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
