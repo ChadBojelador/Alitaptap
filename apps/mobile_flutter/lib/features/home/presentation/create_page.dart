@@ -223,7 +223,7 @@ class _CreatePageState extends State<CreatePage> {
   Future<void> _generateWithAI() async {
     final problem = _problemCtrl.text.trim();
     final idea = _ideaCtrl.text.trim();
-    final approach = _approachCtrl.text.trim();
+    final approach = _aiDescriptionCtrl.text.trim();
 
     if (problem.isEmpty || idea.isEmpty || approach.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
