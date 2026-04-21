@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app.dart';
-import '../features/civic_intelligence/presentation/issue_map_page.dart';
+import '../features/chat/presentation/chat_ai_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
 import '../features/home/presentation/analytics_page.dart';
 import '../features/home/presentation/community_home_page.dart';
@@ -28,10 +28,10 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
-  void _openMap() {
+  void _openChatAI() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => IssueMapPage(onToggleTheme: widget.onToggleTheme),
+        builder: (_) => const ChatAIPage(),
       ),
     );
   }
@@ -60,7 +60,7 @@ class _MainShellState extends State<MainShell> {
         index: safeIndex,
         isDark: isDark,
         onTap: (i) => setState(() => _index = i),
-        onMapTap: _openMap,
+        onChatAITap: _openChatAI,
       ),
     );
   }
@@ -71,13 +71,13 @@ class _BottomNav extends StatelessWidget {
     required this.index,
     required this.isDark,
     required this.onTap,
-    required this.onMapTap,
+    required this.onChatAITap,
   });
 
   final int index;
   final bool isDark;
   final ValueChanged<int> onTap;
-  final VoidCallback onMapTap;
+  final VoidCallback onChatAITap;
 
   static const _items = [
     (icon: Icons.home_rounded, label: 'Home'),
@@ -170,7 +170,7 @@ class _BottomNav extends StatelessWidget {
           Positioned(
             top: -30,
             child: GestureDetector(
-              onTap: onMapTap,
+              onTap: onChatAITap,
               child: Container(
                 width: 56,
                 height: 56,
@@ -190,10 +190,11 @@ class _BottomNav extends StatelessWidget {
                     width: 3,
                   ),
                 ),
-                child: const Icon(
-                  Icons.map_rounded,
-                  color: _dark,
-                  size: 26,
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/branding/logo_source.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
