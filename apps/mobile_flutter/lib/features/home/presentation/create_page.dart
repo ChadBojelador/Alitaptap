@@ -74,7 +74,7 @@ class _CreatePageState extends State<CreatePage> {
     super.dispose();
   }
 
-  void _saveProject(String title, String description, String sdg) {
+  void _saveProject(String title, String description, String sdg, {bool isAIGuided = false}) {
     setState(() {
       if (_editingProjectIndex != null) {
         _savedProjects[_editingProjectIndex!] = {
@@ -82,6 +82,7 @@ class _CreatePageState extends State<CreatePage> {
           'description': description,
           'sdg': sdg,
           'date': _savedProjects[_editingProjectIndex!]['date']!,
+          'mode': isAIGuided ? 'ai' : 'manual',
         };
         _editingProjectIndex = null;
       } else {
@@ -90,6 +91,7 @@ class _CreatePageState extends State<CreatePage> {
           'description': description,
           'sdg': sdg,
           'date': DateTime.now().toString().split(' ')[0],
+          'mode': isAIGuided ? 'ai' : 'manual',
         });
       }
     });
@@ -97,13 +99,14 @@ class _CreatePageState extends State<CreatePage> {
 
   void _loadProjectForEdit(int index) {
     final project = _savedProjects[index];
+    final isAI = project['mode'] == 'ai';
     setState(() {
       _titleCtrl.text = project['title']!;
       _descriptionCtrl.text = project['description']!;
       _sdgCtrl.text = project['sdg']!;
       _editingProjectIndex = index;
       _showModeSelection = false;
-      _isAIGuided = false;
+      _isAIGuided = isAI;
     });
   }
 
@@ -789,7 +792,7 @@ class _CreatePageState extends State<CreatePage> {
                     );
                     return;
                   }
-                  _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text);
+              _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text, isAIGuided: false);
                   _titleCtrl.clear();
                   _descriptionCtrl.clear();
                   _sdgCtrl.clear();
@@ -1181,7 +1184,7 @@ class _CreatePageState extends State<CreatePage> {
           const SizedBox(height: 24),
           GestureDetector(
             onTap: () {
-              _saveProject(_titleEditCtrl.text, _methodologyEditCtrl.text, _generatedBackbone!.sdgAlignment.join(', '));
+              _saveProject(_titleEditCtrl.text, _methodologyEditCtrl.text, _generatedBackbone!.sdgAlignment.join(', '), isAIGuided: true);
               _problemCtrl.clear();
               _ideaCtrl.clear();
               _approachCtrl.clear();
