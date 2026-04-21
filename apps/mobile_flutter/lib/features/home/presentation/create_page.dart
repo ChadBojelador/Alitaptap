@@ -225,9 +225,21 @@ class _CreatePageState extends State<CreatePage> {
     final idea = _ideaCtrl.text.trim();
     final approach = _aiDescriptionCtrl.text.trim();
 
-    if (problem.isEmpty || idea.isEmpty || approach.isEmpty) {
+    if (problem.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
+        const SnackBar(content: Text('Problem must be at least 10 characters')),
+      );
+      return;
+    }
+    if (idea.length < 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Idea/SDG must be at least 5 characters')),
+      );
+      return;
+    }
+    if (approach.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Approach must be at least 10 characters')),
       );
       return;
     }
