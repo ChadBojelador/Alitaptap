@@ -6,7 +6,6 @@ import '../../../services/api_service.dart';
 import '../../../core/models/issue.dart';
 import '../../civic_intelligence/presentation/issue_detail_page.dart';
 import '../../civic_intelligence/presentation/issue_map_page.dart';
-import '../../civic_intelligence/presentation/issue_submit_page.dart';
 
 const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
@@ -255,17 +254,6 @@ class _StudentHomePageState extends State<StudentHomePage>
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) =>
                             IssueMapPage(showIdeaDock: true, studentId: uid),
-                      )),
-                    ),
-                    const SizedBox(height: 12),
-                    _ActionTile(
-                      icon: Icons.add_location_alt_rounded,
-                      title: 'Report a Problem',
-                      subtitle: 'Pin a community issue on the map.',
-                      isPrimary: false,
-                      isDark: isDark,
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => IssueSubmitPage(reporterId: uid),
                       )),
                     ),
                   ]),
