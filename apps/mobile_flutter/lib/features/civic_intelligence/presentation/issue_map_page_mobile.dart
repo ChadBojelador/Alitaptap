@@ -27,6 +27,14 @@ const _textPrimary = Color(0xFFE0FFF8);
 const _textMuted   = Color(0xFF8A7340);
 const _userLocBlue = Color(0xFF00BFFF);
 
+// ─── Map overlay tokens (dark, readable over light map) ──────────────────────
+const _barBg       = Color(0xFF1A1A2E);   // deep navy glass
+const _barBorder   = Color(0xFF2D2D4A);   // subtle dark outline
+const _barIcon     = Color(0xFFF1F1F1);   // near-white icons
+const _barIconMuted = Color(0xFF9CA3AF);  // muted icons
+const _barTitle    = Color(0xFFFFFFFF);   // white title
+const _barSubtitle = Color(0xFFB0B8C8);  // light muted subtitle
+
 /// Full-screen cyber-terminal map page — mobile variant.
 ///
 /// Differences from web:
@@ -695,16 +703,23 @@ class _TerminalTopBar extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color:        _darkPanel.withValues(alpha: 0.88),
+            color:        _barBg.withValues(alpha: 0.82),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: _cyberGreen.withValues(alpha: 0.30),
+              color: _barBorder,
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -734,7 +749,7 @@ class _TerminalTopBar extends StatelessWidget {
                     Text(
                       'ALITAPTAP // CIVIC-INTEL',
                       style: GoogleFonts.robotoMono(
-                        color:         _cyberGreen,
+                        color:         _barTitle,
                         fontSize:      10,
                         fontWeight:    FontWeight.w700,
                         letterSpacing: 1.8,
@@ -743,7 +758,7 @@ class _TerminalTopBar extends StatelessWidget {
                     Text(
                       '${issueCount.toString().padLeft(4, '0')} ISSUES LOADED',
                       style: GoogleFonts.robotoMono(
-                        color:         _textMuted,
+                        color:         _barSubtitle,
                         fontSize:      8,
                         letterSpacing: 1.2,
                       ),
@@ -776,9 +791,7 @@ class _TBtn extends StatelessWidget {
       onTap: onPressed,
       child: Icon(
         icon,
-        color: onPressed == null
-            ? _textMuted
-            : _cyberGreen,
+        color: onPressed == null ? _barIconMuted : _barIcon,
         size: 18,
       ),
     );
