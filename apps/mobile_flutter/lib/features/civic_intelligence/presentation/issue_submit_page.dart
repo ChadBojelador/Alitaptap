@@ -23,6 +23,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   String? _elaboratedText;
   String? _suggestedSDG;
   List<Map<String, String>> _savedReports = [];
+  int? _editingIndex;
+  bool _isEditingMode = false;
 
   @override
   void dispose() {
@@ -49,6 +51,53 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('✓ Report deleted')),
+    );
+  }
+
+  void _loadReportForEdit(int index) {
+    final report = _savedReports[index];
+    setState(() {
+      _editingIndex = index;
+      _isEditingMode = true;
+      _titleCtrl.text = report['title']!;
+      _descriptionCtrl.text = report['description']!;
+      _isAIGuided = false;
+    });
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _editingIndex = null;
+      _isEditingMode = false;
+      _titleCtrl.clear();
+      _descriptionCtrl.clear();
+      _problemCtrl.clear();
+      _elaboratedText = null;
+      _suggestedSDG = null;
+    });
+  }
+
+  void _updateReport() {
+    if (_titleCtrl.text.isEmpty || _descriptionCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+    setState(() {
+      _savedReports[_editingIndex!] = {
+        'title': _titleCtrl.text,
+        'description': _descriptionCtrl.text,
+        'sdg': _savedReports[_editingIndex!]['sdg']!,
+        'date': _savedReports[_editingIndex!]['date']!,
+      };
+      _editingIndex = null;
+      _isEditingMode = false;
+      _titleCtrl.clear();
+      _descriptionCtrl.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✓ Report updated successfully')),
     );
   }
 
@@ -126,7 +175,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       backgroundColor: bg,
       appBar: AppBar(
         title: Text(
-          'Report a Problem',
+          _isEditingMode ? 'Edit Report' : 'Report a Problem',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
       ),
@@ -164,103 +213,105 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
             ),
             const SizedBox(height: 24),
 
-            Text(
-              'Report Method',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textColor,
+            if (!_isEditingMode) ...[
+              Text(
+                'Report Method',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _isAIGuided = false),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: !_isAIGuided
-                            ? _amber
-                            : (isDark
-                                ? const Color(0xFF242424)
-                                : const Color(0xFFF5F5F5)),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _isAIGuided = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
                           color: !_isAIGuided
                               ? _amber
-                              : _amber.withValues(alpha: 0.2),
+                              : (isDark
+                                  ? const Color(0xFF242424)
+                                  : const Color(0xFFF5F5F5)),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: !_isAIGuided
+                                ? _amber
+                                : _amber.withValues(alpha: 0.2),
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.edit_note_rounded,
-                            color: !_isAIGuided ? _dark : subtleColor,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Manual',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.edit_note_rounded,
                               color: !_isAIGuided ? _dark : subtleColor,
+                              size: 18,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 6),
+                            Text(
+                              'Manual',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: !_isAIGuided ? _dark : subtleColor,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _isAIGuided = true),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _isAIGuided
-                            ? _amberBright
-                            : (isDark
-                                ? const Color(0xFF242424)
-                                : const Color(0xFFF5F5F5)),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _isAIGuided = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
                           color: _isAIGuided
                               ? _amberBright
-                              : _amberBright.withValues(alpha: 0.2),
+                              : (isDark
+                                  ? const Color(0xFF242424)
+                                  : const Color(0xFFF5F5F5)),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _isAIGuided
+                                ? _amberBright
+                                : _amberBright.withValues(alpha: 0.2),
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.auto_awesome_rounded,
-                            color: _isAIGuided ? _dark : subtleColor,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'AI-Guided',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome_rounded,
                               color: _isAIGuided ? _dark : subtleColor,
+                              size: 18,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 6),
+                            Text(
+                              'AI-Guided',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _isAIGuided ? _dark : subtleColor,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
+                ],
+              ),
+              const SizedBox(height: 32),
+            ],
 
-            if (_isAIGuided) ...[
+            if (_isAIGuided && !_isEditingMode) ...[
               Text(
                 'Describe the Problem',
                 style: GoogleFonts.poppins(
@@ -457,7 +508,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   ),
                 ),
               ],
-            ] else ...[
+            ] else if (!_isAIGuided || _isEditingMode) ...[
               Text(
                 'Problem Title',
                 style: GoogleFonts.poppins(
@@ -543,51 +594,125 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              GestureDetector(
-                onTap: () {
-                  if (_titleCtrl.text.isEmpty || _descriptionCtrl.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please fill all fields')),
-                    );
-                    return;
-                  }
-                  _saveReport(_titleCtrl.text, _descriptionCtrl.text, 'Manual Report');
-                  _titleCtrl.clear();
-                  _descriptionCtrl.clear();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('✓ Report saved successfully')),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: _amber,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _amber.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.save_rounded, color: _dark, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Save Report',
-                        style: GoogleFonts.poppins(
-                          color: _dark,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
+              if (_isEditingMode)
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _updateReport,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: _amber,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _amber.withValues(alpha: 0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.check_rounded, color: _dark, size: 20),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Update Report',
+                                style: GoogleFonts.poppins(
+                                  color: _dark,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _cancelEdit,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF242424)
+                                : const Color(0xFFF5F5F5),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _amber.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.close_rounded,
+                                  color: subtleColor, size: 20),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Cancel',
+                                style: GoogleFonts.poppins(
+                                  color: subtleColor,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                GestureDetector(
+                  onTap: () {
+                    if (_titleCtrl.text.isEmpty || _descriptionCtrl.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please fill all fields')),
+                      );
+                      return;
+                    }
+                    _saveReport(_titleCtrl.text, _descriptionCtrl.text, 'Manual Report');
+                    _titleCtrl.clear();
+                    _descriptionCtrl.clear();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('✓ Report saved successfully')),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _amber,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _amber.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.save_rounded, color: _dark, size: 20),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Save Report',
+                          style: GoogleFonts.poppins(
+                            color: _dark,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
 
             if (_savedReports.isNotEmpty) ...[
@@ -633,10 +758,20 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                                 ),
                               ),
                             ),
-                            GestureDetector(
-                              onTap: () => _deleteReport(index),
-                              child: Icon(Icons.delete_rounded,
-                                  color: subtleColor, size: 18),
+                            Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _loadReportForEdit(index),
+                                  child: Icon(Icons.edit_rounded,
+                                      color: _amber, size: 18),
+                                ),
+                                const SizedBox(width: 12),
+                                GestureDetector(
+                                  onTap: () => _deleteReport(index),
+                                  child: Icon(Icons.delete_rounded,
+                                      color: subtleColor, size: 18),
+                                ),
+                              ],
                             ),
                           ],
                         ),
