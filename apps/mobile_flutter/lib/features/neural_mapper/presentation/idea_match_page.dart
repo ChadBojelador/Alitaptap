@@ -16,11 +16,13 @@ class IdeaMatchPage extends StatefulWidget {
     required this.studentId,
     this.initialIdeaText,
     this.autoRun = false,
+    this.popWithBestMatch = false,
   });
 
   final String studentId;
   final String? initialIdeaText;
   final bool autoRun;
+  final bool popWithBestMatch;
 
   @override
   State<IdeaMatchPage> createState() => _IdeaMatchPageState();
@@ -106,6 +108,10 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
 
         if (result.matches.isNotEmpty) {
           final bestMatch = result.matches.first;
+          if (widget.popWithBestMatch) {
+            Navigator.of(context).pop(bestMatch.issueId);
+            return;
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(

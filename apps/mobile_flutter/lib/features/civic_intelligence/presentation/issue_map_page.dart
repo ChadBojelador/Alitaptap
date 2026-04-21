@@ -97,6 +97,8 @@ class _IssueMapPageState extends State<IssueMapPage>
   bool _isDarkMode = true;
   bool get _isDark => _isDarkMode;
   ThemeMode? _lastThemeMode;
+  Offset? _ideaDockAnchor;
+  String? _connectedIssueId;
 
   // Animations
   late final AnimationController _sidebarAnim = AnimationController(
@@ -106,6 +108,10 @@ class _IssueMapPageState extends State<IssueMapPage>
   late final Animation<double> _sidebarSlide = CurvedAnimation(
     parent: _sidebarAnim,
     curve: Curves.easeOutExpo,
+  );
+  late final AnimationController _connectionAnim = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1180),
   );
 
   // ── Lifecycle ───────────────────────────────────────────────────────────────
@@ -136,6 +142,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     _mapController?.removeListener(_onCameraMove);
     _ideaController.dispose();
     _sidebarAnim.dispose();
+    _connectionAnim.dispose();
     super.dispose();
   }
 
@@ -373,16 +380,83 @@ class _IssueMapPageState extends State<IssueMapPage>
     final studentId =
         widget.studentId ?? FirebaseAuth.instance.currentUser?.uid ?? 'anon';
     setState(() => _matchingIdea = true);
-    await Navigator.of(context).push(
+    final matchedIssueId = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (_) => IdeaMatchPage(
           studentId: studentId,
           initialIdeaText: idea,
           autoRun: true,
+          popWithBestMatch: true,
         ),
       ),
     );
     if (mounted) setState(() => _matchingIdea = false);
+    if (matchedIssueId != null) {
+      unawaited(_runConnectionAnimation(matchedIssueId));
+    }
+  }
+
+  Future<void> _runConnectionAnimation(String issueId) async {
+    var animationIssueId = issueId;
+    Offset? target = _issueScreenPositions[animationIssueId];
+    if (target == null) {
+      final issue = _issues.where((candidate) => candidate.issueId == issueId);
+      if (issue.isNotEmpty) {
+        await _mapController?.animateCamera(
+          CameraUpdate.newLatLng(LatLng(issue.first.lat, issue.first.lng)),
+        );
+      }
+      await Future.delayed(const Duration(milliseconds: 220));
+      await _updateIssueScreenPositions();
+      target = _issueScreenPositions[animationIssueId];
+    }
+
+    if (target == null) {
+      final fallbackIssueId = _closestVisibleIssueIdTo(issueId);
+      if (fallbackIssueId != null) {
+        animationIssueId = fallbackIssueId;
+        target = _issueScreenPositions[fallbackIssueId];
+      }
+    }
+
+    if (!mounted || _ideaDockAnchor == null || target == null) {
+      return;
+    }
+
+    _connectionAnim.stop();
+    setState(() => _connectedIssueId = animationIssueId);
+    await _connectionAnim.forward(from: 0);
+    if (mounted) {
+      setState(() => _connectedIssueId = null);
+    }
+  }
+
+  String? _closestVisibleIssueIdTo(String issueId) {
+    final origin = _issues.where((candidate) => candidate.issueId == issueId);
+    if (origin.isEmpty || _issueScreenPositions.isEmpty) return null;
+
+    String? bestId;
+    var bestDistance = double.infinity;
+    final anchor = origin.first;
+
+    for (final visibleId in _issueScreenPositions.keys) {
+      final candidate = _issues.where((issue) => issue.issueId == visibleId);
+      if (candidate.isEmpty) continue;
+      final dx = candidate.first.lat - anchor.lat;
+      final dy = candidate.first.lng - anchor.lng;
+      final distance = (dx * dx) + (dy * dy);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestId = visibleId;
+      }
+    }
+    return bestId;
+  }
+
+  void _onIdeaDockAnchorChanged(Offset anchor) {
+    if (_ideaDockAnchor == null || (_ideaDockAnchor! - anchor).distance > 0.5) {
+      setState(() => _ideaDockAnchor = anchor);
+    }
   }
 
   void _toggleSidebar() {
@@ -445,6 +519,39 @@ class _IssueMapPageState extends State<IssueMapPage>
                   child: const _RadarBlip(),
                 ),
               ),
+
+          // ── Idea-to-problem connection overlay ─────────────────────────────
+          if (_connectedIssueId != null &&
+              _ideaDockAnchor != null &&
+              _issueScreenPositions[_connectedIssueId!] != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _connectionAnim,
+                  builder: (context, _) {
+                    final t = _connectionAnim.value;
+                    final drawProgress = Curves.easeOutCubic
+                        .transform((t / 0.68).clamp(0.0, 1.0));
+                    final headProgress = Curves.easeOutExpo
+                        .transform((t / 0.82).clamp(0.0, 1.0));
+                    final fade = t < 0.72
+                        ? 1.0
+                        : 1 - Curves.easeIn.transform(((t - 0.72) / 0.28).clamp(0.0, 1.0));
+                    return CustomPaint(
+                      painter: _ConnectionLinePainter(
+                        source: _ideaDockAnchor!,
+                        target: _issueScreenPositions[_connectedIssueId!]!,
+                        progress: drawProgress,
+                        headProgress: headProgress,
+                        opacity: fade,
+                        phase: t,
+                        color: _cyberGreen,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
 
           // ── Top terminal bar ───────────────────────────────────────────────
           Positioned(
@@ -592,6 +699,7 @@ class _IssueMapPageState extends State<IssueMapPage>
                 controller: _ideaController,
                 isMatching: _matchingIdea,
                 onSubmit: _submitIdea,
+                onAnchorChanged: _onIdeaDockAnchorChanged,
               ),
             ),
         ],
@@ -955,6 +1063,110 @@ class _CompassPainter extends CustomPainter {
   bool shouldRepaint(_CompassPainter old) => false;
 }
 
+class _ConnectionLinePainter extends CustomPainter {
+  const _ConnectionLinePainter({
+    required this.source,
+    required this.target,
+    required this.progress,
+    required this.headProgress,
+    required this.opacity,
+    required this.phase,
+    required this.color,
+  });
+
+  final Offset source;
+  final Offset target;
+  final double progress;
+  final double headProgress;
+  final double opacity;
+  final double phase;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final clampedProgress = progress.clamp(0.0, 1.0);
+    final clampedOpacity = opacity.clamp(0.0, 1.0);
+    if (clampedProgress <= 0 || clampedOpacity <= 0) return;
+
+    final arcHeight = 80 + ((source - target).distance * 0.06);
+    final control = Offset(
+      (source.dx + target.dx) * 0.5,
+      min(source.dy, target.dy) - arcHeight,
+    );
+
+    final path = Path()
+      ..moveTo(source.dx, source.dy)
+      ..quadraticBezierTo(control.dx, control.dy, target.dx, target.dy);
+
+    final metric = path.computeMetrics().first;
+    final drawPath = metric.extractPath(0, metric.length * clampedProgress);
+    final headTangent = metric
+        .getTangentForOffset(metric.length * headProgress.clamp(0.0, 1.0));
+
+    final glow = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 7
+      ..color = color.withValues(alpha: 0.24 * clampedOpacity)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.6
+      ..color = color.withValues(alpha: 0.92 * clampedOpacity);
+
+    final trace = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 1.15
+      ..color = Colors.white.withValues(alpha: 0.62 * clampedOpacity);
+
+    canvas.drawPath(drawPath, glow);
+    canvas.drawPath(drawPath, stroke);
+    canvas.drawPath(drawPath, trace);
+
+    if (headTangent != null) {
+      final pulse = 0.88 + (0.12 * sin(phase * pi * 8));
+      canvas.drawCircle(
+        headTangent.position,
+        9 * pulse,
+        Paint()
+          ..color = color.withValues(alpha: 0.28 * clampedOpacity)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+      canvas.drawCircle(
+        headTangent.position,
+        3.2,
+        Paint()..color = Colors.white.withValues(alpha: 0.95 * clampedOpacity),
+      );
+    }
+
+    if (clampedProgress > 0.95) {
+      final pulse = (1 - clampedOpacity) * 9;
+      canvas.drawCircle(
+        target,
+        10 + pulse,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = color.withValues(alpha: 0.55 * clampedOpacity),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConnectionLinePainter oldDelegate) {
+    return oldDelegate.source != source ||
+        oldDelegate.target != target ||
+        oldDelegate.progress != progress ||
+        oldDelegate.headProgress != headProgress ||
+        oldDelegate.opacity != opacity ||
+        oldDelegate.phase != phase ||
+        oldDelegate.color != color;
+  }
+}
+
 /// Left collapsible sidebar listing all validated issues.
 class _IssueSidebar extends StatelessWidget {
   const _IssueSidebar({
@@ -1287,11 +1499,13 @@ class _IdeaDock extends StatefulWidget {
     required this.controller,
     required this.isMatching,
     required this.onSubmit,
+    required this.onAnchorChanged,
   });
 
   final TextEditingController controller;
   final bool isMatching;
   final VoidCallback onSubmit;
+  final ValueChanged<Offset> onAnchorChanged;
 
   @override
   State<_IdeaDock> createState() => _IdeaDockState();
@@ -1301,6 +1515,7 @@ class _IdeaDockState extends State<_IdeaDock>
     with SingleTickerProviderStateMixin {
   static const double _collapsedHeight = 56;
   static const double _expandedHeight = 128;
+  final GlobalKey _inputKey = GlobalKey();
 
   late final AnimationController _sheetController = AnimationController(
     vsync: this,
@@ -1353,6 +1568,16 @@ class _IdeaDockState extends State<_IdeaDock>
       child: AnimatedBuilder(
         animation: _sheetController,
         builder: (context, _) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final sheetBg = isDark ? const Color(0xFF151B24) : Colors.white;
+          final borderColor = isDark ? const Color(0xFF2A3342) : const Color(0xFFE5E7EB);
+          final iconColor = isDark ? const Color(0xFFE5E7EB) : const Color(0xFF111827);
+          final handleColor = isDark ? const Color(0xFF4B5563) : const Color(0xFFCBD5E1);
+          final dividerColor = isDark ? const Color(0xFF2A3342) : const Color(0xFFE5E7EB);
+          final inputBg = isDark ? const Color(0xFF0F141C) : const Color(0xFFFFFFFF);
+          final inputText = isDark ? const Color(0xFFE5E7EB) : const Color(0xFF202124);
+          final inputHint = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF80868B);
+          final searchIcon = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF5F6368);
           final progress = Curves.easeOutCubic.transform(_sheetController.value);
           final height =
               _collapsedHeight + ((_expandedHeight - _collapsedHeight) * progress);
@@ -1361,10 +1586,10 @@ class _IdeaDockState extends State<_IdeaDock>
             height: height,
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.98),
+              color: sheetBg.withValues(alpha: 0.98),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border.all(
-                color: const Color(0xFFE5E7EB),
+                color: borderColor,
                 width: 1,
               ),
               boxShadow: [
@@ -1389,16 +1614,16 @@ class _IdeaDockState extends State<_IdeaDock>
                           width: 42,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFCBD5E1),
+                            color: handleColor,
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.lightbulb_rounded,
-                              color: Color(0xFF111827),
+                              color: iconColor,
                               size: 16,
                             ),
                             const Spacer(),
@@ -1406,7 +1631,7 @@ class _IdeaDockState extends State<_IdeaDock>
                               progress < 0.5
                                   ? Icons.keyboard_arrow_up_rounded
                                   : Icons.keyboard_arrow_down_rounded,
-                              color: const Color(0xFF111827),
+                              color: iconColor,
                               size: 18,
                             ),
                           ],
@@ -1417,7 +1642,7 @@ class _IdeaDockState extends State<_IdeaDock>
                 ),
                 if (progress > 0.05) ...[
                   Divider(
-                    color: const Color(0xFFE5E7EB),
+                    color: dividerColor,
                     height: 1,
                     thickness: 1,
                   ),
@@ -1426,17 +1651,18 @@ class _IdeaDockState extends State<_IdeaDock>
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
                       child: Container(
+                        key: _inputKey,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
+                          color: inputBg,
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Row(
                           children: [
                             const SizedBox(width: 12),
-                            const Icon(
+                            Icon(
                               Icons.search_rounded,
-                              color: Color(0xFF5F6368),
+                              color: searchIcon,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -1446,13 +1672,13 @@ class _IdeaDockState extends State<_IdeaDock>
                                 textInputAction: TextInputAction.search,
                                 onSubmitted: (_) => widget.onSubmit(),
                                 style: GoogleFonts.robotoMono(
-                                  color: const Color(0xFF202124),
+                                  color: inputText,
                                   fontSize: 13,
                                 ),
                                 decoration: InputDecoration(
                                   hintText: 'Search research idea',
                                   hintStyle: GoogleFonts.robotoMono(
-                                    color: const Color(0xFF80868B),
+                                    color: inputHint,
                                     fontSize: 12,
                                   ),
                                   border: InputBorder.none,
@@ -1500,5 +1726,29 @@ class _IdeaDockState extends State<_IdeaDock>
         },
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _publishAnchorAfterBuild();
+  }
+
+  @override
+  void didUpdateWidget(covariant _IdeaDock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _publishAnchorAfterBuild();
+  }
+
+  void _publishAnchorAfterBuild() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final context = _inputKey.currentContext;
+      if (context == null) return;
+      final render = context.findRenderObject() as RenderBox?;
+      if (render == null || !render.hasSize) return;
+      final global = render.localToGlobal(Offset(render.size.width * 0.5, 4));
+      widget.onAnchorChanged(global);
+    });
   }
 }

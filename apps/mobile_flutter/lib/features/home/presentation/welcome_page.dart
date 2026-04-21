@@ -58,9 +58,14 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? const Color(0xFF141414) : const Color(0xFFF7F8FA);
+    final headingColor = isDark ? const Color(0xFFF1F1F1) : _dark;
+    final subtitleColor =
+        isDark ? const Color(0xFFB0B0B0) : const Color(0xFF9E9E9E);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: pageBg,
       body: Stack(
         children: [
           // Amber blob top-right
@@ -72,7 +77,7 @@ class _WelcomePageState extends State<WelcomePage>
               height: 280,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _amber.withValues(alpha: 0.15),
+                color: _amber.withValues(alpha: isDark ? 0.10 : 0.15),
               ),
             ),
           ),
@@ -85,7 +90,7 @@ class _WelcomePageState extends State<WelcomePage>
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _amber.withValues(alpha: 0.10),
+                color: _amber.withValues(alpha: isDark ? 0.08 : 0.10),
               ),
             ),
           ),
@@ -142,7 +147,7 @@ class _WelcomePageState extends State<WelcomePage>
                       Text(
                         'Ready to tap your next research project',
                         style: GoogleFonts.poppins(
-                          color: _dark,
+                          color: headingColor,
                           fontSize: 34,
                           fontWeight: FontWeight.w800,
                           height: 1.15,
@@ -155,7 +160,7 @@ class _WelcomePageState extends State<WelcomePage>
                       Text(
                         'Discover real community problems,\nmatch your ideas, and make an impact.',
                         style: GoogleFonts.poppins(
-                          color: const Color(0xFF9E9E9E),
+                          color: subtitleColor,
                           fontSize: 14,
                           height: 1.6,
                         ),
@@ -167,10 +172,22 @@ class _WelcomePageState extends State<WelcomePage>
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: const [
-                          _Pill(icon: Icons.map_rounded, label: 'Community Map'),
-                          _Pill(icon: Icons.auto_awesome_rounded, label: 'AI Matching'),
-                          _Pill(icon: Icons.science_rounded, label: 'Innovation Expo'),
+                        children: [
+                          _Pill(
+                            icon: Icons.map_rounded,
+                            label: 'Community Map',
+                            isDark: isDark,
+                          ),
+                          _Pill(
+                            icon: Icons.auto_awesome_rounded,
+                            label: 'AI Matching',
+                            isDark: isDark,
+                          ),
+                          _Pill(
+                            icon: Icons.science_rounded,
+                            label: 'Innovation Expo',
+                            isDark: isDark,
+                          ),
                         ],
                       ),
 
@@ -240,18 +257,19 @@ class _WelcomePageState extends State<WelcomePage>
 }
 
 class _Pill extends StatelessWidget {
-  const _Pill({required this.icon, required this.label});
+  const _Pill({required this.icon, required this.label, required this.isDark});
   final IconData icon;
   final String label;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: _amber.withValues(alpha: 0.12),
+        color: _amber.withValues(alpha: isDark ? 0.20 : 0.12),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: _amber.withValues(alpha: 0.3)),
+        border: Border.all(color: _amber.withValues(alpha: isDark ? 0.42 : 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -261,7 +279,7 @@ class _Pill extends StatelessWidget {
           Text(
             label,
             style: GoogleFonts.poppins(
-              color: _dark,
+              color: isDark ? const Color(0xFFECECEC) : _dark,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),

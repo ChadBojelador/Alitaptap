@@ -21,23 +21,33 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
+  void _openMap() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => IssueMapPage(onToggleTheme: widget.onToggleTheme),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final pages = [
       const StudentHomePage(),
-      IssueMapPage(onToggleTheme: widget.onToggleTheme),
       const ExpoFeedPage(),
       _ProfilePage(onToggleTheme: widget.onToggleTheme),
     ];
 
+    final safeIndex = _index.clamp(0, pages.length - 1);
+
     return Scaffold(
-      body: IndexedStack(index: _index, children: pages),
+      body: IndexedStack(index: safeIndex, children: pages),
       bottomNavigationBar: _BottomNav(
-        index: _index,
+        index: safeIndex,
         isDark: isDark,
         onTap: (i) => setState(() => _index = i),
+        onMapTap: _openMap,
       ),
     );
   }
@@ -48,15 +58,16 @@ class _BottomNav extends StatelessWidget {
     required this.index,
     required this.isDark,
     required this.onTap,
+    required this.onMapTap,
   });
 
   final int index;
   final bool isDark;
   final ValueChanged<int> onTap;
+  final VoidCallback onMapTap;
 
   static const _items = [
     (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.map_rounded, label: 'Map'),
     (icon: Icons.lightbulb_rounded, label: 'Expo'),
     (icon: Icons.person_rounded, label: 'Profile'),
   ];
@@ -68,67 +79,116 @@ class _BottomNav extends StatelessWidget {
         ? const Color(0xFF2A2A2A)
         : const Color(0xFFE0E0E0);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border(top: BorderSide(color: border, width: 1)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: List.generate(_items.length, (i) {
-              final item = _items[i];
-              final selected = i == index;
-              return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onTap(i),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? _amber.withValues(alpha: 0.15)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
+    return SizedBox(
+      height: 72,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: bg,
+                border: Border(top: BorderSide(color: border, width: 1)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 64,
+                  child: Row(
+                    children: List.generate(_items.length, (i) {
+                      final item = _items[i];
+                      final selected = i == index;
+                      return Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => onTap(i),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: selected
+                                      ? _amber.withValues(alpha: 0.15)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  item.icon,
+                                  size: 22,
+                                  color: selected
+                                      ? _amber
+                                      : isDark
+                                          ? const Color(0xFF616161)
+                                          : const Color(0xFF9E9E9E),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                item.label,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  fontWeight: selected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: selected
+                                      ? _amber
+                                      : isDark
+                                          ? const Color(0xFF616161)
+                                          : const Color(0xFF9E9E9E),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Icon(
-                          item.icon,
-                          size: 22,
-                          color: selected
-                              ? _amber
-                              : isDark
-                                  ? const Color(0xFF616161)
-                                  : const Color(0xFF9E9E9E),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.label,
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: selected
-                              ? _amber
-                              : isDark
-                                  ? const Color(0xFF616161)
-                                  : const Color(0xFF9E9E9E),
-                        ),
-                      ),
-                    ],
+                      );
+                    }),
                   ),
                 ),
-              );
-            }),
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            top: -30,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onMapTap,
+                child: Ink(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _amber,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _amber.withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      width: 3,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.map_rounded,
+                    color: _dark,
+                    size: 26,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -251,7 +311,7 @@ class _DarkModeTile extends StatelessWidget {
           const Spacer(),
           Switch.adaptive(
             value: isDarkMode,
-            activeColor: _amber,
+            activeThumbColor: _amber,
             onChanged: onChanged,
           ),
         ],
