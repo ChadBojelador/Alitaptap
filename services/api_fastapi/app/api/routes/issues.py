@@ -5,12 +5,14 @@ from enum import Enum
 import re
 from typing import Optional
 
+import logging
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app.core.firebase import get_db
 
 router = APIRouter(prefix='/issues', tags=['issues'])
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -176,25 +178,26 @@ def list_issues(
     status: Optional[IssueStatus] = Query(None, description='Filter by status'),
 ) -> list[IssueListItem]:
     """List issues, optionally filtered by status."""
-    db = get_db()
-    query = db.collection('issues')
+    try:
+        db = get_db()
+        query = db.collection('issues')
 
-    if status is not None:
-        query = query.where('status', '==', status.value)
+        if status is not None:
+            query = query.where('status', '==', status.value)
 
-    # Avoid requiring a composite index for (status + created_at) during
-    # early-stage deployment. Keep explicit ordering only for the unfiltered
-    # query path.
-    if status is None:
-        query = query.order_by('created_at', direction='DESCENDING')
+        if status is None:
+            query = query.order_by('created_at', direction='DESCENDING')
 
-    docs = query.stream()
+        docs = query.stream()
 
-    items = []
-    for doc in docs:
-        data = doc.to_dict()
-        items.append(IssueListItem(**_doc_to_issue(doc.id, data)))
-    return items
+        items = []
+        for doc in docs:
+            data = doc.to_dict()
+            items.append(IssueListItem(**_doc_to_issue(doc.id, data)))
+        return items
+    except Exception as e:
+        logger.exception('list_issues failed: %s', e)
+        raise
 
 
 @router.get('/{issue_id}', response_model=IssueDetail)

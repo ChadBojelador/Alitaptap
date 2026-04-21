@@ -252,8 +252,12 @@ class _ProfilePage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.person_rounded,
-                      color: _dark, size: 40),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/branding/logo_source.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
