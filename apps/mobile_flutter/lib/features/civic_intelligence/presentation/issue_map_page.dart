@@ -1668,15 +1668,15 @@ class _IdeaDockState extends State<_IdeaDock>
         animation: _sheetController,
         builder: (context, _) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
-          final sheetBg = isDark ? const Color(0xFF151B24) : Colors.white;
-          final borderColor = isDark ? const Color(0xFF2A3342) : const Color(0xFFE5E7EB);
-          final iconColor = isDark ? const Color(0xFFE5E7EB) : const Color(0xFF111827);
-          final handleColor = isDark ? const Color(0xFF4B5563) : const Color(0xFFCBD5E1);
-          final dividerColor = isDark ? const Color(0xFF2A3342) : const Color(0xFFE5E7EB);
-          final inputBg = isDark ? const Color(0xFF0F141C) : const Color(0xFFFFFFFF);
-          final inputText = isDark ? const Color(0xFFE5E7EB) : const Color(0xFF202124);
-          final inputHint = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF80868B);
-          final searchIcon = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF5F6368);
+          final sheetBg = _barBg;
+          final borderColor = _barBorder;
+          final iconColor = const Color(0xFFFFC700);
+          final handleColor = const Color(0xFFFFE066);
+          final dividerColor = _barBorder;
+          final inputBg = const Color(0xFF0D1520).withValues(alpha: 0.6);
+          final inputText = const Color(0xFFFFC700);
+          final inputHint = const Color(0xFFFFE066);
+          final searchIcon = const Color(0xFFFFC700);
           final progress = Curves.easeOutCubic.transform(_sheetController.value);
           final height =
               _collapsedHeight + ((_expandedHeight - _collapsedHeight) * progress);
@@ -1792,7 +1792,7 @@ class _IdeaDockState extends State<_IdeaDock>
                                       width: 20,
                                       height: 20,
                                       child: CircularProgressIndicator(
-                                        color: Color(0xFF1A73E8),
+                                        color: const Color(0xFFFFC700),
                                         strokeWidth: 2,
                                       ),
                                     )
@@ -1803,11 +1803,11 @@ class _IdeaDockState extends State<_IdeaDock>
                                         height: 32,
                                         decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: Color(0xFF1A73E8),
+                                          color: Color(0xFFFFC700),
                                         ),
                                         child: const Icon(
                                           Icons.arrow_forward_rounded,
-                                          color: Colors.white,
+                                          color: Color(0xFF1A1A1A),
                                           size: 18,
                                         ),
                                       ),

@@ -1248,13 +1248,13 @@ class _IdeaDock extends StatelessWidget {
                   textInputAction: TextInputAction.search,
                   onSubmitted:     (_) => onSubmit(),
                   style: GoogleFonts.robotoMono(
-                    color:    _textPrimary,
+                    color:    const Color(0xFFFFC700),
                     fontSize: 13,
                   ),
                   decoration: InputDecoration(
                     hintText: 'ENTER RESEARCH IDEA...',
                     hintStyle: GoogleFonts.robotoMono(
-                      color:         _textMuted,
+                      color:         const Color(0xFFFFE066),
                       fontSize:      12,
                       letterSpacing: 0.8,
                     ),
