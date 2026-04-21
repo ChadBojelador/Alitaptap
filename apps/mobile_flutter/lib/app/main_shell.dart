@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app.dart';
 import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
+import '../features/home/presentation/analytics_page.dart';
 import '../features/home/presentation/community_home_page.dart';
 import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/dashboard_page.dart';
@@ -46,6 +47,7 @@ class _MainShellState extends State<MainShell> {
         DashboardPage(role: AppRole.community)
       else
         DashboardPage(role: AppRole.student),
+      const AnalyticsPage(),
       const ExpoFeedPage(),
       _ProfilePage(onToggleTheme: widget.onToggleTheme, onSignOut: widget.onSignOut, role: widget.role),
     ];
@@ -79,6 +81,7 @@ class _BottomNav extends StatelessWidget {
 
   static const _items = [
     (icon: Icons.home_rounded, label: 'Home'),
+    (icon: Icons.bar_chart_rounded, label: 'Analytics'),
     (icon: Icons.lightbulb_rounded, label: 'Expo'),
     (icon: Icons.person_rounded, label: 'Profile'),
   ];
@@ -166,35 +169,31 @@ class _BottomNav extends StatelessWidget {
           ),
           Positioned(
             top: -30,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: onMapTap,
-                child: Ink(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _amber,
-                    boxShadow: [
-                      BoxShadow(
-                        color: _amber.withValues(alpha: 0.35),
-                        blurRadius: 18,
-                        spreadRadius: 1,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      width: 3,
+            child: GestureDetector(
+              onTap: onMapTap,
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _amber,
+                  boxShadow: [
+                    BoxShadow(
+                      color: _amber.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 8),
                     ),
+                  ],
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    width: 3,
                   ),
-                  child: const Icon(
-                    Icons.map_rounded,
-                    color: _dark,
-                    size: 26,
-                  ),
+                ),
+                child: const Icon(
+                  Icons.map_rounded,
+                  color: _dark,
+                  size: 26,
                 ),
               ),
             ),
