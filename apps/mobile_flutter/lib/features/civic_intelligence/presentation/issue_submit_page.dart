@@ -26,6 +26,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _regionCtrl = TextEditingController();
   final _issueRepository = ApiIssueRepository();
 
   late final SubmitIssueUseCase _submitIssueUseCase =
@@ -52,6 +53,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
+    _regionCtrl.dispose();
     super.dispose();
   }
 
@@ -131,7 +133,14 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_useLocationInput) {
+    if (_useLocationInput) {
+      if (_regionCtrl.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a region or city.')),
+        );
+        return;
+      }
+    } else {
       if (_userPosition != null && _lat == null && _lng == null) {
         _lat = _userPosition!.latitude;
         _lng = _userPosition!.longitude;
@@ -346,7 +355,22 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ],
               ),
               const SizedBox(height: 24),
-              if (_useLocationInput) ...[]
+              if (_useLocationInput) ...[
+                _fieldLabel('Region / City', textColor),
+                const SizedBox(height: 8),
+                TextFormField(
+                  style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+                  decoration: _inputDecoration(
+                    hint: 'e.g. Manila, Quezon City, Cebu',
+                    icon: Icons.location_city_rounded,
+                    isDark: isDark,
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Region / City is required'
+                      : null,
+                ),
+                const SizedBox(height: 24),
+              ]
               else ...[
                 _fieldLabel('Pin the Location', textColor),
                 const SizedBox(height: 4),
