@@ -1049,7 +1049,7 @@ class _CreatePageState extends State<CreatePage> {
         const SizedBox(height: 24),
 
         // Generated fields (if any)
-        if (_titleCtrl.text.isNotEmpty) ...[
+        if (_generatedBackbone != null) ...[
           Divider(color: _amber.withValues(alpha: 0.2)),
           const SizedBox(height: 24),
           Text(
@@ -1061,69 +1061,129 @@ class _CreatePageState extends State<CreatePage> {
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: _amberBright.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _amberBright.withValues(alpha: 0.15),
+          if (_generatedBackbone != null)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _amberBright.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _amberBright.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Research Title',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _amberBright,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _titleEditCtrl.text,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: textColor,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Methodology',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _amberBright,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _methodologyEditCtrl.text,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: subtleColor,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'SDG Alignment',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _amberBright,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _generatedBackbone!.sdgAlignment.join(', '),
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: subtleColor,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Feasibility Score',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _amberBright,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Cost: ${_generatedBackbone!.feasibilityScore.cost} | Time: ${_generatedBackbone!.feasibilityScore.time} | Data: ${_generatedBackbone!.feasibilityScore.dataAvailability}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: subtleColor,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Community Impact Level',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _amberBright,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _impactEditCtrl.text,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: subtleColor,
+                      height: 1.6,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Title',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: _amberBright,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _titleCtrl.text,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: textColor,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Description',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: _amberBright,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _descriptionCtrl.text,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: subtleColor,
-                    height: 1.6,
-                  ),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 24),
           GestureDetector(
             onTap: () {
-              _saveProject(_titleCtrl.text, _descriptionCtrl.text, 'AI-Assisted Project');
-              _titleCtrl.clear();
-              _descriptionCtrl.clear();
+              _saveProject(_titleEditCtrl.text, _methodologyEditCtrl.text, _generatedBackbone!.sdgAlignment.join(', '));
               _problemCtrl.clear();
               _ideaCtrl.clear();
+              _approachCtrl.clear();
               _aiDescriptionCtrl.clear();
+              _titleEditCtrl.clear();
+              _methodologyEditCtrl.clear();
+              _impactEditCtrl.clear();
+              setState(() {
+                _generatedBackbone = null;
+                _showModeSelection = true;
+              });
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('✓ Project saved successfully')),
               );
-              setState(() => _showModeSelection = true);
             },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16),
