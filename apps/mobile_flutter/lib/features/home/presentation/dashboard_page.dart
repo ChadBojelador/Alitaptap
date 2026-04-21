@@ -110,6 +110,15 @@ class _DashboardPageState extends State<DashboardPage>
                                 height: 1.1,
                               ),
                             ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _roleGreeting(),
+                              style: GoogleFonts.poppins(
+                                color: _amber,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -326,6 +335,11 @@ class _DashboardPageState extends State<DashboardPage>
     if (h < 12) return 'Good Morning!';
     if (h < 17) return 'Good Afternoon!';
     return 'Good Evening!';
+  }
+
+  String _roleGreeting() {
+    if (widget.role == AppRole.community) return 'Community Member';
+    return 'Student / Researcher';
   }
 
   String _capitalize(String s) =>
