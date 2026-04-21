@@ -28,6 +28,9 @@ class _CreatePageState extends State<CreatePage> {
   final _aiDescriptionCtrl = TextEditingController();
   
   bool _aiGenerating = false;
+  
+  // Saved projects list
+  List<Map<String, String>> _savedProjects = [];
 
   @override
   void dispose() {
@@ -38,6 +41,17 @@ class _CreatePageState extends State<CreatePage> {
     _ideaCtrl.dispose();
     _aiDescriptionCtrl.dispose();
     super.dispose();
+  }
+
+  void _saveProject(String title, String description, String sdg) {
+    setState(() {
+      _savedProjects.add({
+        'title': title,
+        'description': description,
+        'sdg': sdg,
+        'date': DateTime.now().toString().split(' ')[0],
+      });
+    });
   }
 
   Future<void> _generateWithAI() async {
@@ -89,7 +103,7 @@ class _CreatePageState extends State<CreatePage> {
       backgroundColor: bg,
       body: SafeArea(
         child: _showModeSelection
-            ? _buildModeSelection(isDark, textColor, subtleColor)
+            ? _buildModeSelection(isDark, textColor, subtleColor, cardBg)
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
@@ -143,8 +157,8 @@ class _CreatePageState extends State<CreatePage> {
     );
   }
 
-  Widget _buildModeSelection(bool isDark, Color textColor, Color subtleColor) {
-    return Padding(
+  Widget _buildModeSelection(bool isDark, Color textColor, Color subtleColor, Color cardBg) {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,120 +179,203 @@ class _CreatePageState extends State<CreatePage> {
               color: subtleColor,
             ),
           ),
-          const SizedBox(height: 40),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // AI Guided Option
-                GestureDetector(
-                  onTap: () => setState(() {
-                    _isAIGuided = true;
-                    _showModeSelection = false;
-                  }),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
+          const SizedBox(height: 32),
+          
+          // AI Guided Option
+          GestureDetector(
+            onTap: () => setState(() {
+              _isAIGuided = true;
+              _showModeSelection = false;
+            }),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: _amberBright.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _amberBright.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _amberBright.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _amberBright.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
+                      color: _amberBright.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
                     ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _amberBright.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.auto_awesome_rounded,
-                            color: _amberBright,
-                            size: 40,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'AI-Guided Creation',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Answer guided questions and let AI compile your project details',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: subtleColor,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: _amberBright,
+                      size: 40,
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                // Manual Option
-                GestureDetector(
-                  onTap: () => setState(() {
-                    _isAIGuided = false;
-                    _showModeSelection = false;
-                  }),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: _amber.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _amber.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _amber.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.edit_note_rounded,
-                            color: _amber,
-                            size: 40,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Manual Creation',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Write your project title, description, and SDG topics directly',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: subtleColor,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'AI-Guided Creation',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Answer guided questions and let AI compile your project details',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: subtleColor,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 20),
+          
+          // Manual Option
+          GestureDetector(
+            onTap: () => setState(() {
+              _isAIGuided = false;
+              _showModeSelection = false;
+            }),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: _amber.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _amber.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _amber.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.edit_note_rounded,
+                      color: _amber,
+                      size: 40,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Manual Creation',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Write your project title, description, and SDG topics directly',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: subtleColor,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 40),
+          
+          // Saved Projects Section
+          if (_savedProjects.isNotEmpty) ...[
+            Text(
+              'Your Projects',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ..._savedProjects.asMap().entries.map((entry) {
+              final project = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _amber.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              project['title']!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: textColor,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            project['date']!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: subtleColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        project['description']!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: subtleColor,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _amber.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          project['sdg']!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: _amber,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -433,9 +530,14 @@ class _CreatePageState extends State<CreatePage> {
               );
               return;
             }
+            _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text);
+            _titleCtrl.clear();
+            _descriptionCtrl.clear();
+            _sdgCtrl.clear();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('✓ Project saved successfully')),
             );
+            setState(() => _showModeSelection = true);
           },
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -756,9 +858,16 @@ class _CreatePageState extends State<CreatePage> {
           const SizedBox(height: 24),
           GestureDetector(
             onTap: () {
+              _saveProject(_titleCtrl.text, _descriptionCtrl.text, 'AI-Generated');
+              _titleCtrl.clear();
+              _descriptionCtrl.clear();
+              _problemCtrl.clear();
+              _ideaCtrl.clear();
+              _aiDescriptionCtrl.clear();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('✓ Project saved successfully')),
               );
+              setState(() => _showModeSelection = true);
             },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16),
