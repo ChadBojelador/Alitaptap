@@ -1732,7 +1732,6 @@ class _IdeaDockState extends State<_IdeaDock>
                         key: _inputKey,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: _barBorder.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: _barIcon.withValues(alpha: 0.3),
