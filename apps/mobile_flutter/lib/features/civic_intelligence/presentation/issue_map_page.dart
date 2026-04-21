@@ -826,7 +826,7 @@ class _TerminalTopBar extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: _barBg.withValues(alpha: 0.82),
+            color: _barBg.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: _barBorder, width: 1),
             boxShadow: [
