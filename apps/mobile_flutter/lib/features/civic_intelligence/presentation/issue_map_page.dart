@@ -1667,37 +1667,24 @@ class _IdeaDockState extends State<_IdeaDock>
       child: AnimatedBuilder(
         animation: _sheetController,
         builder: (context, _) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          final sheetBg = _barBg;
-          final borderColor = _barBorder;
-          final iconColor = const Color(0xFFFFC700);
-          final handleColor = const Color(0xFFFFE066);
-          final dividerColor = _barBorder;
-          final inputBg = const Color(0xFF0D1520).withValues(alpha: 0.6);
-          final inputText = const Color(0xFFFFC700);
-          final inputHint = const Color(0xFFFFE066);
-          final searchIcon = const Color(0xFFFFC700);
           final progress = Curves.easeOutCubic.transform(_sheetController.value);
           final height =
               _collapsedHeight + ((_expandedHeight - _collapsedHeight) * progress);
 
-          return Container(
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Container(
             height: height,
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
-              color: sheetBg.withValues(alpha: 0.55),
+              color: _barBg.withValues(alpha: 0.55),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border.all(
-                color: borderColor,
+                color: _barBorder,
                 width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 18,
-                  offset: const Offset(0, -4),
-                ),
-              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1713,24 +1700,20 @@ class _IdeaDockState extends State<_IdeaDock>
                           width: 42,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: handleColor,
+                            color: _barIcon.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(
-                              Icons.lightbulb_rounded,
-                              color: iconColor,
-                              size: 16,
-                            ),
+                            Icon(Icons.lightbulb_rounded, color: _barIcon, size: 16),
                             const Spacer(),
                             Icon(
                               progress < 0.5
                                   ? Icons.keyboard_arrow_up_rounded
                                   : Icons.keyboard_arrow_down_rounded,
-                              color: iconColor,
+                              color: _barIcon,
                               size: 18,
                             ),
                           ],
@@ -1740,11 +1723,7 @@ class _IdeaDockState extends State<_IdeaDock>
                   ),
                 ),
                 if (progress > 0.05) ...[
-                  Divider(
-                    color: dividerColor,
-                    height: 1,
-                    thickness: 1,
-                  ),
+                  Divider(color: _barBorder, height: 1, thickness: 1),
                   Opacity(
                     opacity: progress,
                     child: Padding(
@@ -1753,17 +1732,17 @@ class _IdeaDockState extends State<_IdeaDock>
                         key: _inputKey,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: inputBg,
+                          color: _barBorder.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: _barIcon.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
                         ),
                         child: Row(
                           children: [
                             const SizedBox(width: 12),
-                            Icon(
-                              Icons.search_rounded,
-                              color: searchIcon,
-                              size: 20,
-                            ),
+                            Icon(Icons.search_rounded, color: _barIcon, size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: TextField(
@@ -1771,13 +1750,13 @@ class _IdeaDockState extends State<_IdeaDock>
                                 textInputAction: TextInputAction.search,
                                 onSubmitted: (_) => widget.onSubmit(),
                                 style: GoogleFonts.robotoMono(
-                                  color: inputText,
+                                  color: _barTitle,
                                   fontSize: 13,
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'Search research idea',
+                                  hintText: 'Search research idea...',
                                   hintStyle: GoogleFonts.robotoMono(
-                                    color: inputHint,
+                                    color: _barSubtitle,
                                     fontSize: 12,
                                   ),
                                   border: InputBorder.none,
@@ -1788,11 +1767,11 @@ class _IdeaDockState extends State<_IdeaDock>
                             Padding(
                               padding: const EdgeInsets.only(right: 6),
                               child: widget.isMatching
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       width: 20,
                                       height: 20,
                                       child: CircularProgressIndicator(
-                                        color: const Color(0xFFFFC700),
+                                        color: _barIcon,
                                         strokeWidth: 2,
                                       ),
                                     )
@@ -1801,9 +1780,15 @@ class _IdeaDockState extends State<_IdeaDock>
                                       child: Container(
                                         width: 32,
                                         height: 32,
-                                        decoration: const BoxDecoration(
+                                        decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: Color(0xFFFFC700),
+                                          color: _barIcon,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: _barIcon.withValues(alpha: 0.4),
+                                              blurRadius: 8,
+                                            ),
+                                          ],
                                         ),
                                         child: const Icon(
                                           Icons.arrow_forward_rounded,
@@ -1820,6 +1805,8 @@ class _IdeaDockState extends State<_IdeaDock>
                   ),
                 ],
               ],
+            ),
+          ),
             ),
           );
         },
