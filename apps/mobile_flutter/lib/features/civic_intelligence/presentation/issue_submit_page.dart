@@ -22,6 +22,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   bool _elaborating = false;
   String? _elaboratedText;
   String? _suggestedSDG;
+  List<Map<String, String>> _savedReports = [];
 
   @override
   void dispose() {
@@ -29,6 +30,26 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     _titleCtrl.dispose();
     _descriptionCtrl.dispose();
     super.dispose();
+  }
+
+  void _saveReport(String title, String description, String sdg) {
+    setState(() {
+      _savedReports.add({
+        'title': title,
+        'description': description,
+        'sdg': sdg,
+        'date': DateTime.now().toString().split(' ')[0],
+      });
+    });
+  }
+
+  void _deleteReport(int index) {
+    setState(() {
+      _savedReports.removeAt(index);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✓ Report deleted')),
+    );
   }
 
   Future<void> _elaborateWithAI() async {
@@ -42,12 +63,10 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
 
     setState(() => _elaborating = true);
     
-    // Simulate AI elaboration
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
-    // Generate elaborated text based on keywords
     final elaborated = _generateElaboratedDescription(problem);
     final sdg = _suggestSDG(problem);
 
@@ -63,7 +82,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   }
 
   String _generateElaboratedDescription(String problem) {
-    // Create a clear, non-redundant elaboration
     return 'Impact: The issue affects community members and local infrastructure.\n\n'
         'Scope: This problem requires immediate attention and community involvement.\n\n'
         'Solution Potential: Addressing this requires coordinated efforts and resource allocation.\n\n'
@@ -117,7 +135,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Info banner
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -147,7 +164,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
             ),
             const SizedBox(height: 24),
 
-            // Toggle buttons
             Text(
               'Report Method',
               style: GoogleFonts.poppins(
@@ -244,7 +260,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
             ),
             const SizedBox(height: 32),
 
-            // AI-Guided mode
             if (_isAIGuided) ...[
               Text(
                 'Describe the Problem',
@@ -290,7 +305,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               ),
               const SizedBox(height: 24),
 
-              // Elaborate button
               GestureDetector(
                 onTap: _elaborating ? null : _elaborateWithAI,
                 child: Container(
@@ -339,7 +353,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ),
               ),
 
-              // Elaborated result
               if (_elaboratedText != null) ...[
                 const SizedBox(height: 24),
                 Text(
@@ -371,7 +384,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                           height: 1.6,
                         ),
                       ),
-                      if (_suggestedSDG != null) ...[const SizedBox(height: 14),
+                      if (_suggestedSDG != null) ...[
+                        const SizedBox(height: 14),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
@@ -397,6 +411,49 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                         ),
                       ],
                     ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () {
+                    _saveReport(_problemCtrl.text, _elaboratedText!, _suggestedSDG ?? 'SDG 17');
+                    _problemCtrl.clear();
+                    setState(() {
+                      _elaboratedText = null;
+                      _suggestedSDG = null;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('✓ Report saved successfully')),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _amberBright,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _amberBright.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_rounded, color: _dark, size: 20),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Save Report',
+                          style: GoogleFonts.poppins(
+                            color: _dark,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -494,10 +551,12 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                     );
                     return;
                   }
+                  _saveReport(_titleCtrl.text, _descriptionCtrl.text, 'Manual Report');
+                  _titleCtrl.clear();
+                  _descriptionCtrl.clear();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('✓ Problem reported successfully')),
+                    const SnackBar(content: Text('✓ Report saved successfully')),
                   );
-                  Navigator.of(context).pop();
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -515,10 +574,10 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.send_rounded, color: _dark, size: 20),
+                      const Icon(Icons.save_rounded, color: _dark, size: 20),
                       const SizedBox(width: 10),
                       Text(
-                        'Submit Report',
+                        'Save Report',
                         style: GoogleFonts.poppins(
                           color: _dark,
                           fontWeight: FontWeight.w700,
@@ -530,6 +589,101 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ),
               ),
             ],
+
+            if (_savedReports.isNotEmpty) ...[
+              const SizedBox(height: 40),
+              Text(
+                'Your Reports',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ..._savedReports.asMap().entries.map((entry) {
+                final index = entry.key;
+                final report = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _amber.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                report['title']!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: textColor,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => _deleteReport(index),
+                              child: Icon(Icons.delete_rounded,
+                                  color: subtleColor, size: 18),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          report['date']!,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: subtleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          report['description']!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: subtleColor,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _amber.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            report['sdg']!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: _amber,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+
             const SizedBox(height: 40),
           ],
         ),
