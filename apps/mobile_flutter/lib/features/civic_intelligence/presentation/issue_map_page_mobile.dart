@@ -1217,7 +1217,7 @@ class _IdeaDock extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           decoration: BoxDecoration(
-            color:        _darkPanel.withValues(alpha: 0.9),
+            color:        _darkPanel.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _cyberGreen.withValues(alpha: 0.35),

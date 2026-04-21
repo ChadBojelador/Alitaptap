@@ -1685,7 +1685,7 @@ class _IdeaDockState extends State<_IdeaDock>
             height: height,
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
-              color: sheetBg.withValues(alpha: 0.98),
+              color: sheetBg.withValues(alpha: 0.55),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border.all(
                 color: borderColor,
