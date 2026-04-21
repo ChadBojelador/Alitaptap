@@ -903,7 +903,8 @@ class _CreatePageState extends State<CreatePage> {
         ),
         const SizedBox(height: 24),
 
-        // Problem
+        // Show input fields only if not editing
+        if (_editingProjectIndex == null) ...[
         Text(
           'What is the community problem?',
           style: GoogleFonts.poppins(
@@ -948,7 +949,7 @@ class _CreatePageState extends State<CreatePage> {
         ),
         const SizedBox(height: 24),
 
-        // SDG Idea
+        ] else if (_generatedBackbone != null) ...[
         Text(
           'What SDG or idea do you want to focus on?',
           style: GoogleFonts.poppins(
@@ -993,106 +994,12 @@ class _CreatePageState extends State<CreatePage> {
         ),
         const SizedBox(height: 24),
 
-        // Description
-        Text(
-          'Describe your approach',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _aiDescriptionCtrl,
-          maxLines: 4,
-          style: GoogleFonts.poppins(fontSize: 14, color: textColor),
-          decoration: InputDecoration(
-            hintText: 'Add timeline, resources, methods, expected outcomes...',
-            hintStyle: GoogleFonts.poppins(
-              fontSize: 13,
-              color: subtleColor,
-            ),
-            filled: true,
-            fillColor: cardBg,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: _amberBright.withValues(alpha: 0.2),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: _amberBright.withValues(alpha: 0.2),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: _amberBright,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-
-        // Generate Button
-        GestureDetector(
-          onTap: _aiGenerating ? null : _generateWithAI,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: _aiGenerating
-                  ? _amberBright.withValues(alpha: 0.5)
-                  : _amberBright,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: _aiGenerating
-                  ? []
-                  : [
-                      BoxShadow(
-                        color: _amberBright.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (_aiGenerating)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: _dark,
-                    ),
-                  )
-                else
-                  const Icon(Icons.auto_awesome_rounded, color: _dark, size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  _aiGenerating ? 'Generating...' : 'Generate with AI',
-                  style: GoogleFonts.poppins(
-                    color: _dark,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Generated fields (if any)
+        // Generated fields - show editable version when editing
         if (_generatedBackbone != null) ...[
           Divider(color: _amber.withValues(alpha: 0.2)),
           const SizedBox(height: 24),
           Text(
-            'AI-Assisted Project Details',
+            'Edit Project Details',
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -1100,159 +1007,263 @@ class _CreatePageState extends State<CreatePage> {
             ),
           ),
           const SizedBox(height: 16),
-          if (_generatedBackbone != null)
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: _amberBright.withValues(alpha: 0.05),
+          Text(
+            'Research Title',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _titleEditCtrl,
+            maxLines: 2,
+            style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: cardBg,
+              border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _amberBright.withValues(alpha: 0.15),
+                borderSide: BorderSide(
+                  color: _amberBright.withValues(alpha: 0.3),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Research Title',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _amberBright,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _titleEditCtrl.text,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: textColor,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Methodology',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _amberBright,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _methodologyEditCtrl.text,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: subtleColor,
-                      height: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'SDG Alignment',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _amberBright,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _generatedBackbone!.sdgAlignment.join(', '),
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: subtleColor,
-                      height: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Feasibility Score',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _amberBright,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Cost: ${_generatedBackbone!.feasibilityScore.cost} | Time: ${_generatedBackbone!.feasibilityScore.time} | Data: ${_generatedBackbone!.feasibilityScore.dataAvailability}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: subtleColor,
-                      height: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Community Impact Level',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _amberBright,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _impactEditCtrl.text,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: subtleColor,
-                      height: 1.6,
-                    ),
-                  ),
-                ],
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _amberBright.withValues(alpha: 0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: _amberBright,
+                  width: 1.5,
+                ),
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Methodology',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _methodologyEditCtrl,
+            maxLines: 4,
+            style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: cardBg,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _amberBright.withValues(alpha: 0.3),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _amberBright.withValues(alpha: 0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: _amberBright,
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'SDG Alignment',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _amberBright.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Text(
+              _generatedBackbone!.sdgAlignment.join(', '),
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: textColor,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Feasibility Score',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _amberBright.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Text(
+              'Cost: ${_generatedBackbone!.feasibilityScore.cost} | Time: ${_generatedBackbone!.feasibilityScore.time} | Data: ${_generatedBackbone!.feasibilityScore.dataAvailability}',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: textColor,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Community Impact Level',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _impactEditCtrl,
+            maxLines: 2,
+            style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: cardBg,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _amberBright.withValues(alpha: 0.3),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _amberBright.withValues(alpha: 0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: _amberBright,
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
-          GestureDetector(
-            onTap: () {
-              _saveProject(_titleEditCtrl.text, _methodologyEditCtrl.text, _generatedBackbone!.sdgAlignment.join(', '), isAIGuided: true, backbone: _generatedBackbone);
-              _problemCtrl.clear();
-              _ideaCtrl.clear();
-              _approachCtrl.clear();
-              _aiDescriptionCtrl.clear();
-              _titleEditCtrl.clear();
-              _methodologyEditCtrl.clear();
-              _impactEditCtrl.clear();
-              setState(() {
-                _generatedBackbone = null;
-                _showModeSelection = true;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('✓ Project saved successfully')),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: _amberBright,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: _amberBright.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.check_rounded, color: _dark, size: 20),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Save Project',
-                    style: GoogleFonts.poppins(
-                      color: _dark,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    _titleCtrl.clear();
+                    _descriptionCtrl.clear();
+                    _sdgCtrl.clear();
+                    _titleEditCtrl.clear();
+                    _methodologyEditCtrl.clear();
+                    _impactEditCtrl.clear();
+                    setState(() {
+                      _generatedBackbone = null;
+                      _editingProjectIndex = null;
+                      _showModeSelection = true;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: subtleColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: subtleColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    _saveProject(_titleEditCtrl.text, _methodologyEditCtrl.text, _generatedBackbone!.sdgAlignment.join(', '), isAIGuided: true, backbone: _generatedBackbone);
+                    _titleCtrl.clear();
+                    _descriptionCtrl.clear();
+                    _sdgCtrl.clear();
+                    _titleEditCtrl.clear();
+                    _methodologyEditCtrl.clear();
+                    _impactEditCtrl.clear();
+                    setState(() {
+                      _generatedBackbone = null;
+                      _editingProjectIndex = null;
+                      _showModeSelection = true;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('✓ Project updated successfully')),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _amberBright,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _amberBright.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_rounded, color: _dark, size: 20),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Update Project',
+                          style: GoogleFonts.poppins(
+                            color: _dark,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
         const SizedBox(height: 24),
