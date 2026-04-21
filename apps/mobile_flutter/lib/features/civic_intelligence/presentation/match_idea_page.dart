@@ -94,6 +94,21 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
     }
   }
 
+  Future<void> _toggleLocationSearch() async {
+    if (!_useLocationSearch) {
+      // Turning ON location search
+      setState(() => _useLocationSearch = true);
+      await _searchNearestProblems();
+    } else {
+      // Turning OFF location search
+      setState(() {
+        _useLocationSearch = false;
+        _nearestMatches = [];
+        _selectedIssueId = null;
+      });
+    }
+  }
+
   Future<void> _submitIdea() async {
     final idea = _ideaCtrl.text.trim();
     if (idea.isEmpty) {
@@ -204,12 +219,7 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
             const SizedBox(height: 24),
             // Toggle button for location search
             GestureDetector(
-              onTap: () {
-                if (!_useLocationSearch) {
-                  _searchNearestProblems();
-                }
-                setState(() => _useLocationSearch = !_useLocationSearch);
-              },
+              onTap: _toggleLocationSearch,
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
