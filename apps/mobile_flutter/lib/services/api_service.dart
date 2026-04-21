@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import '../core/models/issue.dart';
 import '../core/models/match_result.dart';
 import '../core/models/news_article.dart';
+import '../core/models/research_backbone.dart';
 import '../core/models/research_post.dart';
 import '../core/models/title_suggestions.dart';
 
@@ -392,5 +393,34 @@ class ApiService {
     return matches
         .map((e) => MatchResult.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Generate AI-guided research backbone from problem, idea, and approach.
+  Future<ResearchBackbone> generateResearchBackbone({
+    required String studentId,
+    required String problem,
+    required String sdgOrIdea,
+    required String approach,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/research/backbone/generate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'student_id': studentId,
+          'problem': problem,
+          'sdg_or_idea': sdgOrIdea,
+          'approach': approach,
+        }),
+      ),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to generate research backbone: ${response.body}');
+    }
+
+    return ResearchBackbone.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 }

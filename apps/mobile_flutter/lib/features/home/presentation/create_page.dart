@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:alitaptap_mobile/core/models/research_backbone.dart';
+import 'package:alitaptap_mobile/services/api_service.dart';
 
 const _amber = Color(0xFFFFC700);
 const _amberMuted = Color(0xFFFFB700);
@@ -25,13 +31,29 @@ class _CreatePageState extends State<CreatePage> {
   // AI guided mode controllers
   final _problemCtrl = TextEditingController();
   final _ideaCtrl = TextEditingController();
-  final _aiDescriptionCtrl = TextEditingController();
+  final _approachCtrl = TextEditingController();
   
   bool _aiGenerating = false;
+  ResearchBackbone? _generatedBackbone;
+  
+  // Editable backbone fields
+  late TextEditingController _titleEditCtrl;
+  late TextEditingController _methodologyEditCtrl;
+  late TextEditingController _impactEditCtrl;
+  late List<TextEditingController> _sdgEditCtrls;
   
   // Saved projects list
   List<Map<String, String>> _savedProjects = [];
   int? _editingProjectIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleEditCtrl = TextEditingController();
+    _methodologyEditCtrl = TextEditingController();
+    _impactEditCtrl = TextEditingController();
+    _sdgEditCtrls = [];
+  }
 
   @override
   void dispose() {
@@ -40,7 +62,13 @@ class _CreatePageState extends State<CreatePage> {
     _sdgCtrl.dispose();
     _problemCtrl.dispose();
     _ideaCtrl.dispose();
-    _aiDescriptionCtrl.dispose();
+    _approachCtrl.dispose();
+    _titleEditCtrl.dispose();
+    _methodologyEditCtrl.dispose();
+    _impactEditCtrl.dispose();
+    for (var ctrl in _sdgEditCtrls) {
+      ctrl.dispose();
+    }
     super.dispose();
   }
 
@@ -86,12 +114,116 @@ class _CreatePageState extends State<CreatePage> {
     );
   }
 
+  Future<void> _exportProjectToPDF(Map<String, String> project) async {
+    try {
+      final pdf = pw.Document();
+      final now = DateTime.now();
+      final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'ALITAPTAP Project Report',
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Exported on $dateStr',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColors.grey,
+                  ),
+                ),
+                pw.Divider(margin: const pw.EdgeInsets.symmetric(vertical: 16)),
+                pw.Text(
+                  'Project Title',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  project['title']!,
+                  style: const pw.TextStyle(fontSize: 14),
+                ),
+                pw.SizedBox(height: 16),
+                pw.Text(
+                  'Description',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  project['description']!,
+                  style: const pw.TextStyle(fontSize: 11),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 16),
+                pw.Text(
+                  'SDG Topics',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  project['sdg']!,
+                  style: const pw.TextStyle(fontSize: 11),
+                ),
+                pw.SizedBox(height: 16),
+                pw.Text(
+                  'Date Created',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  project['date']!,
+                  style: const pw.TextStyle(fontSize: 11),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = 'project_${project['title']!.replaceAll(' ', '_')}_$dateStr.pdf';
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(await pdf.save());
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('✓ PDF exported: $fileName')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error exporting PDF: $e')),
+      );
+    }
+  }
+
   Future<void> _generateWithAI() async {
     final problem = _problemCtrl.text.trim();
     final idea = _ideaCtrl.text.trim();
-    final description = _aiDescriptionCtrl.text.trim();
+    final approach = _approachCtrl.text.trim();
 
-    if (problem.isEmpty || idea.isEmpty || description.isEmpty) {
+    if (problem.isEmpty || idea.isEmpty || approach.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all fields')),
       );
@@ -99,28 +231,37 @@ class _CreatePageState extends State<CreatePage> {
     }
 
     setState(() => _aiGenerating = true);
-    
-    // Simulate AI generation
-    await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return;
+    try {
+      final backbone = await ApiService.generateResearchBackbone(
+        problem: problem,
+        sdgOrIdea: idea,
+        approach: approach,
+      );
 
-    // Generate sample title and description
-    final generatedTitle = 'AI-Assisted: $idea Solution for $problem';
-    final generatedDesc = 'This research project addresses the community problem of "$problem" '
-        'through the lens of "$idea". The proposed solution aims to create sustainable impact '
-        'by implementing the following approach: $description. This initiative aligns with '
-        'multiple SDG targets and focuses on scalability and community engagement.';
+      if (!mounted) return;
 
-    setState(() {
-      _titleCtrl.text = generatedTitle;
-      _descriptionCtrl.text = generatedDesc;
-      _aiGenerating = false;
-    });
+      setState(() {
+        _generatedBackbone = backbone;
+        _titleEditCtrl.text = backbone.researchTitle;
+        _methodologyEditCtrl.text = backbone.methodology;
+        _impactEditCtrl.text = backbone.communityImpactLevel;
+        _sdgEditCtrls = backbone.sdgAlignment
+            .map((sdg) => TextEditingController(text: sdg))
+            .toList();
+        _aiGenerating = false;
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✓ AI-assisted title and description generated')),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✓ Research backbone generated')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _aiGenerating = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
   @override
