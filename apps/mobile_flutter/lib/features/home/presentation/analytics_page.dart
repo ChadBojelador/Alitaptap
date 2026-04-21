@@ -21,7 +21,7 @@ class AnalyticsPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Analytics',
+                'Create',
                 style: GoogleFonts.poppins(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -30,7 +30,7 @@ class AnalyticsPage extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'SDG trends, research heatmap & impact metrics',
+                'Start a new research project or proposal',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575),
@@ -49,14 +49,14 @@ class AnalyticsPage extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.bar_chart_rounded,
+                          Icons.edit_note_rounded,
                           color: _amber,
                           size: 48,
                         ),
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        'Coming Soon',
+                        'Start Creating',
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -65,7 +65,7 @@ class AnalyticsPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'SDG distribution, research trends,\nand community impact scores.',
+                        'Draft your research idea, proposal,\nor community project outline.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
