@@ -106,7 +106,7 @@ class _CreatePageState extends State<CreatePage> {
     if (!mounted) return;
 
     // Generate sample title and description
-    final generatedTitle = 'AI-Generated: $idea Solution for $problem';
+    final generatedTitle = 'AI-Assisted: $idea Solution for $problem';
     final generatedDesc = 'This research project addresses the community problem of "$problem" '
         'through the lens of "$idea". The proposed solution aims to create sustainable impact '
         'by implementing the following approach: $description. This initiative aligns with '
@@ -119,7 +119,7 @@ class _CreatePageState extends State<CreatePage> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✓ AI generated title and description')),
+      const SnackBar(content: Text('✓ AI-assisted title and description generated')),
     );
   }
 
@@ -908,7 +908,7 @@ class _CreatePageState extends State<CreatePage> {
           Divider(color: _amber.withValues(alpha: 0.2)),
           const SizedBox(height: 24),
           Text(
-            'Generated Project Details',
+            'AI-Assisted Project Details',
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -969,7 +969,7 @@ class _CreatePageState extends State<CreatePage> {
           const SizedBox(height: 24),
           GestureDetector(
             onTap: () {
-              _saveProject(_titleCtrl.text, _descriptionCtrl.text, 'AI-Generated');
+              _saveProject(_titleCtrl.text, _descriptionCtrl.text, 'AI-Assisted');
               _titleCtrl.clear();
               _descriptionCtrl.clear();
               _problemCtrl.clear();
