@@ -607,7 +607,7 @@ class _CreatePageState extends State<CreatePage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'How will you implement this solution? Include methods, timeline, resources, and expected outcomes.',
+          'Timeline • Resources • Methods • Expected outcomes',
           style: GoogleFonts.poppins(
             fontSize: 11,
             color: subtleColor,
