@@ -16,13 +16,7 @@ const _amberLight = Color(0xFFFFF9C4);
 const _dark = Color(0xFF1A1A1A);
 const _white = Color(0xFFFFFFFF);
 
-// ── Mock top masters data ─────────────────────────────────────────────────────
-const _topMasters = [
-  {'name': 'Ana R.', 'projects': 12, 'color': Color(0xFF9C27B0)},
-  {'name': 'Ben C.', 'projects': 9, 'color': Color(0xFF2196F3)},
-  {'name': 'Lia M.', 'projects': 7, 'color': Color(0xFFE91E63)},
-  {'name': 'Jay P.', 'projects': 6, 'color': Color(0xFF4CAF50)},
-];
+
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, required this.role});
@@ -217,83 +211,6 @@ class _DashboardPageState extends State<DashboardPage>
                                 ),
                               ),
                             ),
-                ),
-              ),
-
-              // ── Top Project Masters ──────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 14),
-                  child: Text(
-                    'Top Project Masters',
-                    style: GoogleFonts.poppins(
-                      color: isDark ? _white : _dark,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    children: _topMasters.map((m) {
-                      final color = m['color'] as Color;
-                      final name = m['name'] as String;
-                      final projects = m['projects'] as int;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 52,
-                              height: 52,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: color.withValues(alpha: 0.35),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: Text(
-                                  name[0],
-                                  style: GoogleFonts.poppins(
-                                    color: _white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              name,
-                              style: GoogleFonts.poppins(
-                                color: isDark ? _white : _dark,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              '$projects projects',
-                              style: GoogleFonts.poppins(
-                                color: isDark
-                                    ? const Color(0xFF9E9E9E)
-                                    : const Color(0xFF9E9E9E),
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
                 ),
               ),
 

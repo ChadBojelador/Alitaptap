@@ -12,13 +12,6 @@ const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
 const _white = Color(0xFFFFFFFF);
 
-const _topMasters = [
-  {'name': 'Ana R.', 'projects': 12, 'color': Color(0xFF9C27B0), 'avatarStyle': 0},
-  {'name': 'Ben C.', 'projects': 9,  'color': Color(0xFF2196F3), 'avatarStyle': 1},
-  {'name': 'Lia M.', 'projects': 7,  'color': Color(0xFFE91E63), 'avatarStyle': 2},
-  {'name': 'Jay P.', 'projects': 6,  'color': Color(0xFF4CAF50), 'avatarStyle': 3},
-];
-
 /// Student home page — matches the travel-app UI reference.
 class StudentHomePage extends StatefulWidget {
   const StudentHomePage({super.key});
@@ -220,60 +213,6 @@ class _StudentHomePageState extends State<StudentHomePage>
                                 ),
                               ),
                             ),
-                ),
-              ),
-
-              // ── Top Project Masters ───────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 14),
-                  child: Text(
-                    'Top Project Masters',
-                    style: GoogleFonts.poppins(
-                      color: isDark ? _white : _dark,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 100,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    children: _topMasters.map((m) {
-                      final color = m['color'] as Color;
-                      final name = m['name'] as String;
-                      final projects = m['projects'] as int;
-                      final avatarStyle = m['avatarStyle'] as int;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 20),
-                        child: Column(
-                          children: [
-                            _MasterAvatar(color: color, style: avatarStyle),
-                            const SizedBox(height: 5),
-                            Text(
-                              name,
-                              style: GoogleFonts.poppins(
-                                color: isDark ? _white : _dark,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              '$projects projects',
-                              style: GoogleFonts.poppins(
-                                color: const Color(0xFF9E9E9E),
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
                 ),
               ),
 
@@ -650,66 +589,6 @@ class _ActionTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ── Master avatar clipart ─────────────────────────────────────────────────────
-class _MasterAvatar extends StatelessWidget {
-  const _MasterAvatar({required this.color, required this.style});
-  final Color color;
-  final int style;
-
-  // Each style = different hair/accessory combo to look like a unique person
-  static const _hairs = [
-    Icons.face_retouching_natural,  // long hair
-    Icons.face_6,                   // short hair
-    Icons.face_3,                   // curly
-    Icons.face_4,                   // cap style
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Colored circle background
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-        ),
-        // Person clipart icon
-        Icon(
-          _hairs[style % _hairs.length],
-          size: 36,
-          color: _white.withValues(alpha: 0.95),
-        ),
-        // Small amber badge bottom-right
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: Container(
-            width: 16,
-            height: 16,
-            decoration: const BoxDecoration(
-              color: _amber,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.star_rounded, size: 10, color: _dark),
-          ),
-        ),
-      ],
     );
   }
 }
