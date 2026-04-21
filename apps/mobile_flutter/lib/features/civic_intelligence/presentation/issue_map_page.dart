@@ -29,7 +29,7 @@ const _gridLine = Color(0xFF1A2332);
 
 // Map overlay tokens — dark, readable over light map
 const _barBg        = Color(0xFF1A1A2E);
-const _barBorder    = Color(0xFF2D2D4A);
+const _barBorder    = Color(0xFFFFC700);
 const _barIcon      = Color(0xFFFFC700);
 const _barIconMuted = Color(0xFFFFE066);
 const _barTitle     = Color(0xFFFFC700);
@@ -1556,15 +1556,15 @@ class _FabButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFD60A).withValues(alpha: 0.10),
+              color: _barBg.withValues(alpha: 0.55),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFFFFD60A).withValues(alpha: 0.50),
+                color: _barIcon.withValues(alpha: 0.50),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD60A).withValues(alpha: 0.15),
+                  color: _barIcon.withValues(alpha: 0.15),
                   blurRadius: 16,
                 ),
               ],
@@ -1572,12 +1572,12 @@ class _FabButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: _cyberGreen, size: 16),
+                Icon(icon, color: _barIcon, size: 16),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: GoogleFonts.robotoMono(
-                    color: _cyberGreen,
+                    color: _barIcon,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.4,

@@ -29,7 +29,7 @@ const _userLocBlue = Color(0xFF00BFFF);
 
 // ─── Map overlay tokens (dark, readable over light map) ──────────────────────
 const _barBg       = Color(0xFF1A1A2E);   // deep navy glass
-const _barBorder   = Color(0xFF2D2D4A);   // subtle dark outline
+const _barBorder   = Color(0xFFFFC700);   // logo yellow outline
 const _barIcon     = Color(0xFFFFC700);   // logo yellow icons
 const _barIconMuted = Color(0xFFFFE066);  // lighter yellow muted
 const _barTitle    = Color(0xFFFFC700);   // logo yellow
