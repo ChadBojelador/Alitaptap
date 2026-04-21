@@ -356,12 +356,11 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               _fieldLabel('Region (PSGC, optional)', textColor),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedRegionCode,
+                initialValue: _selectedRegionCode,
                 isExpanded: true,
                 decoration: _inputDecoration(
-                  hint: _loadingRegions
-                      ? 'Loading regions...'
-                      : 'Select region',
+                  hint:
+                      _loadingRegions ? 'Loading regions...' : 'Select region',
                   icon: Icons.public_rounded,
                   isDark: isDark,
                 ),
@@ -393,7 +392,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               _fieldLabel('City / Municipality (PSGC, optional)', textColor),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedCityMunicipalityCode,
+                initialValue: _selectedCityMunicipalityCode,
                 isExpanded: true,
                 decoration: _inputDecoration(
                   hint: _selectedRegionCode == null
@@ -537,10 +536,12 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0D1B2A).withValues(alpha: 0.9),
+                              color: const Color(0xFF0D1B2A)
+                                  .withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: const Color(0xFFFFD60A).withValues(alpha: 0.5),
+                                color: const Color(0xFFFFD60A)
+                                    .withValues(alpha: 0.5),
                               ),
                             ),
                             child: const Icon(Icons.my_location_rounded,
@@ -556,10 +557,12 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0D1B2A).withValues(alpha: 0.8),
+                              color: const Color(0xFF0D1B2A)
+                                  .withValues(alpha: 0.8),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
+                                color: const Color(0xFFFFD60A)
+                                    .withValues(alpha: 0.4),
                               ),
                             ),
                             child: Row(
@@ -589,8 +592,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                           right: 0,
                           child: Center(
                             child: GestureDetector(
-                              onTap: () => ScaffoldMessenger.of(context)
-                                  .showSnackBar(
+                              onTap: () =>
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text('Location pinned!')),
                               ),

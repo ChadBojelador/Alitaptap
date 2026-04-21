@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/models/issue.dart';
 import '../../../core/models/match_result.dart';
@@ -132,94 +133,237 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final matches = _runResult?.matches ?? const <MatchResult>[];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Match Your Idea'),
+        title: Text(
+          'Match Your Idea',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            'Describe your research idea to find the most relevant community problems.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFD60A).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.lightbulb_outline_rounded,
+                    color: Color(0xFFFFD60A), size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Describe your research idea to find the most relevant community problems.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: isDark
+                          ? const Color(0xFFF0F0F0)
+                          : const Color(0xFF1A1A1A),
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
+          Text(
+            'Research Idea',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A),
+            ),
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: _ideaController,
             minLines: 4,
             maxLines: 6,
-            decoration: const InputDecoration(
-              labelText: 'Research idea',
-              hintText: 'Example: Low-cost flood warning system for urban neighborhoods',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: _loading ? null : _matchIdea,
-            icon: const Icon(Icons.auto_awesome),
-            label: const Text('Find Matches'),
-          ),
-          const SizedBox(height: 12),
-          if (_loading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(),
+            style: GoogleFonts.poppins(fontSize: 14),
+            decoration: InputDecoration(
+              hintText:
+                  'Example: Low-cost flood warning system for urban neighborhoods',
+              hintStyle: GoogleFonts.poppins(
+                fontSize: 13,
+                color: isDark
+                    ? const Color(0xFF616161)
+                    : const Color(0xFF9E9E9E),
+              ),
+              prefixIcon: const Icon(Icons.edit_note_rounded,
+                  color: Color(0xFFFFD60A), size: 22),
+              filled: true,
+              fillColor:
+                  isDark ? const Color(0xFF242424) : const Color(0xFFF5F5F5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: const Color(0xFFFFD60A).withValues(alpha: 0.2),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: const Color(0xFFFFD60A).withValues(alpha: 0.2),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide:
+                    const BorderSide(color: Color(0xFFFFD60A), width: 1.5),
               ),
             ),
-          if (_error != null && !_loading)
-            Card(
-              color: theme.colorScheme.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  _error!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onErrorContainer,
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: _loading ? null : _matchIdea,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: _loading
+                    ? const Color(0xFFFFD60A).withValues(alpha: 0.5)
+                    : const Color(0xFFFFD60A),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_loading)
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    )
+                  else
+                    const Icon(Icons.auto_awesome_rounded,
+                        color: Color(0xFF1A1A1A), size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    _loading ? 'Finding Matches...' : 'Find Matches',
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF1A1A1A),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          if (_error != null && !_loading)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.red.withValues(alpha: 0.3),
                 ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      color: Colors.red, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           if (matches.isNotEmpty && !_loading) ...[
             const SizedBox(height: 8),
             if (_connectedIssueId != null)
-              Card(
-                color: theme.colorScheme.primaryContainer,
-                margin: const EdgeInsets.only(bottom: 10),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.link,
-                    color: theme.colorScheme.onPrimaryContainer,
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD60A).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
                   ),
-                  title: Text(
-                    'Connected Problem',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w700,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFD60A),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.link_rounded,
+                          color: Color(0xFF1A1A1A), size: 20),
                     ),
-                  ),
-                  subtitle: Text(
-                    _issueById[_connectedIssueId!]?.title ??
-                        'Most related community problem selected',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Connected Problem',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? const Color(0xFFF0F0F0)
+                                  : const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _issueById[_connectedIssueId!]?.title ??
+                                'Most related community problem',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: isDark
+                                  ? const Color(0xFF9E9E9E)
+                                  : const Color(0xFF666666),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             Text(
               'Top Matches',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color:
+                    isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             for (var index = 0; index < matches.length; index++)
               _MatchCard(
                 rank: index + 1,
@@ -249,43 +393,140 @@ class _MatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
-      color: isConnected ? theme.colorScheme.secondaryContainer : null,
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        leading: isConnected
-            ? Icon(
-                Icons.link,
-                color: theme.colorScheme.onSecondaryContainer,
-              )
-            : CircleAvatar(
-                child: Text('$rank'),
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => IssueDetailPage(issueId: match.issueId),
+        ),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isConnected
+              ? const Color(0xFFFFD60A).withValues(alpha: 0.12)
+              : isDark
+                  ? const Color(0xFF242424)
+                  : const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isConnected
+                ? const Color(0xFFFFD60A).withValues(alpha: 0.4)
+                : isDark
+                    ? const Color(0xFF3A3A3A)
+                    : const Color(0xFFE0E0E0),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isConnected
+                    ? const Color(0xFFFFD60A)
+                    : isDark
+                        ? const Color(0xFF3A3A3A)
+                        : const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isConnected
+                      ? const Color(0xFFFFD60A)
+                      : isDark
+                          ? const Color(0xFF4A4A4A)
+                          : const Color(0xFFE0E0E0),
+                ),
               ),
-        title: Text(
-          issue?.title ?? 'Community Problem',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(
-            match.reason,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        trailing: Chip(
-          label: Text('${(match.score * 100).toStringAsFixed(1)}%'),
-          visualDensity: VisualDensity.compact,
-          backgroundColor: theme.colorScheme.primaryContainer,
-        ),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => IssueDetailPage(issueId: match.issueId),
-          ),
+              child: isConnected
+                  ? const Icon(Icons.link_rounded,
+                      color: Color(0xFF1A1A1A), size: 20)
+                  : Text(
+                      '$rank',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? const Color(0xFFF0F0F0)
+                            : const Color(0xFF1A1A1A),
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    issue?.title ?? 'Community Problem',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? const Color(0xFFF0F0F0)
+                          : const Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    match.reason,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: isDark
+                          ? const Color(0xFF9E9E9E)
+                          : const Color(0xFF666666),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD60A).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    '${(match.score * 100).toStringAsFixed(0)}%',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFFFD60A),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: isDark
+                      ? const Color(0xFF616161)
+                      : const Color(0xFF9E9E9E),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

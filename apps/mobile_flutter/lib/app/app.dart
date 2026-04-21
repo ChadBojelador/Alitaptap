@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../features/civic_intelligence/presentation/issue_map_page.dart';
+import '../features/civic_intelligence/presentation/philippines_intro_screen.dart';
 
 /// Provides [themeMode] and [toggleTheme] to the entire widget tree so any
 /// page can toggle the theme without prop drilling.
@@ -116,7 +116,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
         themeMode: _themeMode,
         theme: _buildTheme(Brightness.light),
         darkTheme: _buildTheme(Brightness.dark),
-        home: IssueMapPage(onToggleTheme: toggleTheme),
+        home: PhilippinesIntroScreen(onToggleTheme: toggleTheme),
       ),
     );
   }

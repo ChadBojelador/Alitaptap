@@ -20,23 +20,17 @@ import '../../../app/app.dart' show AppTheme;
 import 'issue_detail_page.dart';
 import 'issue_submit_page.dart';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const _cyberGreen  = Color(0xFFFFD60A);
-const _cyberRed    = Color(0xFFFF2D55);
-const _darkBg      = Color(0xFF0A0E17);
-const _darkPanel   = Color(0xFF0D1320);
-const _gridLine    = Color(0xFF1A2A3A);
-const _textPrimary = Color(0xFFE0FFF8);
-const _textMuted   = Color(0xFF8A7340);
+// ─── Cyber theme colors ───────────────────────────────────────────────────────
+const _darkBg = Color(0xFF080C14);
+const _darkPanel = Color(0xFF0D1520);
+const _cyberGreen = Color(0xFFFFD60A);
+const _cyberRed = Color(0xFFFF3366);
+const _textPrimary = Color(0xFFE0E0E0);
+const _textMuted = Color(0xFF6B7280);
+const _gridLine = Color(0xFF1A2332);
 
-/// Full-screen cyber-terminal map page.
-///
-/// Redesigned to match the aesthetic of phadmindownloader.vercel.app:
-/// - Near-black deep-space map with cyan/green neon accents
-/// - Scanline grid overlay for terminal feel
-/// - Left collapsible sidebar listing issues (replaces bottom sheet)
-/// - Radar-blip glowing issue pins
-/// - Monospace terminal-style top bar
+/// Full-screen cutesy map page for Alitaptap.
+/// Warm pastel palette, rounded cards, friendly Nunito font.
 class IssueMapPage extends StatefulWidget {
   const IssueMapPage({
     super.key,
@@ -60,37 +54,36 @@ class IssueMapPage extends StatefulWidget {
   @override
   State<IssueMapPage> createState() => _IssueMapPageState();
 }
+
 class _IssueMapPageState extends State<IssueMapPage>
     with TickerProviderStateMixin {
-
-  static const _mapStyleUrl =
-      'https://tiles.openfreemap.org/styles/liberty';
+  static const _mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
-  static const _defaultZoom   = 6.0;
-  static const _userZoom      = 16.5;
+  static const _defaultZoom = 6.0;
+  static const _userZoom = 16.5;
 
   LatLngBounds get _philippinesBounds => LatLngBounds(
         southwest: const LatLng(4.5, 116.0),
         northeast: const LatLng(21.5, 127.5),
       );
 
-  final _issueRepository   = ApiIssueRepository();
-  final _ideaController    = TextEditingController();
+  final _issueRepository = ApiIssueRepository();
+  final _ideaController = TextEditingController();
 
   late final GetValidatedIssuesUseCase _getValidatedIssues =
       GetValidatedIssuesUseCase(_issueRepository);
   late final SubmitIssueUseCase _submitIssueUseCase =
       SubmitIssueUseCase(_issueRepository);
 
-  List<Issue> _issues      = [];
-  Position?   _userPosition;
+  List<Issue> _issues = [];
+  Position? _userPosition;
 
-  bool _loading            = true;
-  bool _styleLoaded        = false;
-  bool _cameraMovedToUser  = false;
-  bool _matchingIdea       = false;
-  bool _generatingDemoIssue= false;
-  bool _sidebarOpen        = false;
+  bool _loading = true;
+  bool _styleLoaded = false;
+  bool _cameraMovedToUser = false;
+  bool _matchingIdea = false;
+  bool _generatingDemoIssue = false;
+  bool _sidebarOpen = false;
 
   // ✅🔥 THIS IS THE FIX (missing variable)
   String? _errorMessage;
@@ -99,11 +92,11 @@ class _IssueMapPageState extends State<IssueMapPage>
   Circle? _userLocationCircle;
   Offset? _userScreenPosition;
   final Map<String, Offset> _issueScreenPositions = {};
-  double  _bearing         = 0.0;
+  double _bearing = 0.0;
   String? _patchedStyle;
 
-  bool _isDarkMode         = true;
-  bool get _isDark         => _isDarkMode;
+  bool _isDarkMode = true;
+  bool get _isDark => _isDarkMode;
   ThemeMode? _lastThemeMode;
 
   // Animations
@@ -132,8 +125,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     _resolveCurrentLocation();
     _loadIssues();
     if (widget.autoRun && (widget.initialIdeaText?.length ?? 0) >= 5) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _submitIdea());
+      WidgetsBinding.instance.addPostFrameCallback((_) => _submitIdea());
     }
   }
 
@@ -143,7 +135,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     final currentMode = AppTheme.of(context).themeMode;
     _isDarkMode = currentMode == ThemeMode.dark;
     if (_lastThemeMode != currentMode) {
-      _styleLoaded  = false;
+      _styleLoaded = false;
       _patchedStyle = null;
       _loadPatchedStyle();
       _lastThemeMode = currentMode;
@@ -161,76 +153,76 @@ class _IssueMapPageState extends State<IssueMapPage>
 
   // ── Map style patching ──────────────────────────────────────────────────────
 
-  /// Fetches and patches the liberty style to a deep-space cyber aesthetic.
+  /// Fetches and patches the liberty style to a soft pastel aesthetic.
   Future<void> _loadPatchedStyle() async {
     try {
       final res = await http.get(Uri.parse(_mapStyleUrl));
       if (res.statusCode != 200) return;
-      final style  = jsonDecode(res.body) as Map<String, dynamic>;
+      final style = jsonDecode(res.body) as Map<String, dynamic>;
       final layers = style['layers'] as List<dynamic>;
 
-      // Cyber-terminal dark palette — near-black land, deep cyan water.
+      // Soft warm pastel palette.
       const patches = <String, String>{
-        'background':                     '#080C14',
-        'park':                           '#081A10',
-        'landuse_residential':            '#0A1018',
-        'landcover_wood':                 '#061410',
-        'landcover_grass':                '#081610',
-        'landcover_wetland':              '#071218',
-        'landcover_sand':                 '#0C140C',
-        'landcover_ice':                  '#0C1420',
-        'landuse_cemetery':               '#090F18',
-        'landuse_hospital':               '#090F18',
-        'landuse_school':                 '#090F18',
-        'landuse_pitch':                  '#071410',
-        'landuse_track':                  '#071410',
-        'aeroway_fill':                   '#080C14',
-        'water':                          '#003A4A',
-        'waterway_river':                 '#004D5E',
-        'waterway_other':                 '#003A4A',
-        'waterway_tunnel':                '#002A36',
-        'road_motorway':                  '#FFD60A',
-        'road_motorway_casing':           '#B38300',
-        'road_motorway_link':             '#FFD60A',
-        'road_motorway_link_casing':      '#B38300',
-        'road_trunk_primary':             '#FFC300',
-        'road_trunk_primary_casing':      '#8F6A00',
-        'road_secondary_tertiary':        '#E6B800',
-        'road_secondary_tertiary_casing': '#6E5200',
-        'road_minor':                     '#0D2030',
-        'road_minor_casing':              '#091828',
-        'road_link':                      '#E6B800',
-        'road_link_casing':               '#6E5200',
-        'road_service_track':             '#0B1C2C',
-        'road_service_track_casing':      '#071420',
-        'road_path_pedestrian':           '#0B1C2C',
-        'bridge_motorway':                '#FFD60A',
-        'bridge_motorway_casing':         '#B38300',
-        'bridge_trunk_primary':           '#FFC300',
-        'bridge_trunk_primary_casing':    '#8F6A00',
-        'bridge_secondary_tertiary':      '#E6B800',
-        'bridge_street':                  '#0D2030',
-        'bridge_motorway_link':           '#FFD60A',
-        'bridge_link':                    '#E6B800',
-        'bridge_service_track':           '#0B1C2C',
-        'bridge_path_pedestrian':         '#0B1C2C',
-        'tunnel_motorway':                '#B38300',
-        'tunnel_trunk_primary':           '#8F6A00',
-        'tunnel_secondary_tertiary':      '#6E5200',
-        'tunnel_minor':                   '#091828',
-        'building':                       '#0D1C30',
-        'road_major_rail':                '#1A3040',
-        'road_transit_rail':              '#1A3040',
-        'bridge_major_rail':              '#1A3040',
-        'bridge_transit_rail':            '#1A3040',
-        'boundary_2':                     '#FFD60A',
-        'boundary_3':                     '#FFC300',
+        'background': '#FFF8E7',
+        'park': '#D4EDDA',
+        'landuse_residential': '#FFF3CD',
+        'landcover_wood': '#C8E6C9',
+        'landcover_grass': '#DCEDC8',
+        'landcover_wetland': '#B2EBF2',
+        'landcover_sand': '#FFF9C4',
+        'landcover_ice': '#E3F2FD',
+        'landuse_cemetery': '#F3E5F5',
+        'landuse_hospital': '#FCE4EC',
+        'landuse_school': '#FFF8E1',
+        'landuse_pitch': '#C8E6C9',
+        'landuse_track': '#DCEDC8',
+        'aeroway_fill': '#F5F5F5',
+        'water': '#B3E5FC',
+        'waterway_river': '#81D4FA',
+        'waterway_other': '#B3E5FC',
+        'waterway_tunnel': '#90CAF9',
+        'road_motorway': '#FFD60A',
+        'road_motorway_casing': '#FFC107',
+        'road_motorway_link': '#FFD60A',
+        'road_motorway_link_casing': '#FFC107',
+        'road_trunk_primary': '#FFCC02',
+        'road_trunk_primary_casing': '#FFB300',
+        'road_secondary_tertiary': '#FFE082',
+        'road_secondary_tertiary_casing': '#FFD54F',
+        'road_minor': '#EEEEEE',
+        'road_minor_casing': '#E0E0E0',
+        'road_link': '#FFE082',
+        'road_link_casing': '#FFD54F',
+        'road_service_track': '#F5F5F5',
+        'road_service_track_casing': '#EEEEEE',
+        'road_path_pedestrian': '#F5F5F5',
+        'bridge_motorway': '#FFD60A',
+        'bridge_motorway_casing': '#FFC107',
+        'bridge_trunk_primary': '#FFCC02',
+        'bridge_trunk_primary_casing': '#FFB300',
+        'bridge_secondary_tertiary': '#FFE082',
+        'bridge_street': '#EEEEEE',
+        'bridge_motorway_link': '#FFD60A',
+        'bridge_link': '#FFE082',
+        'bridge_service_track': '#F5F5F5',
+        'bridge_path_pedestrian': '#F5F5F5',
+        'tunnel_motorway': '#FFC107',
+        'tunnel_trunk_primary': '#FFB300',
+        'tunnel_secondary_tertiary': '#FFD54F',
+        'tunnel_minor': '#E0E0E0',
+        'building': '#FFE0B2',
+        'road_major_rail': '#BDBDBD',
+        'road_transit_rail': '#BDBDBD',
+        'bridge_major_rail': '#BDBDBD',
+        'bridge_transit_rail': '#BDBDBD',
+        'boundary_2': '#FF8A65',
+        'boundary_3': '#FFAB91',
       };
 
       for (final layer in layers) {
-        final map   = layer as Map<String, dynamic>;
-        final id    = map['id']   as String? ?? '';
-        final type  = map['type'] as String? ?? '';
+        final map = layer as Map<String, dynamic>;
+        final id = map['id'] as String? ?? '';
+        final type = map['type'] as String? ?? '';
         final paint = Map<String, dynamic>.from(
             map['paint'] as Map<String, dynamic>? ?? {});
 
@@ -239,8 +231,8 @@ class _IssueMapPageState extends State<IssueMapPage>
           if (type == 'background') {
             paint['background-color'] = color;
           } else if (type == 'fill') {
-            paint['fill-color']    = color;
-            paint['fill-opacity']  = 1.0;
+            paint['fill-color'] = color;
+            paint['fill-opacity'] = 1.0;
           } else if (type == 'line') {
             paint['line-color'] = color;
           }
@@ -259,9 +251,9 @@ class _IssueMapPageState extends State<IssueMapPage>
       final issues = await _getValidatedIssues();
       if (mounted) {
         setState(() {
-          _issues       = issues;
+          _issues = issues;
           _errorMessage = null;
-          _loading      = false;
+          _loading = false;
         });
         await _renderIssuePins();
         await _updateIssueScreenPositions();
@@ -269,7 +261,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _loading      = false;
+          _loading = false;
           _errorMessage = e.toString();
         });
       }
@@ -288,15 +280,15 @@ class _IssueMapPageState extends State<IssueMapPage>
     final controller = _mapController;
     if (controller != null) {
       const labelSizes = {
-        'label_country_1':   26.0,
-        'label_country_2':   24.0,
-        'label_country_3':   22.0,
-        'label_state':       18.0,
-        'label_city_capital':16.0,
-        'label_city':        15.0,
-        'label_town':        13.0,
-        'label_village':     11.0,
-        'label_other':       10.0,
+        'label_country_1': 26.0,
+        'label_country_2': 24.0,
+        'label_country_3': 22.0,
+        'label_state': 18.0,
+        'label_city_capital': 16.0,
+        'label_city': 15.0,
+        'label_town': 13.0,
+        'label_village': 11.0,
+        'label_other': 10.0,
       };
 
       for (final entry in labelSizes.entries) {
@@ -304,21 +296,27 @@ class _IssueMapPageState extends State<IssueMapPage>
           await controller.setLayerProperties(
             entry.key,
             SymbolLayerProperties(
-              textColor:      '#FFD60A',
-              textSize:       entry.value,
-              textHaloColor:  '#080C14',
-              textHaloWidth:  2.5,
-              textHaloBlur:   0,
+              textColor: '#FFD60A',
+              textSize: entry.value,
+              textHaloColor: '#080C14',
+              textHaloWidth: 2.5,
+              textHaloBlur: 0,
             ),
           );
         } catch (_) {}
       }
 
       const hideLayers = [
-        'poi_r20', 'poi_r7', 'poi_r1', 'poi_transit', 'airport',
+        'poi_r20',
+        'poi_r7',
+        'poi_r1',
+        'poi_transit',
+        'airport',
       ];
       for (final layer in hideLayers) {
-        try { await controller.setLayerVisibility(layer, false); } catch (_) {}
+        try {
+          await controller.setLayerVisibility(layer, false);
+        } catch (_) {}
       }
     }
     await _moveCameraToUserLocation();
@@ -331,14 +329,14 @@ class _IssueMapPageState extends State<IssueMapPage>
 
   Future<void> _updateUserScreenPosition() async {
     final controller = _mapController;
-    final pos        = _userPosition;
+    final pos = _userPosition;
     if (controller == null || pos == null) return;
     final point = await controller.toScreenLocation(
       LatLng(pos.latitude, pos.longitude),
     );
     if (mounted) {
-      setState(() => _userScreenPosition =
-          Offset(point.x.toDouble(), point.y.toDouble()));
+      setState(() =>
+          _userScreenPosition = Offset(point.x.toDouble(), point.y.toDouble()));
     }
   }
 
@@ -361,7 +359,9 @@ class _IssueMapPageState extends State<IssueMapPage>
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) return;
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
 
       final position = await Geolocator.getCurrentPosition(
         locationSettings:
@@ -376,7 +376,7 @@ class _IssueMapPageState extends State<IssueMapPage>
   Future<void> _moveCameraToUserLocation({bool force = false}) async {
     if (!force && _cameraMovedToUser) return;
     final controller = _mapController;
-    final pos        = _userPosition;
+    final pos = _userPosition;
     if (controller == null || pos == null) return;
     if (!_styleLoaded && !force) return;
 
@@ -416,8 +416,8 @@ class _IssueMapPageState extends State<IssueMapPage>
     final positions = <String, Offset>{};
     for (final issue in _issues) {
       try {
-        final screenPoint = await controller
-            .toScreenLocation(LatLng(issue.lat, issue.lng));
+        final screenPoint =
+            await controller.toScreenLocation(LatLng(issue.lat, issue.lng));
         positions[issue.issueId] =
             Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
       } catch (_) {}
@@ -450,14 +450,14 @@ class _IssueMapPageState extends State<IssueMapPage>
     }
 
     final index = _issues.length + 1;
-    final now   = DateTime.now();
+    final now = DateTime.now();
 
     setState(() => _generatingDemoIssue = true);
     try {
       await _submitIssueUseCase(
         SubmitIssueInput(
-          reporterId:  'demo-seed-user',
-          title:       'Generated Problem #$index',
+          reporterId: 'demo-seed-user',
+          title: 'Generated Problem #$index',
           description: 'Auto-generated pin at '
               '${now.hour.toString().padLeft(2, '0')}:'
               '${now.minute.toString().padLeft(2, '0')}.',
@@ -508,16 +508,15 @@ class _IssueMapPageState extends State<IssueMapPage>
       );
       return;
     }
-    final studentId = widget.studentId ??
-        FirebaseAuth.instance.currentUser?.uid ??
-        'anon';
+    final studentId =
+        widget.studentId ?? FirebaseAuth.instance.currentUser?.uid ?? 'anon';
     setState(() => _matchingIdea = true);
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => IdeaMatchPage(
-          studentId:       studentId,
+          studentId: studentId,
           initialIdeaText: idea,
-          autoRun:         true,
+          autoRun: true,
         ),
       ),
     );
@@ -551,20 +550,18 @@ class _IssueMapPageState extends State<IssueMapPage>
             styleString: _patchedStyle ?? _mapStyleUrl,
             initialCameraPosition: const CameraPosition(
               target: _defaultCenter,
-              zoom:   _defaultZoom,
-              tilt:   60,
+              zoom: _defaultZoom,
+              tilt: 60,
             ),
-            cameraTargetBounds:
-                CameraTargetBounds(_philippinesBounds),
-            minMaxZoomPreference:
-                const MinMaxZoomPreference(5.5, 20.0),
-            onMapCreated:          _onMapCreated,
+            cameraTargetBounds: CameraTargetBounds(_philippinesBounds),
+            minMaxZoomPreference: const MinMaxZoomPreference(5.5, 20.0),
+            onMapCreated: _onMapCreated,
             onStyleLoadedCallback: _onStyleLoaded,
-            onMapClick:            _onMapTap,
-            compassEnabled:        false,
-            myLocationEnabled:     false,
+            onMapClick: _onMapTap,
+            compassEnabled: false,
+            myLocationEnabled: false,
             attributionButtonMargins: const Point(-100, -100),
-            logoViewMargins:          const Point(-100, -100),
+            logoViewMargins: const Point(-100, -100),
           ),
 
           // ── Scanline overlay ───────────────────────────────────────────────
@@ -579,7 +576,7 @@ class _IssueMapPageState extends State<IssueMapPage>
           if (_userScreenPosition != null)
             Positioned(
               left: _userScreenPosition!.dx - 32,
-              top:  _userScreenPosition!.dy - 32,
+              top: _userScreenPosition!.dy - 32,
               child: const _UserBlip(),
             ),
 
@@ -588,7 +585,7 @@ class _IssueMapPageState extends State<IssueMapPage>
             if (_issueScreenPositions[issue.issueId] != null)
               Positioned(
                 left: _issueScreenPositions[issue.issueId]!.dx - 10,
-                top:  _issueScreenPositions[issue.issueId]!.dy - 10,
+                top: _issueScreenPositions[issue.issueId]!.dy - 10,
                 child: GestureDetector(
                   onTap: () => _onPinTapped(issue),
                   child: const _RadarBlip(),
@@ -597,23 +594,23 @@ class _IssueMapPageState extends State<IssueMapPage>
 
           // ── Top terminal bar ───────────────────────────────────────────────
           Positioned(
-            top:   0,
-            left:  0,
+            top: 0,
+            left: 0,
             right: 0,
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                 child: _TerminalTopBar(
-                  issueCount:       _issues.length,
-                  isDark:           _isDark,
-                  sidebarOpen:      _sidebarOpen,
-                  onToggleSidebar:  _toggleSidebar,
+                  issueCount: _issues.length,
+                  isDark: _isDark,
+                  sidebarOpen: _sidebarOpen,
+                  onToggleSidebar: _toggleSidebar,
                   onLocate: () async {
                     await _resolveCurrentLocation();
                     await _moveCameraToUserLocation(force: true);
                   },
                   onRefresh: () => setState(() {
-                    _loading      = true;
+                    _loading = true;
                     _errorMessage = null;
                     _loadIssues();
                   }),
@@ -631,9 +628,9 @@ class _IssueMapPageState extends State<IssueMapPage>
           // ── Left sidebar ───────────────────────────────────────────────────
           if (!_loading)
             Positioned(
-              top:    0,
+              top: 0,
               bottom: 0,
-              left:   0,
+              left: 0,
               child: SafeArea(
                 child: AnimatedBuilder(
                   animation: _sidebarSlide,
@@ -646,9 +643,9 @@ class _IssueMapPageState extends State<IssueMapPage>
                     );
                   },
                   child: _IssueSidebar(
-                    issues:    _issues,
-                    onTap:     _onPinTapped,
-                    onClose:   _toggleSidebar,
+                    issues: _issues,
+                    onTap: _onPinTapped,
+                    onClose: _toggleSidebar,
                   ),
                 ),
               ),
@@ -658,7 +655,7 @@ class _IssueMapPageState extends State<IssueMapPage>
           if (!_loading)
             Positioned(
               bottom: 90,
-              left:   16,
+              left: 16,
               child: _MapFabCluster(
                 onReport: () {
                   final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
@@ -683,7 +680,7 @@ class _IssueMapPageState extends State<IssueMapPage>
           if (!_loading)
             Positioned(
               bottom: 24,
-              right:  16,
+              right: 16,
               child: _MapCompass(
                 bearing: _bearing,
                 onTap: () => _mapController?.animateCamera(
@@ -691,8 +688,8 @@ class _IssueMapPageState extends State<IssueMapPage>
                     CameraPosition(
                       target: _mapController?.cameraPosition?.target ??
                           _defaultCenter,
-                      zoom: _mapController?.cameraPosition?.zoom ??
-                          _defaultZoom,
+                      zoom:
+                          _mapController?.cameraPosition?.zoom ?? _defaultZoom,
                       tilt: _mapController?.cameraPosition?.tilt ?? 60,
                       bearing: 0,
                     ),
@@ -710,10 +707,10 @@ class _IssueMapPageState extends State<IssueMapPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width:  48,
+                      width: 48,
                       height: 48,
-                      child: const CircularProgressIndicator(
-                        color:       _cyberGreen,
+                      child: CircularProgressIndicator(
+                        color: _cyberGreen,
                         strokeWidth: 1.5,
                       ),
                     ),
@@ -721,8 +718,8 @@ class _IssueMapPageState extends State<IssueMapPage>
                     Text(
                       'LOADING CIVIC DATA...',
                       style: GoogleFonts.robotoMono(
-                        color:     _cyberGreen,
-                        fontSize:  11,
+                        color: _cyberGreen,
+                        fontSize: 11,
                         letterSpacing: 2.4,
                       ),
                     ),
@@ -734,14 +731,14 @@ class _IssueMapPageState extends State<IssueMapPage>
           // ── Idea dock ──────────────────────────────────────────────────────
           if (!_loading)
             Positioned(
-              left:   16,
-              right:  16,
+              left: 16,
+              right: 16,
               bottom: 16,
               child: SafeArea(
                 child: _IdeaDock(
-                  controller:  _ideaController,
-                  isMatching:  _matchingIdea,
-                  onSubmit:    _submitIdea,
+                  controller: _ideaController,
+                  isMatching: _matchingIdea,
+                  onSubmit: _submitIdea,
                 ),
               ),
             ),
@@ -801,12 +798,12 @@ class _TerminalTopBar extends StatelessWidget {
     this.onBack,
   });
 
-  final int      issueCount;
-  final bool     isDark;
-  final bool     sidebarOpen;
-  final VoidCallback  onToggleSidebar;
-  final VoidCallback  onLocate;
-  final VoidCallback  onRefresh;
+  final int issueCount;
+  final bool isDark;
+  final bool sidebarOpen;
+  final VoidCallback onToggleSidebar;
+  final VoidCallback onLocate;
+  final VoidCallback onRefresh;
   final VoidCallback? onAddPin;
   final VoidCallback? onBack;
 
@@ -819,7 +816,7 @@ class _TerminalTopBar extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color:        _darkPanel.withValues(alpha: 0.88),
+            color: _darkPanel.withValues(alpha: 0.88),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: _cyberGreen.withValues(alpha: 0.30),
@@ -830,17 +827,14 @@ class _TerminalTopBar extends StatelessWidget {
             children: [
               // Back
               if (onBack != null) ...[
-                _TBtn(
-                    icon: Icons.arrow_back_ios_rounded,
-                    onPressed: onBack),
+                _TBtn(icon: Icons.arrow_back_ios_rounded, onPressed: onBack),
                 const SizedBox(width: 4),
               ],
 
               // Sidebar toggle
               _TBtn(
-                icon: sidebarOpen
-                    ? Icons.menu_open_rounded
-                    : Icons.menu_rounded,
+                icon:
+                    sidebarOpen ? Icons.menu_open_rounded : Icons.menu_rounded,
                 onPressed: onToggleSidebar,
               ),
               const SizedBox(width: 10),
@@ -854,17 +848,17 @@ class _TerminalTopBar extends StatelessWidget {
                     Text(
                       'ALITAPTAP // CIVIC-INTEL',
                       style: GoogleFonts.robotoMono(
-                        color:         _cyberGreen,
-                        fontSize:      10,
-                        fontWeight:    FontWeight.w700,
+                        color: _cyberGreen,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 1.8,
                       ),
                     ),
                     Text(
                       '${issueCount.toString().padLeft(4, '0')} ISSUES LOADED',
                       style: GoogleFonts.robotoMono(
-                        color:         _textMuted,
-                        fontSize:      8,
+                        color: _textMuted,
+                        fontSize: 8,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -873,13 +867,11 @@ class _TerminalTopBar extends StatelessWidget {
               ),
 
               // Controls
-              _TBtn(icon: Icons.my_location_rounded,  onPressed: onLocate),
+              _TBtn(icon: Icons.my_location_rounded, onPressed: onLocate),
               const SizedBox(width: 8),
-              _TBtn(icon: Icons.refresh_rounded,       onPressed: onRefresh),
+              _TBtn(icon: Icons.refresh_rounded, onPressed: onRefresh),
               const SizedBox(width: 8),
-              _TBtn(
-                  icon: Icons.add_location_alt_rounded,
-                  onPressed: onAddPin),
+              _TBtn(icon: Icons.add_location_alt_rounded, onPressed: onAddPin),
             ],
           ),
         ),
@@ -891,7 +883,7 @@ class _TerminalTopBar extends StatelessWidget {
 /// Small icon button used in the terminal top bar.
 class _TBtn extends StatelessWidget {
   const _TBtn({required this.icon, this.onPressed});
-  final IconData     icon;
+  final IconData icon;
   final VoidCallback? onPressed;
 
   @override
@@ -900,9 +892,7 @@ class _TBtn extends StatelessWidget {
       onTap: onPressed,
       child: Icon(
         icon,
-        color: onPressed == null
-            ? _textMuted
-            : _cyberGreen,
+        color: onPressed == null ? _textMuted : _cyberGreen,
         size: 18,
       ),
     );
@@ -937,14 +927,14 @@ class _UserBlipState extends State<_UserBlip>
       builder: (_, __) {
         final t = _anim.value;
         return SizedBox(
-          width:  64,
+          width: 64,
           height: 64,
           child: Stack(
             alignment: Alignment.center,
             children: [
               // Pulse ring
               Container(
-                width:  64 * t,
+                width: 64 * t,
                 height: 64 * t,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -956,15 +946,15 @@ class _UserBlipState extends State<_UserBlip>
               ),
               // Core dot
               Container(
-                width:  14,
+                width: 14,
                 height: 14,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _cyberGreen,
                   boxShadow: [
                     BoxShadow(
-                      color:       _cyberGreen.withValues(alpha: 0.7),
-                      blurRadius:  10,
+                      color: _cyberGreen.withValues(alpha: 0.7),
+                      blurRadius: 10,
                       spreadRadius: 2,
                     ),
                   ],
@@ -972,7 +962,7 @@ class _UserBlipState extends State<_UserBlip>
               ),
               // Inner dot
               Container(
-                width:  6,
+                width: 6,
                 height: 6,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
@@ -1015,14 +1005,14 @@ class _RadarBlipState extends State<_RadarBlip>
       builder: (_, __) {
         final t = _anim.value;
         return SizedBox(
-          width:  32,
+          width: 32,
           height: 32,
           child: Stack(
             alignment: Alignment.center,
             children: [
               // Pulse ring
               Container(
-                width:  32 * t,
+                width: 32 * t,
                 height: 32 * t,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -1034,15 +1024,15 @@ class _RadarBlipState extends State<_RadarBlip>
               ),
               // Core
               Container(
-                width:  10,
+                width: 10,
                 height: 10,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _cyberRed,
                   boxShadow: [
                     BoxShadow(
-                      color:       _cyberRed.withValues(alpha: 0.6),
-                      blurRadius:  8,
+                      color: _cyberRed.withValues(alpha: 0.6),
+                      blurRadius: 8,
                       spreadRadius: 1,
                     ),
                   ],
@@ -1059,7 +1049,7 @@ class _RadarBlipState extends State<_RadarBlip>
 /// Compass rose that rotates with map bearing, snaps north on tap.
 class _MapCompass extends StatelessWidget {
   const _MapCompass({required this.bearing, required this.onTap});
-  final double       bearing;
+  final double bearing;
   final VoidCallback onTap;
 
   @override
@@ -1067,7 +1057,7 @@ class _MapCompass extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width:  48,
+        width: 48,
         height: 48,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -1078,8 +1068,8 @@ class _MapCompass extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color:       _cyberGreen.withValues(alpha: 0.20),
-              blurRadius:  12,
+              color: _cyberGreen.withValues(alpha: 0.20),
+              blurRadius: 12,
               spreadRadius: 1,
             ),
           ],
@@ -1096,9 +1086,9 @@ class _MapCompass extends StatelessWidget {
 class _CompassPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final cx = size.width  / 2;
+    final cx = size.width / 2;
     final cy = size.height / 2;
-    final r  = size.width  * 0.30;
+    final r = size.width * 0.30;
 
     // North — cyber green
     canvas.drawPath(
@@ -1130,10 +1120,10 @@ class _CompassPainter extends CustomPainter {
     // N label
     final tp = TextPainter(
       text: TextSpan(
-        text:  'N',
+        text: 'N',
         style: GoogleFonts.robotoMono(
-          color:      _darkBg,
-          fontSize:   8,
+          color: _darkBg,
+          fontSize: 8,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -1154,9 +1144,9 @@ class _IssueSidebar extends StatelessWidget {
     required this.onClose,
   });
 
-  final List<Issue>        issues;
+  final List<Issue> issues;
   final ValueChanged<Issue> onTap;
-  final VoidCallback        onClose;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -1186,15 +1176,15 @@ class _IssueSidebar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.radar, color: _cyberGreen, size: 16),
+                Icon(Icons.radar, color: _cyberGreen, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'ISSUE DATASETS',
                     style: GoogleFonts.robotoMono(
-                      color:         _cyberGreen,
-                      fontSize:      11,
-                      fontWeight:    FontWeight.w700,
+                      color: _cyberGreen,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 1.6,
                     ),
                   ),
@@ -1217,10 +1207,10 @@ class _IssueSidebar extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color:        _cyberGreen.withValues(alpha: 0.10),
+                    color: _cyberGreen.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: _cyberGreen.withValues(alpha: 0.30),
@@ -1229,8 +1219,8 @@ class _IssueSidebar extends StatelessWidget {
                   child: Text(
                     '${issues.length} ACTIVE',
                     style: GoogleFonts.robotoMono(
-                      color:         _cyberGreen,
-                      fontSize:      9,
+                      color: _cyberGreen,
+                      fontSize: 9,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -1242,15 +1232,14 @@ class _IssueSidebar extends StatelessWidget {
           // List
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               itemCount: issues.length,
               itemBuilder: (context, i) {
                 final issue = issues[i];
                 return _SidebarIssueRow(
-                  issue:  issue,
-                  index:  i,
-                  onTap:  () => onTap(issue),
+                  issue: issue,
+                  index: i,
+                  onTap: () => onTap(issue),
                 );
               },
             ),
@@ -1270,8 +1259,8 @@ class _IssueSidebar extends StatelessWidget {
             child: Text(
               'ALITAPTAP CIVIC-INTEL v2.0',
               style: GoogleFonts.robotoMono(
-                color:         _textMuted,
-                fontSize:      8,
+                color: _textMuted,
+                fontSize: 8,
                 letterSpacing: 1.2,
               ),
             ),
@@ -1289,8 +1278,8 @@ class _SidebarIssueRow extends StatefulWidget {
     required this.onTap,
   });
 
-  final Issue        issue;
-  final int          index;
+  final Issue issue;
+  final int index;
   final VoidCallback onTap;
 
   @override
@@ -1305,21 +1294,19 @@ class _SidebarIssueRowState extends State<_SidebarIssueRow> {
     return GestureDetector(
       onTap: widget.onTap,
       onTapDown: (_) => setState(() => _hovered = true),
-      onTapUp:   (_) => setState(() => _hovered = false),
-      onTapCancel: ()  => setState(() => _hovered = false),
+      onTapUp: (_) => setState(() => _hovered = false),
+      onTapCancel: () => setState(() => _hovered = false),
       child: AnimatedContainer(
-        duration:     const Duration(milliseconds: 120),
-        margin:       const EdgeInsets.only(bottom: 6),
-        padding:      const EdgeInsets.all(10),
+        duration: const Duration(milliseconds: 120),
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: _hovered
               ? _cyberGreen.withValues(alpha: 0.08)
               : _darkBg.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: _hovered
-                ? _cyberGreen.withValues(alpha: 0.45)
-                : _gridLine,
+            color: _hovered ? _cyberGreen.withValues(alpha: 0.45) : _gridLine,
             width: 1,
           ),
         ),
@@ -1327,20 +1314,19 @@ class _SidebarIssueRowState extends State<_SidebarIssueRow> {
           children: [
             // Index badge
             Container(
-              width:  28,
+              width: 28,
               height: 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color:        _cyberRed.withValues(alpha: 0.12),
+                color: _cyberRed.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                    color: _cyberRed.withValues(alpha: 0.35)),
+                border: Border.all(color: _cyberRed.withValues(alpha: 0.35)),
               ),
               child: Text(
                 (widget.index + 1).toString().padLeft(2, '0'),
                 style: GoogleFonts.robotoMono(
-                  color:      _cyberRed,
-                  fontSize:   9,
+                  color: _cyberRed,
+                  fontSize: 9,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1352,21 +1338,21 @@ class _SidebarIssueRowState extends State<_SidebarIssueRow> {
                 children: [
                   Text(
                     widget.issue.title,
-                    maxLines:  1,
-                    overflow:  TextOverflow.ellipsis,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.robotoMono(
-                      color:      _textPrimary,
-                      fontSize:   10,
+                      color: _textPrimary,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     widget.issue.description,
-                    maxLines:  2,
-                    overflow:  TextOverflow.ellipsis,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.robotoMono(
-                      color:    _textMuted,
+                      color: _textMuted,
                       fontSize: 9,
                     ),
                   ),
@@ -1377,7 +1363,7 @@ class _SidebarIssueRowState extends State<_SidebarIssueRow> {
             Icon(
               Icons.chevron_right_rounded,
               color: _hovered ? _cyberGreen : _textMuted,
-              size:  14,
+              size: 14,
             ),
           ],
         ),
@@ -1425,8 +1411,8 @@ class _FabButton extends StatelessWidget {
     required this.onTap,
   });
 
-  final IconData     icon;
-  final String       label;
+  final IconData icon;
+  final String label;
   final VoidCallback onTap;
 
   @override
@@ -1440,7 +1426,7 @@ class _FabButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color:        _darkPanel.withValues(alpha: 0.88),
+              color: _darkPanel.withValues(alpha: 0.88),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _cyberGreen.withValues(alpha: 0.35),
@@ -1448,7 +1434,7 @@ class _FabButton extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color:      _cyberGreen.withValues(alpha: 0.10),
+                  color: _cyberGreen.withValues(alpha: 0.10),
                   blurRadius: 12,
                 ),
               ],
@@ -1461,9 +1447,9 @@ class _FabButton extends StatelessWidget {
                 Text(
                   label,
                   style: GoogleFonts.robotoMono(
-                    color:         _cyberGreen,
-                    fontSize:      10,
-                    fontWeight:    FontWeight.w700,
+                    color: _cyberGreen,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 1.4,
                   ),
                 ),
@@ -1485,8 +1471,8 @@ class _IdeaDock extends StatelessWidget {
   });
 
   final TextEditingController controller;
-  final bool                  isMatching;
-  final VoidCallback          onSubmit;
+  final bool isMatching;
+  final VoidCallback onSubmit;
 
   @override
   Widget build(BuildContext context) {
@@ -1496,7 +1482,7 @@ class _IdeaDock extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           decoration: BoxDecoration(
-            color:        _darkPanel.withValues(alpha: 0.9),
+            color: _darkPanel.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _cyberGreen.withValues(alpha: 0.35),
@@ -1504,10 +1490,10 @@ class _IdeaDock extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color:       _cyberGreen.withValues(alpha: 0.08),
-                blurRadius:  20,
+                color: _cyberGreen.withValues(alpha: 0.08),
+                blurRadius: 20,
                 spreadRadius: 0,
-                offset:      const Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -1517,39 +1503,39 @@ class _IdeaDock extends StatelessWidget {
               Text(
                 '> ',
                 style: GoogleFonts.robotoMono(
-                  color:    _cyberGreen,
+                  color: _cyberGreen,
                   fontSize: 14,
                 ),
               ),
               Expanded(
                 child: TextField(
-                  controller:      controller,
+                  controller: controller,
                   textInputAction: TextInputAction.search,
-                  onSubmitted:     (_) => onSubmit(),
+                  onSubmitted: (_) => onSubmit(),
                   style: GoogleFonts.robotoMono(
-                    color:    _textPrimary,
+                    color: _textPrimary,
                     fontSize: 13,
                   ),
                   decoration: InputDecoration(
                     hintText: 'ENTER RESEARCH IDEA...',
                     hintStyle: GoogleFonts.robotoMono(
-                      color:         _textMuted,
-                      fontSize:      12,
+                      color: _textMuted,
+                      fontSize: 12,
                       letterSpacing: 0.8,
                     ),
-                    border:  InputBorder.none,
-                    filled:  false,
+                    border: InputBorder.none,
+                    filled: false,
                   ),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: isMatching
-                  ? const SizedBox(
-                        width:  20,
+                    ? const SizedBox(
+                        width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                          color:       _cyberGreen,
+                          color: _cyberGreen,
                           strokeWidth: 1.5,
                         ),
                       )
@@ -1558,7 +1544,7 @@ class _IdeaDock extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color:        _cyberGreen.withValues(alpha: 0.12),
+                            color: _cyberGreen.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: _cyberGreen.withValues(alpha: 0.45),
@@ -1567,7 +1553,7 @@ class _IdeaDock extends StatelessWidget {
                           child: const Icon(
                             Icons.arrow_forward_rounded,
                             color: _cyberGreen,
-                            size:  16,
+                            size: 16,
                           ),
                         ),
                       ),
