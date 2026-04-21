@@ -9,6 +9,8 @@ import '../features/home/presentation/analytics_page.dart';
 import '../features/home/presentation/community_home_page.dart';
 import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/dashboard_page.dart';
+import '../features/home/presentation/create_page.dart';
+import '../features/civic_intelligence/presentation/issue_submit_page.dart';
 import '../core/models/app_role.dart';
 
 const _amber = Color(0xFFFFC700);
@@ -40,7 +42,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final pages = [
+  final pages = [
       if (widget.role == 'admin')
         const AdminHomePage()
       else if (widget.role == 'community')
@@ -48,6 +50,10 @@ class _MainShellState extends State<MainShell> {
       else
         DashboardPage(role: AppRole.student),
       const AnalyticsPage(),
+      if (widget.role == 'community')
+        IssueSubmitPage(reporterId: FirebaseAuth.instance.currentUser?.uid ?? '')
+      else
+        const CreatePage(),
       const ExpoFeedPage(),
       _ProfilePage(onToggleTheme: widget.onToggleTheme, onSignOut: widget.onSignOut, role: widget.role),
     ];
@@ -61,6 +67,7 @@ class _MainShellState extends State<MainShell> {
         isDark: isDark,
         onTap: (i) => setState(() => _index = i),
         onChatAITap: _openChatAI,
+        role: widget.role,
       ),
     );
   }
@@ -72,12 +79,14 @@ class _BottomNav extends StatelessWidget {
     required this.isDark,
     required this.onTap,
     required this.onChatAITap,
+    required this.role,
   });
 
   final int index;
   final bool isDark;
   final ValueChanged<int> onTap;
   final VoidCallback onChatAITap;
+  final String role;
 
   static const _items = [
     (icon: Icons.home_rounded, label: 'Home'),
@@ -85,6 +94,17 @@ class _BottomNav extends StatelessWidget {
     (icon: Icons.lightbulb_rounded, label: 'Expo'),
     (icon: Icons.person_rounded, label: 'Profile'),
   ];
+
+  static const _communityItems = [
+    (icon: Icons.home_rounded, label: 'Home'),
+    (icon: Icons.add_location_alt_rounded, label: 'Report'),
+    (icon: Icons.lightbulb_rounded, label: 'Expo'),
+    (icon: Icons.person_rounded, label: 'Profile'),
+  ];
+
+  List<({IconData icon, String label})> _getItems() {
+    return role == 'community' ? _communityItems : _items;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,8 +133,8 @@ class _BottomNav extends StatelessWidget {
                 child: SizedBox(
                   height: 64,
                   child: Row(
-                    children: List.generate(_items.length, (i) {
-                      final item = _items[i];
+                    children: List.generate(_getItems().length, (i) {
+                      final item = _getItems()[i];
                       final selected = i == index;
                       return Expanded(
                         child: GestureDetector(

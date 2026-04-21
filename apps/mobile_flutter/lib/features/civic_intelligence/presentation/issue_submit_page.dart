@@ -294,7 +294,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                           children: [
                             Icon(
                               Icons.public_rounded,
-                              color: _useLocationInput ? textColor : subtleColor,
+                              color: _useLocationInput ? const Color(0xFF1A1A1A) : subtleColor,
                               size: 18,
                             ),
                             const SizedBox(width: 6),
@@ -303,7 +303,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: _useLocationInput ? textColor : subtleColor,
+                                color: _useLocationInput ? const Color(0xFF1A1A1A) : subtleColor,
                               ),
                             ),
                           ],
@@ -335,7 +335,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                           children: [
                             Icon(
                               Icons.my_location_rounded,
-                              color: !_useLocationInput ? textColor : subtleColor,
+                              color: !_useLocationInput ? const Color(0xFF1A1A1A) : subtleColor,
                               size: 18,
                             ),
                             const SizedBox(width: 6),
@@ -344,7 +344,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: !_useLocationInput ? textColor : subtleColor,
+                                color: !_useLocationInput ? const Color(0xFF1A1A1A) : subtleColor,
                               ),
                             ),
                           ],
