@@ -1673,13 +1673,11 @@ class _IdeaDockState extends State<_IdeaDock>
 
           return ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: Container(
+            child: Container(
             height: height,
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
-              color: _barBg.withValues(alpha: 0.55),
+              color: Colors.transparent,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border.all(
                 color: _barBorder,
@@ -1806,8 +1804,6 @@ class _IdeaDockState extends State<_IdeaDock>
                   ),  // Flexible
                 ],
               ],
-            ),
-          ),
             ),
           );
         },
