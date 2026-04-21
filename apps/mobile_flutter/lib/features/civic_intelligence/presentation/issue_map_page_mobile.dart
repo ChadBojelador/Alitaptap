@@ -516,26 +516,6 @@ class _IssueMapPageState extends State<IssueMapPage>
             ),
 
           // ── Compass ───────────────────────────────────────────────────
-          if (!_loading)
-            Positioned(
-              bottom: widget.showIdeaDock ? 96 : 24,
-              right:  16,
-              child: _MapCompass(
-                bearing: _bearing,
-                onTap: () => _mapController?.animateCamera(
-                  CameraUpdate.newCameraPosition(
-                    CameraPosition(
-                      target: _mapController?.cameraPosition?.target ??
-                          _defaultCenter,
-                      zoom: _mapController?.cameraPosition?.zoom ??
-                          _defaultZoom,
-                      tilt: _mapController?.cameraPosition?.tilt ?? 60,
-                      bearing: 0,
-                    ),
-                  ),
-                ),
-              ),
-            ),
 
           // ── Loading overlay ───────────────────────────────────────────
           if (_loading)

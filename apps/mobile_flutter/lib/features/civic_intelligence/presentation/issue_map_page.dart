@@ -721,26 +721,6 @@ class _IssueMapPageState extends State<IssueMapPage>
             ),
 
           // ── Compass ────────────────────────────────────────────────────────
-          if (!_loading)
-            Positioned(
-              bottom: 24,
-              right: 16,
-              child: _MapCompass(
-                bearing: _bearing,
-                onTap: () => _mapController?.animateCamera(
-                  CameraUpdate.newCameraPosition(
-                    CameraPosition(
-                      target: _mapController?.cameraPosition?.target ??
-                          _defaultCenter,
-                      zoom:
-                          _mapController?.cameraPosition?.zoom ?? _defaultZoom,
-                      tilt: 0,
-                      bearing: 0,
-                    ),
-                  ),
-                ),
-              ),
-            ),
 
           // ── Loading overlay ────────────────────────────────────────────────
           if (_loading)
