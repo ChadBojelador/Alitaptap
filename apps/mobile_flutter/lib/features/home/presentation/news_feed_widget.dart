@@ -3,123 +3,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/news_article.dart';
-import '../../civic_intelligence/data/repositories/news_repository.dart';
 
 const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
 const _white = Color(0xFFFFFFFF);
 
-class NewsFeedWidget extends StatefulWidget {
-  const NewsFeedWidget({super.key});
+class NewsFeedWidget extends StatelessWidget {
+  const NewsFeedWidget({super.key, required this.article});
 
-  @override
-  State<NewsFeedWidget> createState() => _NewsFeedWidgetState();
-}
-
-class _NewsFeedWidgetState extends State<NewsFeedWidget> {
-  final _newsRepository = NewsRepository();
-  List<NewsArticle> _news = [];
-  bool _loading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadNews();
-  }
-
-  Future<void> _loadNews() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      final news = await _newsRepository.getPhilippinesNews(pageSize: 15);
-      if (mounted) {
-        setState(() {
-          _news = news;
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _loading = false;
-        });
-      }
-    }
-  }
+  final NewsArticle article;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: _amber, strokeWidth: 2),
-      );
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load news',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFFF0F0F0) : _dark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: _loadNews,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_news.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.newspaper_rounded,
-              size: 48,
-              color: _amber.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No news available',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: isDark
-                    ? const Color(0xFF9E9E9E)
-                    : const Color(0xFF757575),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _news.length,
-      itemBuilder: (_, i) => _NewsCard(
-        article: _news[i],
-        isDark: isDark,
-      ),
-    );
+    return _NewsCard(article: article, isDark: isDark);
   }
 }
 

@@ -1,18 +1,13 @@
-import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../application/usecases/submit_issue_use_case.dart';
 import '../data/repositories/api_issue_repository.dart';
 
-/// Full-screen form for community members to report a local problem.
-/// Includes a map picker for precise location selection and auto-detects
-/// the user's current position as the default pin.
 class IssueSubmitPage extends StatefulWidget {
   const IssueSubmitPage({super.key, required this.reporterId});
   final String reporterId;
@@ -23,7 +18,6 @@ class IssueSubmitPage extends StatefulWidget {
 
 class _IssueSubmitPageState extends State<IssueSubmitPage> {
   static const _mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
-  static const _psgcBaseUrl = 'https://psgc.gitlab.io/api';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom = 12.0;
   static const _userZoom = 16.0;
@@ -41,23 +35,16 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   bool _styleLoaded = false;
   bool _cameraMovedToUser = false;
   Position? _userPosition;
-  List<_PsgcRegion> _regions = const [];
-  List<_PsgcCityMunicipality> _citiesMunicipalities = const [];
-  String? _selectedRegionCode;
-  String? _selectedCityMunicipalityCode;
-  bool _loadingRegions = false;
-  bool _loadingCitiesMunicipalities = false;
-  String? _psgcError;
 
   double? _lat;
   double? _lng;
   bool _submitting = false;
+  bool _useLocationInput = true; // true = region/city, false = current location/map
 
   @override
   void initState() {
     super.initState();
     _resolveCurrentLocation();
-    _loadRegions();
   }
 
   @override
@@ -142,13 +129,23 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // If using location-based, set coordinates
+    if (!_useLocationInput) {
+      if (_userPosition != null && _lat == null && _lng == null) {
+        _lat = _userPosition!.latitude;
+        _lng = _userPosition!.longitude;
+      }
+    }
+
     if (_lat == null || _lng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please tap the map to select a location.')),
+            content: Text('Please select a location or enable GPS.')),
       );
       return;
     }
+
     setState(() => _submitting = true);
     try {
       await _submitIssueUseCase(
@@ -172,95 +169,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  Future<void> _loadRegions() async {
-    setState(() {
-      _loadingRegions = true;
-      _psgcError = null;
-    });
-    try {
-      final res = await http.get(Uri.parse('$_psgcBaseUrl/regions.json'));
-      if (res.statusCode != 200) {
-        throw Exception('Failed to load regions (${res.statusCode}).');
-      }
-      final json = jsonDecode(res.body);
-      if (json is! List) {
-        throw Exception('Unexpected PSGC regions response format.');
-      }
-      final regions = json
-          .whereType<Map<String, dynamic>>()
-          .map(_PsgcRegion.fromJson)
-          .toList()
-        ..sort((a, b) => a.displayName.compareTo(b.displayName));
-
-      if (!mounted) return;
-      setState(() {
-        _regions = regions;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _psgcError = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loadingRegions = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _loadCitiesMunicipalities(String regionCode) async {
-    setState(() {
-      _loadingCitiesMunicipalities = true;
-      _psgcError = null;
-      _citiesMunicipalities = const [];
-      _selectedCityMunicipalityCode = null;
-    });
-
-    try {
-      final res = await http.get(
-        Uri.parse(
-          '$_psgcBaseUrl/regions/$regionCode/cities-municipalities.json',
-        ),
-      );
-      if (res.statusCode != 200) {
-        throw Exception(
-          'Failed to load cities/municipalities (${res.statusCode}).',
-        );
-      }
-
-      final json = jsonDecode(res.body);
-      if (json is! List) {
-        throw Exception(
-          'Unexpected PSGC cities/municipalities response format.',
-        );
-      }
-
-      final items = json
-          .whereType<Map<String, dynamic>>()
-          .map(_PsgcCityMunicipality.fromJson)
-          .toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
-
-      if (!mounted) return;
-      setState(() {
-        _citiesMunicipalities = items;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _psgcError = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loadingCitiesMunicipalities = false;
-        });
-      }
     }
   }
 
@@ -352,290 +260,344 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               ),
               const SizedBox(height: 24),
 
-              // Optional PSGC location metadata
-              _fieldLabel('Region (PSGC, optional)', textColor),
+              // Location method selector
+              _fieldLabel('Location Method', textColor),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedRegionCode,
-                isExpanded: true,
-                decoration: _inputDecoration(
-                  hint:
-                      _loadingRegions ? 'Loading regions...' : 'Select region',
-                  icon: Icons.public_rounded,
-                  isDark: isDark,
-                ),
-                items: _regions
-                    .map(
-                      (region) => DropdownMenuItem<String>(
-                        value: region.code,
-                        child: Text(
-                          region.displayName,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: textColor,
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useLocationInput = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _useLocationInput
+                              ? const Color(0xFFFFD60A)
+                              : (isDark
+                                  ? const Color(0xFF242424)
+                                  : const Color(0xFFF5F5F5)),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _useLocationInput
+                                ? const Color(0xFFFFD60A)
+                                : const Color(0xFFFFD60A).withValues(alpha: 0.2),
                           ),
                         ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.public_rounded,
+                              color: _useLocationInput ? textColor : subtleColor,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Region / City',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _useLocationInput ? textColor : subtleColor,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    )
-                    .toList(),
-                onChanged: _loadingRegions
-                    ? null
-                    : (value) {
-                        if (value == null) return;
-                        setState(() => _selectedRegionCode = value);
-                        _loadCitiesMunicipalities(value);
-                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useLocationInput = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !_useLocationInput
+                              ? const Color(0xFFFFD60A)
+                              : (isDark
+                                  ? const Color(0xFF242424)
+                                  : const Color(0xFFF5F5F5)),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: !_useLocationInput
+                                ? const Color(0xFFFFD60A)
+                                : const Color(0xFFFFD60A).withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.my_location_rounded,
+                              color: !_useLocationInput ? textColor : subtleColor,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Current Location',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: !_useLocationInput ? textColor : subtleColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 24),
 
-              _fieldLabel('City / Municipality (PSGC, optional)', textColor),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCityMunicipalityCode,
-                isExpanded: true,
-                decoration: _inputDecoration(
-                  hint: _selectedRegionCode == null
-                      ? 'Select region first'
-                      : _loadingCitiesMunicipalities
-                          ? 'Loading cities/municipalities...'
-                          : 'Select city or municipality',
-                  icon: Icons.location_city_rounded,
-                  isDark: isDark,
+              // Region and City input (only show if selected)
+              if (_useLocationInput) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Region',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: subtleColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextFormField(
+                            style: GoogleFonts.poppins(fontSize: 12, color: textColor),
+                            decoration: _inputDecoration(
+                              hint: 'e.g. Calabarzon',
+                              icon: Icons.public_rounded,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'City / Municipality',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: subtleColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextFormField(
+                            style: GoogleFonts.poppins(fontSize: 12, color: textColor),
+                            decoration: _inputDecoration(
+                              hint: 'e.g. Cavite City',
+                              icon: Icons.location_city_rounded,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                items: _citiesMunicipalities
-                    .map(
-                      (item) => DropdownMenuItem<String>(
-                        value: item.code,
-                        child: Text(
-                          item.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: textColor,
+              ] else ...[
+                // Map section (only show if current location is selected)
+                _fieldLabel('Pin the Location', textColor),
+                const SizedBox(height: 4),
+                Text(
+                  'Tap the map to mark exactly where the problem is, or use the current location button.',
+                  style: GoogleFonts.poppins(fontSize: 11, color: subtleColor),
+                ),
+                const SizedBox(height: 10),
+                if (_lat != null && _lng != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded,
+                            color: Color(0xFFFFD60A), size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: textColor,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
+                        GestureDetector(
+                          onTap: () async {
+                            setState(() {
+                              _lat = null;
+                              _lng = null;
+                            });
+                            await _renderSelectedPin();
+                          },
+                          child: Icon(Icons.close_rounded,
+                              size: 16, color: subtleColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    height: 260,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
                       ),
-                    )
-                    .toList(),
-                onChanged: _selectedRegionCode == null ||
-                        _loadingCitiesMunicipalities
-                    ? null
-                    : (value) {
-                        setState(() => _selectedCityMunicipalityCode = value);
-                      },
-              ),
-              if (_psgcError != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'PSGC data unavailable: $_psgcError',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: Colors.redAccent,
+                    ),
+                    child: Stack(
+                      children: [
+                        MapLibreMap(
+                          styleString: _mapStyle,
+                          initialCameraPosition: CameraPosition(
+                            target: LatLng(
+                              _lat ?? _defaultCenter.latitude,
+                              _lng ?? _defaultCenter.longitude,
+                            ),
+                            zoom: _defaultZoom,
+                          ),
+                          onMapCreated: _onMapCreated,
+                          onStyleLoadedCallback: _onStyleLoaded,
+                          onMapClick: _onMapTap,
+                          compassEnabled: false,
+                          myLocationEnabled: false,
+                          attributionButtonMargins: const Point(-100, -100),
+                          logoViewMargins: const Point(-100, -100),
+                        ),
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: GestureDetector(
+                            onTap: () async {
+                              await _resolveCurrentLocation();
+                              if (_userPosition != null) {
+                                setState(() {
+                                  _lat = _userPosition!.latitude;
+                                  _lng = _userPosition!.longitude;
+                                });
+                                await _renderSelectedPin();
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0D1B2A)
+                                    .withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFFFD60A)
+                                      .withValues(alpha: 0.5),
+                                ),
+                              ),
+                              child: const Icon(Icons.my_location_rounded,
+                                  color: Color(0xFFFFD60A), size: 18),
+                            ),
+                          ),
+                        ),
+                        if (_lat == null)
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0D1B2A)
+                                    .withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFFFD60A)
+                                      .withValues(alpha: 0.4),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.touch_app_rounded,
+                                      color: Color(0xFFFFD60A), size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Tap to pin location',
+                                    style: GoogleFonts.poppins(
+                                      color: const Color(0xFFF0F0F0),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        if (_lat != null)
+                          Positioned(
+                            bottom: 10,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: GestureDetector(
+                                onTap: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Location pinned!')),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFD60A),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFFFD60A)
+                                            .withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.check_circle_rounded,
+                                          color: Color(0xFF1A1A1A), size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Location Confirmed',
+                                        style: GoogleFonts.poppins(
+                                          color: const Color(0xFF1A1A1A),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
-
-              // Map picker
-              _fieldLabel('Pin the Location', textColor),
-              const SizedBox(height: 4),
-              Text(
-                'Tap the map to mark exactly where the problem is.',
-                style: GoogleFonts.poppins(fontSize: 11, color: subtleColor),
-              ),
-              const SizedBox(height: 10),
-
-              if (_lat != null && _lng != null)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFFFFD60A).withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded,
-                          color: Color(0xFFFFD60A), size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: textColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () async {
-                          setState(() {
-                            _lat = null;
-                            _lng = null;
-                          });
-                          await _renderSelectedPin();
-                        },
-                        child: Icon(Icons.close_rounded,
-                            size: 16, color: subtleColor),
-                      ),
-                    ],
-                  ),
-                ),
-
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  height: 260,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      MapLibreMap(
-                        styleString: _mapStyle,
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(
-                            _lat ?? _defaultCenter.latitude,
-                            _lng ?? _defaultCenter.longitude,
-                          ),
-                          zoom: _defaultZoom,
-                        ),
-                        onMapCreated: _onMapCreated,
-                        onStyleLoadedCallback: _onStyleLoaded,
-                        onMapClick: _onMapTap,
-                        compassEnabled: false,
-                        myLocationEnabled: false,
-                        attributionButtonMargins: const Point(-100, -100),
-                        logoViewMargins: const Point(-100, -100),
-                      ),
-
-                      // Use my location button
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: GestureDetector(
-                          onTap: () async {
-                            await _resolveCurrentLocation();
-                            if (_userPosition != null) {
-                              setState(() {
-                                _lat = _userPosition!.latitude;
-                                _lng = _userPosition!.longitude;
-                              });
-                              await _renderSelectedPin();
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0D1B2A)
-                                  .withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFFFFD60A)
-                                    .withValues(alpha: 0.5),
-                              ),
-                            ),
-                            child: const Icon(Icons.my_location_rounded,
-                                color: Color(0xFFFFD60A), size: 18),
-                          ),
-                        ),
-                      ),
-
-                      // Tap hint when no pin selected
-                      if (_lat == null)
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0D1B2A)
-                                  .withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFFFFD60A)
-                                    .withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.touch_app_rounded,
-                                    color: Color(0xFFFFD60A), size: 16),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Tap to pin location',
-                                  style: GoogleFonts.poppins(
-                                    color: const Color(0xFFF0F0F0),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                      // Confirm pin button
-                      if (_lat != null)
-                        Positioned(
-                          bottom: 10,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: GestureDetector(
-                              onTap: () =>
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Location pinned!')),
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFD60A),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFFFFD60A)
-                                          .withValues(alpha: 0.4),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.check_circle_rounded,
-                                        color: Color(0xFF1A1A1A), size: 16),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Location Confirmed',
-                                      style: GoogleFonts.poppins(
-                                        color: const Color(0xFF1A1A1A),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
               const SizedBox(height: 32),
 
               // Submit button
@@ -735,49 +697,4 @@ Widget _fieldLabel(String label, Color color) {
       color: color,
     ),
   );
-}
-
-class _PsgcRegion {
-  const _PsgcRegion({
-    required this.code,
-    required this.name,
-    required this.regionName,
-  });
-
-  final String code;
-  final String name;
-  final String regionName;
-
-  String get displayName {
-    final trimmedRegionName = regionName.trim();
-    if (trimmedRegionName.isEmpty || trimmedRegionName == name.trim()) {
-      return name.trim();
-    }
-    return '${name.trim()} ($trimmedRegionName)';
-  }
-
-  factory _PsgcRegion.fromJson(Map<String, dynamic> json) {
-    return _PsgcRegion(
-      code: (json['code'] ?? '').toString(),
-      name: (json['name'] ?? '').toString(),
-      regionName: (json['regionName'] ?? '').toString(),
-    );
-  }
-}
-
-class _PsgcCityMunicipality {
-  const _PsgcCityMunicipality({
-    required this.code,
-    required this.name,
-  });
-
-  final String code;
-  final String name;
-
-  factory _PsgcCityMunicipality.fromJson(Map<String, dynamic> json) {
-    return _PsgcCityMunicipality(
-      code: (json['code'] ?? '').toString(),
-      name: (json['name'] ?? '').toString(),
-    );
-  }
 }

@@ -4,9 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/models/app_role.dart';
 import '../../../core/models/issue.dart';
+import '../../../core/models/news_article.dart';
 import '../../../features/civic_intelligence/presentation/issue_detail_page.dart';
 import '../../../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../../../features/civic_intelligence/presentation/issue_submit_page.dart';
+import '../../../features/home/presentation/news_feed_widget.dart';
 import '../../../services/api_service.dart';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
@@ -14,8 +16,6 @@ const _amber = Color(0xFFFFC700);
 const _amberLight = Color(0xFFFFF9C4);
 const _dark = Color(0xFF1A1A1A);
 const _white = Color(0xFFFFFFFF);
-
-
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, required this.role});
@@ -29,6 +29,7 @@ class _DashboardPageState extends State<DashboardPage>
     with SingleTickerProviderStateMixin {
   final _api = ApiService();
   List<Issue> _issues = [];
+  List<NewsArticle> _news = [];
   bool _loading = true;
   late final TabController _tabController;
 
@@ -57,6 +58,11 @@ class _DashboardPageState extends State<DashboardPage>
           _issues = issues.where((i) => i.status == 'validated').toList();
         }
       });
+
+      if (widget.role == AppRole.community) {
+        final news = await _api.getNews();
+        setState(() => _news = news);
+      }
     } catch (_) {}
     setState(() => _loading = false);
   }
@@ -193,33 +199,52 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
               ),
 
-              // ── Horizontal issue cards ───────────────────────────────
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 200,
-                  child: _loading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                              color: _amber, strokeWidth: 2))
-                      : _issues.isEmpty
-                          ? _EmptyCard(isDark: isDark)
-                          : ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              padding:
-                                  const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                              itemCount: _issues.length,
-                              itemBuilder: (_, i) => _IssueImageCard(
-                                issue: _issues[i],
-                                onTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => IssueDetailPage(
-                                        issueId: _issues[i].issueId),
-                                  ),
+              // ── News or Issues ───────────────────────────────────────
+              if (_loading)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                          color: _amber, strokeWidth: 2),
+                    ),
+                  ),
+                )
+              else if (isCommunity)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: NewsFeedWidget(article: _news[i]),
+                      ),
+                      childCount: _news.length,
+                    ),
+                  ),
+                )
+              else
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 200,
+                    child: _issues.isEmpty
+                        ? _EmptyCard(isDark: isDark)
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                            itemCount: _issues.length,
+                            itemBuilder: (_, i) => _IssueImageCard(
+                              issue: _issues[i],
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => IssueDetailPage(
+                                      issueId: _issues[i].issueId),
                                 ),
                               ),
                             ),
+                          ),
+                  ),
                 ),
-              ),
 
               // ── Quick Actions label ──────────────────────────────────
               SliverToBoxAdapter(
@@ -643,5 +668,3 @@ class _ActionTile extends StatelessWidget {
     );
   }
 }
-
-

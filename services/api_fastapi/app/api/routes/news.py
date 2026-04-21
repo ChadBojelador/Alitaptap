@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Path
 from typing import Optional
 from app.services.news_service import NewsService, NewsArticle
 
-router = APIRouter(prefix="/api/v1/news", tags=["news"])
+router = APIRouter(prefix="/news", tags=["news"])
 news_service = NewsService()
 
 @router.get("", response_model=list[NewsArticle])
@@ -33,7 +33,7 @@ async def get_news(
 
 @router.get("/sdg/{sdg_number}", response_model=list[NewsArticle])
 async def get_sdg_news(
-    sdg_number: int = Query(..., ge=1, le=17, description="UN SDG number"),
+    sdg_number: int = Path(..., ge=1, le=17, description="UN SDG number"),
     page_size: int = Query(10, ge=1, le=50),
 ) -> list[NewsArticle]:
     """

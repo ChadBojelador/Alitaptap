@@ -11,7 +11,10 @@ from app.core.firebase import init_firebase
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: initialize services on startup."""
-    init_firebase()
+    try:
+        init_firebase()
+    except Exception as e:
+        print(f"Warning: Firebase initialization failed: {e}")
     yield
 
 

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../core/models/issue.dart';
 import '../core/models/match_result.dart';
+import '../core/models/news_article.dart';
 import '../core/models/research_post.dart';
 import '../core/models/title_suggestions.dart';
 
@@ -309,6 +310,19 @@ class ApiService {
   // -----------------------------------------------------------------------
   // Neural Mapper
   // -----------------------------------------------------------------------
+
+  Future<List<NewsArticle>> getNews() async {
+    final response = await _sendWithTimeout(
+      http.get(Uri.parse('$_baseUrl/news')),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch news: ${response.body}');
+    }
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list
+        .map((e) => NewsArticle.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
 
   /// Match a student idea against validated issues.
   Future<MapperRunResult> matchIdea({

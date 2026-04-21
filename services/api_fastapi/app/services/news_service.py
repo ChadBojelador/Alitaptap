@@ -22,7 +22,7 @@ class NewsService:
         keywords: Optional[str] = None,
         sdg_tags: Optional[list[str]] = None,
         country: str = "ph",
-        page_size: int = 10,
+        page_size: int = 3,
     ) -> list[NewsArticle]:
         """
         Fetch news articles related to SDGs, research, and Philippine news.
@@ -121,7 +121,7 @@ Summary:"""
     async def fetch_sdg_news(
         self,
         sdg_number: Optional[int] = None,
-        page_size: int = 10,
+        page_size: int = 3,
     ) -> list[NewsArticle]:
         """
         Fetch news specifically related to a UN SDG.
@@ -151,7 +151,7 @@ Summary:"""
         
         return await self.fetch_news(sdg_tags=sdg_tags, page_size=page_size)
 
-    async def fetch_research_news(self, page_size: int = 10) -> list[NewsArticle]:
+    async def fetch_research_news(self, page_size: int = 3) -> list[NewsArticle]:
         """
         Fetch news related to research and academic topics.
         """
@@ -160,7 +160,7 @@ Summary:"""
             page_size=page_size,
         )
 
-    async def fetch_philippines_news(self, page_size: int = 10) -> list[NewsArticle]:
+    async def fetch_philippines_news(self, page_size: int = 3) -> list[NewsArticle]:
         """
         Fetch news from Philippines.
         """
