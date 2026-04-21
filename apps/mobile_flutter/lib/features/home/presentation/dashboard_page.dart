@@ -169,7 +169,7 @@ class _DashboardPageState extends State<DashboardPage>
                   child: Row(
                     children: [
                       _TabChip(
-                        label: isCommunity ? 'My Reports' : 'Just For You',
+                        label: isCommunity ? 'News' : 'Just For You',
                         selected: _tabController.index == 0,
                         onTap: () => setState(() => _tabController.index = 0),
                         isDark: isDark,
