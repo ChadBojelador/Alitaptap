@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../features/civic_intelligence/presentation/philippines_intro_screen.dart';
+import '../features/home/presentation/welcome_page.dart';
 import 'main_shell.dart';
 
 /// Provides [themeMode] and [toggleTheme] to the entire widget tree so any
@@ -135,8 +136,39 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
         themeMode: _themeMode,
         theme: _buildTheme(Brightness.light),
         darkTheme: _buildTheme(Brightness.dark),
-        home: PhilippinesIntroScreen(onToggleTheme: toggleTheme, destination: MainShell(onToggleTheme: toggleTheme)),
+        home: _RootRouter(toggleTheme: toggleTheme),
       ),
+    );
+  }
+}
+
+/// Checks if the user has seen the welcome screen and routes accordingly.
+class _RootRouter extends StatefulWidget {
+  const _RootRouter({required this.toggleTheme});
+  final VoidCallback toggleTheme;
+
+  @override
+  State<_RootRouter> createState() => _RootRouterState();
+}
+
+class _RootRouterState extends State<_RootRouter> {
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<SharedPreferences>(
+      future: SharedPreferences.getInstance(),
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          // Brief blank while prefs load
+          return const Scaffold(
+            backgroundColor: Color(0xFFF7F8FA),
+          );
+        }
+        final seen = snap.data!.getBool('seen_welcome') ?? false;
+        if (seen) {
+          return MainShell(onToggleTheme: widget.toggleTheme);
+        }
+        return WelcomePage(onToggleTheme: widget.toggleTheme);
+      },
     );
   }
 }
