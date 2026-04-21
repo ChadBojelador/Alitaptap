@@ -371,6 +371,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ),
               ),
             ],
+            const SizedBox(height: 40),
           ],
         ),
       ),
