@@ -17,6 +17,8 @@ class IssueSubmitPage extends StatefulWidget {
 class _IssueSubmitPageState extends State<IssueSubmitPage> {
   bool _isAIGuided = false;
   final _problemCtrl = TextEditingController();
+  final _titleCtrl = TextEditingController();
+  final _descriptionCtrl = TextEditingController();
   bool _elaborating = false;
   String? _elaboratedText;
   String? _suggestedSDG;
@@ -24,6 +26,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   @override
   void dispose() {
     _problemCtrl.dispose();
+    _titleCtrl.dispose();
+    _descriptionCtrl.dispose();
     super.dispose();
   }
 
@@ -397,36 +401,128 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ),
               ],
             ] else ...[
-              // Manual mode placeholder
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _amber.withValues(alpha: 0.2),
+              Text(
+                'Problem Title',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _titleCtrl,
+                style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+                decoration: InputDecoration(
+                  hintText: 'e.g. Recurring flooding on Main Street',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: subtleColor,
+                  ),
+                  filled: true,
+                  fillColor: cardBg,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: _amber.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: _amber.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: _amber,
+                      width: 1.5,
+                    ),
                   ),
                 ),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(Icons.edit_note_rounded,
-                          color: _amber.withValues(alpha: 0.5), size: 36),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Manual Report',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Description',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descriptionCtrl,
+                maxLines: 5,
+                style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+                decoration: InputDecoration(
+                  hintText: 'Describe the problem in detail — who is affected, how often, what impact...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: subtleColor,
+                  ),
+                  filled: true,
+                  fillColor: cardBg,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: _amber.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: _amber.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: _amber,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: () {
+                  if (_titleCtrl.text.isEmpty || _descriptionCtrl.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please fill all fields')),
+                    );
+                    return;
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('✓ Problem reported successfully')),
+                  );
+                  Navigator.of(context).pop();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: _amber,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _amber.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-                      const SizedBox(height: 4),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.send_rounded, color: _dark, size: 20),
+                      const SizedBox(width: 10),
                       Text(
-                        'Manual report form coming soon',
+                        'Submit Report',
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: subtleColor,
+                          color: _dark,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
                         ),
                       ),
                     ],
