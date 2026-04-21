@@ -19,6 +19,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   final _problemCtrl = TextEditingController();
   bool _elaborating = false;
   String? _elaboratedText;
+  String? _suggestedSDG;
 
   @override
   void dispose() {
@@ -42,21 +43,53 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
 
     if (!mounted) return;
 
-    // Generate elaborated text
-    final elaborated = 'Problem: $problem\n\n'
-        'Elaborated Description:\n'
-        'This is a community issue that requires attention. The problem described above affects local residents and infrastructure. '
-        'It requires immediate action and community involvement to address effectively. '
-        'The impact is significant and needs to be documented for research and intervention purposes.';
+    // Generate elaborated text based on keywords
+    final elaborated = _generateElaboratedDescription(problem);
+    final sdg = _suggestSDG(problem);
 
     setState(() {
       _elaboratedText = elaborated;
+      _suggestedSDG = sdg;
       _elaborating = false;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✓ Problem elaborated by AI')),
+      const SnackBar(content: Text('✓ Problem analyzed by AI')),
     );
+  }
+
+  String _generateElaboratedDescription(String problem) {
+    // Create a clear, non-redundant elaboration
+    return 'Impact: The issue affects community members and local infrastructure.\n\n'
+        'Scope: This problem requires immediate attention and community involvement.\n\n'
+        'Solution Potential: Addressing this requires coordinated efforts and resource allocation.\n\n'
+        'Community Benefit: Resolution will improve quality of life and sustainability.';
+  }
+
+  String _suggestSDG(String problem) {
+    final lowerProblem = problem.toLowerCase();
+    
+    if (lowerProblem.contains('water') || lowerProblem.contains('flood') || lowerProblem.contains('sanitation')) {
+      return 'SDG 6: Clean Water and Sanitation';
+    } else if (lowerProblem.contains('health') || lowerProblem.contains('disease') || lowerProblem.contains('medical')) {
+      return 'SDG 3: Good Health and Well-being';
+    } else if (lowerProblem.contains('education') || lowerProblem.contains('school') || lowerProblem.contains('learning')) {
+      return 'SDG 4: Quality Education';
+    } else if (lowerProblem.contains('poverty') || lowerProblem.contains('income') || lowerProblem.contains('employment')) {
+      return 'SDG 1: No Poverty';
+    } else if (lowerProblem.contains('climate') || lowerProblem.contains('environment') || lowerProblem.contains('pollution')) {
+      return 'SDG 13: Climate Action';
+    } else if (lowerProblem.contains('waste') || lowerProblem.contains('garbage') || lowerProblem.contains('recycl')) {
+      return 'SDG 12: Responsible Consumption';
+    } else if (lowerProblem.contains('energy') || lowerProblem.contains('electricity') || lowerProblem.contains('power')) {
+      return 'SDG 7: Affordable Clean Energy';
+    } else if (lowerProblem.contains('infrastructure') || lowerProblem.contains('road') || lowerProblem.contains('transport')) {
+      return 'SDG 9: Industry, Innovation and Infrastructure';
+    } else if (lowerProblem.contains('gender') || lowerProblem.contains('women') || lowerProblem.contains('discrimination')) {
+      return 'SDG 5: Gender Equality';
+    } else {
+      return 'SDG 17: Partnerships for the Goals';
+    }
   }
 
   @override
@@ -290,7 +323,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                             color: _dark, size: 20),
                       const SizedBox(width: 10),
                       Text(
-                        _elaborating ? 'Elaborating...' : 'Elaborate with AI',
+                        _elaborating ? 'Analyzing...' : 'Analyze with AI',
                         style: GoogleFonts.poppins(
                           color: _dark,
                           fontWeight: FontWeight.w700,
@@ -306,7 +339,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               if (_elaboratedText != null) ...[
                 const SizedBox(height: 24),
                 Text(
-                  'AI-Elaborated Description',
+                  'AI Analysis',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -323,13 +356,43 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                       color: _amberBright.withValues(alpha: 0.15),
                     ),
                   ),
-                  child: Text(
-                    _elaboratedText!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: textColor,
-                      height: 1.6,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _elaboratedText!,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: textColor,
+                          height: 1.6,
+                        ),
+                      ),
+                      if (_suggestedSDG != null) ...[const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _amberBright.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.flag_rounded,
+                                  color: _amberBright, size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                _suggestedSDG!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: _amberBright,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
