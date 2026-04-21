@@ -3,17 +3,20 @@
 This folder tracks planning, architecture, contracts, and delivery for the MVP.
 
 ## Current Focus
+
 - Civic Intelligence (community problem intake + map pins)
 - SDG Neural Mapper (student idea to problem matching)
 - Problem-based research title suggestions
 
 ## Document Index
+
 - [MVP Scope](05-product/mvp-scope.md)
 - [System Context](02-architecture/system-context.md)
 - [API Contracts](03-contracts/api-contracts.md)
 - [Domain Model](04-data-model/domain-model.md)
 - [Roadmap Milestones](01-tracking/roadmap-milestones.md)
 - [Tracking Board](01-tracking/tracking-board.md)
+- [Current Location Pin Fix Note](01-tracking/2026-04-21-user-location-blip-fix.md)
 - [M1 Foundations Checklist](01-tracking/m1-foundations-checklist.md)
 - [M5 QA + Demo Checklist](01-tracking/m5-qa-demo-checklist.md)
 - [Demo Script](05-product/demo-script.md)
@@ -23,6 +26,7 @@ This folder tracks planning, architecture, contracts, and delivery for the MVP.
 - [Logo Usage Guide](07-brand/logo-usage.md)
 
 ## Working Rules
+
 1. Contract-first changes for API fields.
 2. Keep module boundaries explicit (UI -> application -> domain -> adapters).
 3. Every task must include acceptance criteria and evidence link.
