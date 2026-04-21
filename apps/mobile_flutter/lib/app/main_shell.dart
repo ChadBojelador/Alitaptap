@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'app.dart';
 import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
 import '../features/home/presentation/community_home_page.dart';
@@ -28,7 +29,7 @@ class _MainShellState extends State<MainShell> {
       const StudentHomePage(),
       IssueMapPage(onToggleTheme: widget.onToggleTheme),
       const ExpoFeedPage(),
-      const _ProfilePage(),
+      _ProfilePage(onToggleTheme: widget.onToggleTheme),
     ];
 
     return Scaffold(
@@ -134,11 +135,14 @@ class _BottomNav extends StatelessWidget {
 }
 
 class _ProfilePage extends StatelessWidget {
-  const _ProfilePage();
+  const _ProfilePage({this.onToggleTheme});
+
+  final VoidCallback? onToggleTheme;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeMode = AppTheme.of(context).themeMode;
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
@@ -192,6 +196,12 @@ class _ProfilePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
+              _DarkModeTile(
+                isDarkMode: themeMode == ThemeMode.dark,
+                isDark: isDark,
+                onChanged: (_) => onToggleTheme?.call(),
+              ),
+              const SizedBox(height: 12),
               _ProfileTile(
                 icon: Icons.logout_rounded,
                 label: 'Sign Out',
@@ -201,6 +211,50 @@ class _ProfilePage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DarkModeTile extends StatelessWidget {
+  const _DarkModeTile({
+    required this.isDarkMode,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  final bool isDarkMode;
+  final bool isDark;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF242424) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _amber.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.dark_mode_rounded, color: _amber, size: 20),
+          const SizedBox(width: 14),
+          Text(
+            'Dark Mode',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : _dark,
+            ),
+          ),
+          const Spacer(),
+          Switch.adaptive(
+            value: isDarkMode,
+            activeColor: _amber,
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }

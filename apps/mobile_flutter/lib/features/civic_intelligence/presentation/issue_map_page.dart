@@ -55,7 +55,7 @@ class IssueMapPage extends StatefulWidget {
 
 class _IssueMapPageState extends State<IssueMapPage>
     with TickerProviderStateMixin {
-  static const _mapStyleUrl = '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256,"attribution":"\u00a9 OpenStreetMap contributors"}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}';
+  static const _mapStyleUrl = '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom = 6.0;
   static const _userZoom = 15.0;
@@ -1362,7 +1362,7 @@ class _IdeaDockState extends State<_IdeaDock>
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.98),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border.all(
                 color: const Color(0xFFE5E7EB),
                 width: 1,
@@ -1401,20 +1401,7 @@ class _IdeaDockState extends State<_IdeaDock>
                               color: Color(0xFF111827),
                               size: 16,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                progress < 0.3
-                                    ? 'Pull up for research input'
-                                    : 'Research idea input',
-                                style: GoogleFonts.robotoMono(
-                                  color: const Color(0xFF111827),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.7,
-                                ),
-                              ),
-                            ),
+                            const Spacer(),
                             Icon(
                               progress < 0.5
                                   ? Icons.keyboard_arrow_up_rounded
@@ -1436,66 +1423,74 @@ class _IdeaDockState extends State<_IdeaDock>
                   ),
                   Opacity(
                     opacity: progress,
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 12),
-                        const Icon(
-                          Icons.edit_rounded,
-                          color: Color(0xFF111827),
-                          size: 16,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFFFF),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: widget.controller,
-                            textInputAction: TextInputAction.search,
-                            onSubmitted: (_) => widget.onSubmit(),
-                            style: GoogleFonts.robotoMono(
-                              color: const Color(0xFF111827),
-                              fontSize: 13,
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 12),
+                            const Icon(
+                              Icons.search_rounded,
+                              color: Color(0xFF5F6368),
+                              size: 20,
                             ),
-                            decoration: InputDecoration(
-                              hintText: 'Enter research idea...',
-                              hintStyle: GoogleFonts.robotoMono(
-                                color: const Color(0xFF6B7280),
-                                fontSize: 12,
-                              ),
-                              border: InputBorder.none,
-                              filled: false,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: widget.isMatching
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Color(0xFF111827),
-                                    strokeWidth: 1.8,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: widget.controller,
+                                textInputAction: TextInputAction.search,
+                                onSubmitted: (_) => widget.onSubmit(),
+                                style: GoogleFonts.robotoMono(
+                                  color: const Color(0xFF202124),
+                                  fontSize: 13,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Search research idea',
+                                  hintStyle: GoogleFonts.robotoMono(
+                                    color: const Color(0xFF80868B),
+                                    fontSize: 12,
                                   ),
-                                )
-                              : GestureDetector(
-                                  onTap: widget.onSubmit,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF3F4F6),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: const Color(0xFFD1D5DB),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: widget.isMatching
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF1A73E8),
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : GestureDetector(
+                                      onTap: widget.onSubmit,
+                                      child: Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Color(0xFF1A73E8),
+                                        ),
+                                        child: const Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
                                       ),
                                     ),
-                                    child: const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: Color(0xFF111827),
-                                      size: 16,
-                                    ),
-                                  ),
-                                ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ],

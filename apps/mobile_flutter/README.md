@@ -14,3 +14,8 @@
 2. Run `flutter pub get` in this folder.
 3. Configure Firebase for Android/iOS and generate platform configs.
 4. Run the app with `flutter run`.
+
+## Branding and App Icons
+1. Put the source logo in `assets/branding/logo_source.png`.
+2. Generate safe variants: `dart run tool/generate_brand_variants.dart`
+3. Generate launcher icons: `dart run flutter_launcher_icons`

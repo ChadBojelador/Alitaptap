@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../app/main_shell.dart';
+import 'onboarding_carousel_page.dart';
 
 const _amber = Color(0xFFFFA726);
 const _dark = Color(0xFF1A1A1A);
@@ -42,7 +42,7 @@ class _WelcomePageState extends State<WelcomePage>
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (_, __, ___) =>
-            MainShell(onToggleTheme: widget.onToggleTheme),
+            OnboardingCarouselPage(onToggleTheme: widget.onToggleTheme),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
       ),

@@ -20,6 +20,7 @@ This folder tracks planning, architecture, contracts, and delivery for the MVP.
 - [Auth and Role Model](00-governance/auth-role-model.md)
 - [Firebase Setup](00-governance/firebase-setup.md)
 - [Android & Firebase Bypasses](06-bypasses/android-firebase-bypasses.md)
+- [Logo Usage Guide](07-brand/logo-usage.md)
 
 ## Working Rules
 1. Contract-first changes for API fields.

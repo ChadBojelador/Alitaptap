@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../features/home/presentation/onboarding_carousel_page.dart';
 import '../features/home/presentation/welcome_page.dart';
 import 'main_shell.dart';
 
@@ -34,11 +35,38 @@ class AlitaptapApp extends StatefulWidget {
 }
 
 class _AlitaptapAppState extends State<AlitaptapApp> {
+  static const _themeModePrefKey = 'theme_mode';
   ThemeMode _themeMode = ThemeMode.light;
   final _navigatorKey = GlobalKey<NavigatorState>();
 
-  void toggleTheme() => setState(() => _themeMode =
-      _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedMode = prefs.getString(_themeModePrefKey);
+    final mode = storedMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    if (!mounted) return;
+    setState(() => _themeMode = mode);
+  }
+
+  void toggleTheme() {
+    final nextMode =
+        _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    setState(() => _themeMode = nextMode);
+    _persistThemeMode(nextMode);
+  }
+
+  Future<void> _persistThemeMode(ThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _themeModePrefKey,
+      mode == ThemeMode.dark ? 'dark' : 'light',
+    );
+  }
 
   // Brand colors matching the clean travel-app UI reference
   static const _amber = Color(0xFFFFA726);   // warm amber — primary accent
@@ -142,7 +170,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   }
 }
 
-/// Checks if the user has seen the welcome screen and routes accordingly.
+/// Routes first-time users through welcome + onboarding before entering the app.
 class _RootRouter extends StatefulWidget {
   const _RootRouter({required this.toggleTheme});
   final VoidCallback toggleTheme;
@@ -163,11 +191,17 @@ class _RootRouterState extends State<_RootRouter> {
             backgroundColor: Color(0xFFF7F8FA),
           );
         }
-        final seen = snap.data!.getBool('seen_welcome') ?? false;
-        if (seen) {
-          return MainShell(onToggleTheme: widget.toggleTheme);
+        final prefs = snap.data!;
+        final seenWelcome = prefs.getBool('seen_welcome') ?? false;
+        final seenOnboarding = prefs.getBool('seen_onboarding') ?? false;
+
+        if (!seenWelcome) {
+          return WelcomePage(onToggleTheme: widget.toggleTheme);
         }
-        return WelcomePage(onToggleTheme: widget.toggleTheme);
+        if (!seenOnboarding) {
+          return OnboardingCarouselPage(onToggleTheme: widget.toggleTheme);
+        }
+        return MainShell(onToggleTheme: widget.toggleTheme);
       },
     );
   }
