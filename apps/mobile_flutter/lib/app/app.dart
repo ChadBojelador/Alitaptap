@@ -69,7 +69,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   }
 
   // Brand colors matching the clean travel-app UI reference
-  static const _amber = Color(0xFFFFA726);   // warm amber — primary accent
+  static const _amber = Color(0xFFFFC700);   // logo yellow — primary accent
   static const _dark = Color(0xFF1A1A1A);
   static const _white = Color(0xFFFFFFFF);
   static const _bgLight = Color(0xFFF7F8FA);

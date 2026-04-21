@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../services/api_service.dart';
 
-const _amber = Color(0xFFFFA726);
+const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
 const _white = Color(0xFFFFFFFF);
 

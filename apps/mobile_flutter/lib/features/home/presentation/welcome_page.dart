@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'onboarding_carousel_page.dart';
 
-const _amber = Color(0xFFFFA726);
+const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
 
 class WelcomePage extends StatefulWidget {
@@ -122,10 +122,12 @@ class _WelcomePageState extends State<WelcomePage>
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.lightbulb_rounded,
-                          color: _dark,
-                          size: 38,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(22),
+                          child: Image.asset(
+                            'assets/branding/logo_source.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
 

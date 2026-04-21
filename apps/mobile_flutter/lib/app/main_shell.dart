@@ -7,7 +7,7 @@ import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
 import '../features/home/presentation/community_home_page.dart';
 
-const _amber = Color(0xFFFFA726);
+const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
 
 class MainShell extends StatefulWidget {

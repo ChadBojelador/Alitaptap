@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/main_shell.dart';
 
-const _amber = Color(0xFFFFA726);
+const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
 
 class OnboardingCarouselPage extends StatefulWidget {
@@ -27,7 +27,7 @@ class _OnboardingCarouselPageState extends State<OnboardingCarouselPage> {
       title: 'Spot Real Community Problems',
       subtitle:
           'Browse reports on a live map and discover issues that need research-backed solutions.',
-      accent: Color(0xFFFFB74D),
+      accent: Color(0xFFFFC700),
       visual: _OnboardingVisual.map,
     ),
     _OnboardingCardData(
@@ -35,7 +35,7 @@ class _OnboardingCarouselPageState extends State<OnboardingCarouselPage> {
       title: 'Match Ideas With AI',
       subtitle:
           'Use smart suggestions to connect your concepts with local needs and project goals.',
-      accent: Color(0xFFFFCC80),
+      accent: Color(0xFFFFD740),
       visual: _OnboardingVisual.ai,
     ),
     _OnboardingCardData(
@@ -43,7 +43,7 @@ class _OnboardingCarouselPageState extends State<OnboardingCarouselPage> {
       title: 'Build Impactful Projects',
       subtitle:
           'Turn research into action, collaborate, and showcase outcomes in the innovation expo.',
-      accent: Color(0xFFFFE0B2),
+      accent: Color(0xFFFFE566),
       visual: _OnboardingVisual.lab,
     ),
   ];
@@ -213,7 +213,10 @@ class _OnboardingCard extends StatelessWidget {
               color: _amber,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(card.icon, color: _dark, size: 28),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset('assets/branding/logo_source.png', fit: BoxFit.cover),
+            ),
           ),
           const SizedBox(height: 22),
           Text(

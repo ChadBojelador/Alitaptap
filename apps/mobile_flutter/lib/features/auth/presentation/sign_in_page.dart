@@ -74,7 +74,7 @@ class _SignInPageState extends State<SignInPage> {
               height: 260,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFFFA726).withValues(alpha: 0.12),
+                color: const Color(0xFFFFC700).withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -86,7 +86,7 @@ class _SignInPageState extends State<SignInPage> {
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFFFA726).withValues(alpha: 0.07),
+                color: const Color(0xFFFFC700).withValues(alpha: 0.07),
               ),
             ),
           ),
@@ -105,20 +105,22 @@ class _SignInPageState extends State<SignInPage> {
                       width: 72,
                       height: 72,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFA726),
+                        color: const Color(0xFFFFC700),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFA726).withValues(alpha: 0.4),
+                            color: const Color(0xFFFFC700).withValues(alpha: 0.4),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.lightbulb_rounded,
-                        color: Color(0xFF1A1A1A),
-                        size: 36,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          'assets/branding/logo_source.png',
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
@@ -127,7 +129,7 @@ class _SignInPageState extends State<SignInPage> {
                     'ALITAPTAP',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      color: isDark ? const Color(0xFFFFA726) : const Color(0xFF1A1A1A),
+                      color: isDark ? const Color(0xFFFFC700) : const Color(0xFF1A1A1A),
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 3,
@@ -201,14 +203,14 @@ class _SignInPageState extends State<SignInPage> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
                         color: _selectedRole == null
-                            ? const Color(0xFFFFA726).withValues(alpha: 0.3)
-                            : const Color(0xFFFFA726),
+                            ? const Color(0xFFFFC700).withValues(alpha: 0.3)
+                            : const Color(0xFFFFC700),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: _selectedRole == null
                             ? []
                             : [
                                 BoxShadow(
-                                  color: const Color(0xFFFFA726)
+                                  color: const Color(0xFFFFC700)
                                       .withValues(alpha: 0.4),
                                   blurRadius: 16,
                                   offset: const Offset(0, 6),
@@ -280,21 +282,21 @@ class _RoleCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFFFFA726).withValues(alpha: 0.12)
+              ? const Color(0xFFFFC700).withValues(alpha: 0.12)
               : isDark
                   ? const Color(0xFF242424)
                   : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
-                ? const Color(0xFFFFA726)
-                : const Color(0xFFFFA726).withValues(alpha: 0.15),
+                ? const Color(0xFFFFC700)
+                : const Color(0xFFFFC700).withValues(alpha: 0.15),
             width: selected ? 1.5 : 1,
           ),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: const Color(0xFFFFA726).withValues(alpha: 0.15),
+                    color: const Color(0xFFFFC700).withValues(alpha: 0.15),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -307,11 +309,11 @@ class _RoleCard extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: selected
-                    ? const Color(0xFFFFA726).withValues(alpha: 0.2)
-                    : const Color(0xFFFFA726).withValues(alpha: 0.08),
+                    ? const Color(0xFFFFC700).withValues(alpha: 0.2)
+                    : const Color(0xFFFFC700).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: const Color(0xFFFFA726), size: 24),
+              child: Icon(icon, color: const Color(0xFFFFC700), size: 24),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -322,7 +324,7 @@ class _RoleCard extends StatelessWidget {
                     title,
                     style: GoogleFonts.poppins(
                       color: selected
-                          ? const Color(0xFFFFA726)
+                          ? const Color(0xFFFFC700)
                           : isDark
                               ? const Color(0xFFF0F0F0)
                               : const Color(0xFF1A1A1A),
@@ -350,8 +352,8 @@ class _RoleCard extends StatelessWidget {
                   ? Icons.check_circle_rounded
                   : Icons.radio_button_unchecked_rounded,
               color: selected
-                  ? const Color(0xFFFFA726)
-                  : const Color(0xFFFFA726).withValues(alpha: 0.3),
+                  ? const Color(0xFFFFC700)
+                  : const Color(0xFFFFC700).withValues(alpha: 0.3),
               size: 22,
             ),
           ],
