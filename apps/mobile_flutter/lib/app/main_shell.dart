@@ -49,7 +49,6 @@ class _MainShellState extends State<MainShell> {
         DashboardPage(role: AppRole.community)
       else
         DashboardPage(role: AppRole.student),
-      const AnalyticsPage(),
       if (widget.role == 'community')
         IssueSubmitPage(reporterId: FirebaseAuth.instance.currentUser?.uid ?? '')
       else
