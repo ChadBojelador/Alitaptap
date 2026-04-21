@@ -94,6 +94,7 @@ class ApiService {
     required double lat,
     required double lng,
     String? imageUrl,
+    String? reporterName,
   }) async {
     final response = await _sendWithTimeout(
       http.post(
@@ -101,6 +102,7 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'reporter_id': reporterId,
+          'reporter_name': reporterName,
           'title': title,
           'description': description,
           'lat': lat,
@@ -127,6 +129,22 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch issues: ${response.body}');
+    }
+
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list
+        .map((e) => Issue.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Get all AI-validated issues for the expo page.
+  Future<List<Issue>> getExpoIssues() async {
+    final response = await _sendWithTimeout(
+      http.get(Uri.parse('$_baseUrl/issues/expo/validated')),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch expo issues: ${response.body}');
     }
 
     final list = jsonDecode(response.body) as List<dynamic>;

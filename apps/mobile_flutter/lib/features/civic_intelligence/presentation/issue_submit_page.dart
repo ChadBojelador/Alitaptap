@@ -9,8 +9,9 @@ import '../application/usecases/submit_issue_use_case.dart';
 import '../data/repositories/api_issue_repository.dart';
 
 class IssueSubmitPage extends StatefulWidget {
-  const IssueSubmitPage({super.key, required this.reporterId});
+  const IssueSubmitPage({super.key, required this.reporterId, this.reporterName});
   final String reporterId;
+  final String? reporterName;
 
   @override
   State<IssueSubmitPage> createState() => _IssueSubmitPageState();
@@ -39,7 +40,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   double? _lat;
   double? _lng;
   bool _submitting = false;
-  bool _useLocationInput = true; // true = region/city, false = current location/map
+  bool _useLocationInput = true;
 
   @override
   void initState() {
@@ -101,8 +102,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   }
 
   Future<void> _onMapTap(Point<double> point, LatLng latLng) async {
-    setState(() {
-      _lat = latLng.latitude;
+    setState(() {\n      _lat = latLng.latitude;
       _lng = latLng.longitude;
     });
     await _renderSelectedPin();
@@ -130,7 +130,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // If using location-based, set coordinates
     if (!_useLocationInput) {
       if (_userPosition != null && _lat == null && _lng == null) {
         _lat = _userPosition!.latitude;
@@ -151,6 +150,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       await _submitIssueUseCase(
         SubmitIssueInput(
           reporterId: widget.reporterId,
+          reporterName: widget.reporterName,
           title: _titleCtrl.text.trim(),
           description: _descCtrl.text.trim(),
           lat: _lat!,
@@ -159,7 +159,10 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Problem reported! Awaiting validation.')),
+        const SnackBar(
+          content: Text('✓ Problem validated by AI and posted to expo!'),
+          duration: Duration(seconds: 3),
+        ),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -194,7 +197,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Info banner
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -211,7 +213,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Your report will be reviewed and pinned on the community map for researchers to discover.',
+                        'Your report will be validated by AI and automatically posted to the expo for researchers to discover.',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: textColor,
@@ -223,8 +225,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Title field
               _fieldLabel('Problem Title', textColor),
               const SizedBox(height: 8),
               TextFormField(
@@ -240,8 +240,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                     : null,
               ),
               const SizedBox(height: 20),
-
-              // Description field
               _fieldLabel('Description', textColor),
               const SizedBox(height: 8),
               TextFormField(
@@ -259,8 +257,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                     : null,
               ),
               const SizedBox(height: 24),
-
-              // Location method selector
               _fieldLabel('Location Method', textColor),
               const SizedBox(height: 8),
               Row(
@@ -349,64 +345,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // Region and City input (only show if selected)
-              if (_useLocationInput) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Region',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: subtleColor,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          TextFormField(
-                            style: GoogleFonts.poppins(fontSize: 12, color: textColor),
-                            decoration: _inputDecoration(
-                              hint: 'e.g. Calabarzon',
-                              icon: Icons.public_rounded,
-                              isDark: isDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'City / Municipality',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: subtleColor,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          TextFormField(
-                            style: GoogleFonts.poppins(fontSize: 12, color: textColor),
-                            decoration: _inputDecoration(
-                              hint: 'e.g. Cavite City',
-                              icon: Icons.location_city_rounded,
-                              isDark: isDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ] else ...[
-                // Map section (only show if current location is selected)
+              if (_useLocationInput) ...[]
+              else ...[
                 _fieldLabel('Pin the Location', textColor),
                 const SizedBox(height: 4),
                 Text(
@@ -599,8 +539,6 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ),
               ],
               const SizedBox(height: 32),
-
-              // Submit button
               GestureDetector(
                 onTap: _submitting ? null : _submit,
                 child: Container(

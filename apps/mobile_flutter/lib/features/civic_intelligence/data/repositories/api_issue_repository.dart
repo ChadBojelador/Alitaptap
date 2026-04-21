@@ -15,6 +15,11 @@ class ApiIssueRepository implements IssueRepository {
   }
 
   @override
+  Future<List<Issue>> getExpoIssues() {
+    return _apiService.getExpoIssues();
+  }
+
+  @override
   Future<Map<String, dynamic>> submitIssue({
     required String reporterId,
     required String title,
@@ -22,9 +27,11 @@ class ApiIssueRepository implements IssueRepository {
     required double lat,
     required double lng,
     String? imageUrl,
+    String? reporterName,
   }) {
     return _apiService.submitIssue(
       reporterId: reporterId,
+      reporterName: reporterName,
       title: title,
       description: description,
       lat: lat,

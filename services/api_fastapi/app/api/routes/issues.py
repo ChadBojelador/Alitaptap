@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app.core.firebase import get_db
+from app.services.ai_validator import get_ai_validator
 
 router = APIRouter(prefix='/issues', tags=['issues'])
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ class IssueCreate(BaseModel):
     lat: float
     lng: float
     image_url: Optional[str] = None
+    reporter_name: Optional[str] = None
 
 
 class IssueCreateResponse(BaseModel):
@@ -43,6 +45,7 @@ class IssueCreateResponse(BaseModel):
 class IssueListItem(BaseModel):
     issue_id: str
     reporter_id: str
+    reporter_name: Optional[str] = None
     title: str
     description: str
     lat: float
@@ -50,6 +53,8 @@ class IssueListItem(BaseModel):
     image_url: Optional[str] = None
     status: str
     tags: list[str] = []
+    ai_summary: Optional[str] = None
+    ai_sdg_tag: Optional[str] = None
     created_at: str
 
 
@@ -85,6 +90,7 @@ def _doc_to_issue(doc_id: str, data: dict) -> dict:
     return {
         'issue_id': doc_id,
         'reporter_id': data.get('reporter_id', ''),
+        'reporter_name': data.get('reporter_name'),
         'title': data.get('title', ''),
         'description': data.get('description', ''),
         'lat': location.get('lat', 0.0),
@@ -92,6 +98,8 @@ def _doc_to_issue(doc_id: str, data: dict) -> dict:
         'image_url': data.get('image_url'),
         'status': data.get('status', 'pending'),
         'tags': data.get('tags', []),
+        'ai_summary': data.get('ai_summary'),
+        'ai_sdg_tag': data.get('ai_sdg_tag'),
         'created_at': created.isoformat() if hasattr(created, 'isoformat') else str(created or ''),
         'updated_at': updated.isoformat() if hasattr(updated, 'isoformat') else (str(updated) if updated else None),
     }
@@ -145,12 +153,23 @@ def _build_title_suggestions(issue: dict, limit: int = 3) -> list[str]:
 
 @router.post('', response_model=IssueCreateResponse)
 def create_issue(payload: IssueCreate) -> IssueCreateResponse:
-    """Create a new community problem report. Status defaults to pending."""
+    """Create a new community problem report. AI validates and auto-approves."""
     db = get_db()
     now = datetime.now(timezone.utc)
+    validator = get_ai_validator()
+
+    # AI validation
+    validation_result = validator.validate_and_process(
+        title=payload.title,
+        description=payload.description,
+    )
+
+    # Auto-approve if valid, otherwise reject
+    status = IssueStatus.validated.value if validation_result.is_valid else IssueStatus.rejected.value
 
     doc_data = {
         'reporter_id': payload.reporter_id,
+        'reporter_name': payload.reporter_name,
         'title': payload.title,
         'description': payload.description,
         'location': {
@@ -158,17 +177,20 @@ def create_issue(payload: IssueCreate) -> IssueCreateResponse:
             'lng': payload.lng,
         },
         'image_url': payload.image_url,
-        'status': IssueStatus.pending.value,  # Requires admin validation before appearing on map.
-        'tags': [],
+        'status': status,
+        'ai_summary': validation_result.ai_summary,
+        'ai_sdg_tag': validation_result.auto_sdg_tag,
+        'tags': [validation_result.auto_sdg_tag],
+        'validation_reason': validation_result.reason,
         'created_at': now,
-        'updated_at': None,
+        'updated_at': now,
     }
 
     _, doc_ref = db.collection('issues').add(doc_data)
 
     return IssueCreateResponse(
         issue_id=doc_ref.id,
-        status=IssueStatus.pending.value,
+        status=status,
         created_at=now.isoformat(),
     )
 
@@ -184,10 +206,11 @@ def list_issues(
 
         if status is not None:
             query = query.where('status', '==', status.value)
+        else:
+            # Default: show only validated issues
+            query = query.where('status', '==', IssueStatus.validated.value)
 
-        if status is None:
-            query = query.order_by('created_at', direction='DESCENDING')
-
+        query = query.order_by('created_at', direction='DESCENDING')
         docs = query.stream()
 
         items = []
@@ -233,6 +256,25 @@ def update_issue_status(issue_id: str, payload: StatusUpdate) -> StatusUpdateRes
         status=payload.status.value,
         updated_at=now.isoformat(),
     )
+
+
+@router.get('/expo/validated', response_model=list[IssueListItem])
+def get_expo_issues() -> list[IssueListItem]:
+    """Get all AI-validated issues for the expo page."""
+    try:
+        db = get_db()
+        docs = db.collection('issues').where(
+            'status', '==', IssueStatus.validated.value
+        ).order_by('created_at', direction='DESCENDING').stream()
+
+        items = []
+        for doc in docs:
+            data = doc.to_dict()
+            items.append(IssueListItem(**_doc_to_issue(doc.id, data)))
+        return items
+    except Exception as e:
+        logger.exception('get_expo_issues failed: %s', e)
+        raise
 
 
 @router.get('/{issue_id}/title-suggestions', response_model=TitleSuggestionsResponse)

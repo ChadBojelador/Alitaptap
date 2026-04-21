@@ -8,6 +8,7 @@ class SubmitIssueInput {
     required this.lat,
     required this.lng,
     this.imageUrl,
+    this.reporterName,
   });
 
   final String reporterId;
@@ -16,6 +17,7 @@ class SubmitIssueInput {
   final double lat;
   final double lng;
   final String? imageUrl;
+  final String? reporterName;
 }
 
 class SubmitIssueUseCase {
@@ -31,6 +33,7 @@ class SubmitIssueUseCase {
       lat: input.lat,
       lng: input.lng,
       imageUrl: input.imageUrl,
+      reporterName: input.reporterName,
     );
   }
 }

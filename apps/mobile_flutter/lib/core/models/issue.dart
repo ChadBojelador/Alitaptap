@@ -3,6 +3,7 @@ class Issue {
   Issue({
     required this.issueId,
     required this.reporterId,
+    this.reporterName,
     required this.title,
     required this.description,
     required this.lat,
@@ -10,12 +11,15 @@ class Issue {
     this.imageUrl,
     required this.status,
     this.tags = const [],
+    this.aiSummary,
+    this.aiSdgTag,
     required this.createdAt,
     this.updatedAt,
   });
 
   final String issueId;
   final String reporterId;
+  final String? reporterName;
   final String title;
   final String description;
   final double lat;
@@ -23,6 +27,8 @@ class Issue {
   final String? imageUrl;
   final String status;
   final List<String> tags;
+  final String? aiSummary;
+  final String? aiSdgTag;
   final String createdAt;
   final String? updatedAt;
 
@@ -30,6 +36,7 @@ class Issue {
     return Issue(
       issueId: json['issue_id'] as String? ?? '',
       reporterId: json['reporter_id'] as String? ?? '',
+      reporterName: json['reporter_name'] as String?,
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       lat: (json['lat'] as num?)?.toDouble() ?? 0.0,
@@ -40,6 +47,8 @@ class Issue {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      aiSummary: json['ai_summary'] as String?,
+      aiSdgTag: json['ai_sdg_tag'] as String?,
       createdAt: json['created_at'] as String? ?? '',
       updatedAt: json['updated_at'] as String?,
     );
@@ -49,6 +58,7 @@ class Issue {
     return {
       'issue_id': issueId,
       'reporter_id': reporterId,
+      'reporter_name': reporterName,
       'title': title,
       'description': description,
       'lat': lat,
@@ -56,6 +66,8 @@ class Issue {
       'image_url': imageUrl,
       'status': status,
       'tags': tags,
+      'ai_summary': aiSummary,
+      'ai_sdg_tag': aiSdgTag,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
