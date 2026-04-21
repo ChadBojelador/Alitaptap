@@ -8,6 +8,7 @@ import '../../../core/models/news_article.dart';
 import '../../../features/civic_intelligence/presentation/issue_detail_page.dart';
 import '../../../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../../../features/civic_intelligence/presentation/issue_submit_page.dart';
+import '../../../features/civic_intelligence/presentation/match_idea_page.dart';
 import '../../../features/home/presentation/news_feed_widget.dart';
 import '../../../services/api_service.dart';
 
@@ -313,8 +314,7 @@ class _DashboardPageState extends State<DashboardPage>
               isPrimary: true,
               isDark: isDark,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => IssueMapPage(
-                    showIdeaDock: true, studentId: uid, autoRun: false),
+                builder: (_) => MatchIdeaPage(studentId: uid),
               )),
             ),
             _ActionTile(

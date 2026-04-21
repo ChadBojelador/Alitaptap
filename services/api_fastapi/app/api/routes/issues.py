@@ -195,6 +195,25 @@ def create_issue(payload: IssueCreate) -> IssueCreateResponse:
     )
 
 
+@router.get('/expo/validated', response_model=list[IssueListItem])
+def get_expo_issues() -> list[IssueListItem]:
+    """Get all AI-validated issues for the expo page."""
+    try:
+        db = get_db()
+        docs = db.collection('issues').where(
+            'status', '==', IssueStatus.validated.value
+        ).order_by('created_at', direction='DESCENDING').stream()
+
+        items = []
+        for doc in docs:
+            data = doc.to_dict()
+            items.append(IssueListItem(**_doc_to_issue(doc.id, data)))
+        return items
+    except Exception as e:
+        logger.exception('get_expo_issues failed: %s', e)
+        raise
+
+
 @router.get('', response_model=list[IssueListItem])
 def list_issues(
     status: Optional[IssueStatus] = Query(None, description='Filter by status'),
@@ -256,25 +275,6 @@ def update_issue_status(issue_id: str, payload: StatusUpdate) -> StatusUpdateRes
         status=payload.status.value,
         updated_at=now.isoformat(),
     )
-
-
-@router.get('/expo/validated', response_model=list[IssueListItem])
-def get_expo_issues() -> list[IssueListItem]:
-    """Get all AI-validated issues for the expo page."""
-    try:
-        db = get_db()
-        docs = db.collection('issues').where(
-            'status', '==', IssueStatus.validated.value
-        ).order_by('created_at', direction='DESCENDING').stream()
-
-        items = []
-        for doc in docs:
-            data = doc.to_dict()
-            items.append(IssueListItem(**_doc_to_issue(doc.id, data)))
-        return items
-    except Exception as e:
-        logger.exception('get_expo_issues failed: %s', e)
-        raise
 
 
 @router.get('/{issue_id}/title-suggestions', response_model=TitleSuggestionsResponse)
