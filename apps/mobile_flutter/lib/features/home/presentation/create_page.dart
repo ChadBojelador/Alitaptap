@@ -605,6 +605,15 @@ class _CreatePageState extends State<CreatePage> {
             color: textColor,
           ),
         ),
+        const SizedBox(height: 4),
+        Text(
+          'How will you implement this solution? Include methods, timeline, resources, and expected outcomes.',
+          style: GoogleFonts.poppins(
+            fontSize: 11,
+            color: subtleColor,
+            height: 1.5,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: _aiDescriptionCtrl,
