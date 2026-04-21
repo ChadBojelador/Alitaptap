@@ -69,8 +69,8 @@ class _IssueMapPageState extends State<IssueMapPage>
   // ── Constants ──────────────────────────────────────────────────────────
   static const _mapStyleUrl =
       'https://tiles.openfreemap.org/styles/liberty';
-  static const _defaultCenter = LatLng(12.8797, 121.7740);
-  static const _defaultZoom   = 6.0;
+  static const _defaultCenter = LatLng(13.7887, 121.0685);
+  static const _defaultZoom   = 13.0;
 
   // ── Dependencies ───────────────────────────────────────────────────────
   final _issueRepository = ApiIssueRepository();
@@ -92,6 +92,7 @@ class _IssueMapPageState extends State<IssueMapPage>
   MapLibreMapController? _mapController;
   final Map<String, Offset> _issueScreenPositions = {};
   double _bearing = 0.0;
+  double _zoom = _defaultZoom;
 
   bool _isDarkMode = true;
   bool get _isDark => _isDarkMode;
@@ -165,8 +166,10 @@ class _IssueMapPageState extends State<IssueMapPage>
           _errorMessage = null;
           _loading      = false;
         });
-        await _renderIssuePins();
-        await _updateScreenPositions();
+        // Only project if style is already loaded; otherwise _onStyleLoaded will do it
+        if (_styleLoaded) {
+          await _tryProjectPins();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -176,6 +179,14 @@ class _IssueMapPageState extends State<IssueMapPage>
         });
       }
     }
+  }
+
+  /// Projects pins only when both issues are loaded AND the map style is ready.
+  Future<void> _tryProjectPins() async {
+    if (!_styleLoaded || _mapController == null || _issues.isEmpty) return;
+    // Small delay to let the map finish tile rendering
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (mounted) await _updateScreenPositions();
   }
 
   // ── User GPS location ──────────────────────────────────────────────────
@@ -270,7 +281,6 @@ class _IssueMapPageState extends State<IssueMapPage>
     _styleLoaded = true;
     final controller = _mapController;
     if (controller != null) {
-      // Restyle labels to cyber-gold
       const labelSizes = {
         'label_country_1':    26.0,
         'label_country_2':    24.0,
@@ -298,7 +308,6 @@ class _IssueMapPageState extends State<IssueMapPage>
         } catch (_) {}
       }
 
-      // Hide POI clutter
       const hideLayers = [
         'poi_r20', 'poi_r7', 'poi_r1', 'poi_transit', 'airport',
       ];
@@ -308,16 +317,20 @@ class _IssueMapPageState extends State<IssueMapPage>
     }
 
     await _renderIssuePins();
-    await _updateScreenPositions();
+    // Gate: project only if issues are already loaded
+    await _tryProjectPins();
     await _updateUserScreenPosition();
   }
 
   void _onCameraMove() {
     unawaited(_updateScreenPositions());
     unawaited(_updateUserScreenPosition());
-    final bearing = _mapController?.cameraPosition?.bearing ?? 0.0;
+    final pos = _mapController?.cameraPosition;
     if (mounted) {
-      setState(() => _bearing = bearing);
+      setState(() {
+        _bearing = pos?.bearing ?? 0.0;
+        _zoom    = pos?.zoom    ?? _zoom;
+      });
     }
   }
 
@@ -341,8 +354,11 @@ class _IssueMapPageState extends State<IssueMapPage>
       try {
         final screenPoint = await controller
             .toScreenLocation(LatLng(issue.lat, issue.lng));
-        positions[issue.issueId] =
-            Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
+        final offset = Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
+        // Filter out (0,0) — means the point is off-screen or not yet projected
+        if (offset.dx > 1 || offset.dy > 1) {
+          positions[issue.issueId] = offset;
+        }
       } catch (_) {}
     }
 
@@ -453,14 +469,18 @@ class _IssueMapPageState extends State<IssueMapPage>
           // ── Issue pin overlays ────────────────────────────────────────
           for (final issue in _issues)
             if (_issueScreenPositions[issue.issueId] != null)
-              Positioned(
-                left: _issueScreenPositions[issue.issueId]!.dx - 10,
-                top:  _issueScreenPositions[issue.issueId]!.dy - 10,
-                child: GestureDetector(
-                  onTap: () => _onPinTapped(issue),
-                  child: const _RadarBlip(),
-                ),
-              ),
+              Builder(builder: (context) {
+                final scale = ((_zoom - 13.0) * 0.18 + 1.0).clamp(0.5, 2.5);
+                final half  = 16.0 * scale;
+                return Positioned(
+                  left: _issueScreenPositions[issue.issueId]!.dx - half,
+                  top:  _issueScreenPositions[issue.issueId]!.dy - half,
+                  child: GestureDetector(
+                    onTap: () => _onPinTapped(issue),
+                    child: _RadarBlip(zoom: _zoom),
+                  ),
+                );
+              }),
 
           // ── Top terminal bar ──────────────────────────────────────────
           Positioned(
@@ -778,9 +798,10 @@ class _TBtn extends StatelessWidget {
   }
 }
 
-/// Radar blip for issue pins — small red glowing dot with pulse.
+/// Radar blip for issue pins — scales with map zoom for consistent visual size.
 class _RadarBlip extends StatefulWidget {
-  const _RadarBlip();
+  const _RadarBlip({required this.zoom});
+  final double zoom;
 
   @override
   State<_RadarBlip> createState() => _RadarBlipState();
@@ -801,20 +822,26 @@ class _RadarBlipState extends State<_RadarBlip>
 
   @override
   Widget build(BuildContext context) {
+    // At zoom 13 (default) → scale 1.0. Each zoom level doubles/halves by ~0.18.
+    // Clamp so pins never disappear at low zoom or become huge at high zoom.
+    final scale = ((widget.zoom - 13.0) * 0.18 + 1.0).clamp(0.5, 2.5);
+    final outerSize = 32.0 * scale;
+    final coreSize  = 10.0 * scale;
+
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) {
         final t = _anim.value;
         return SizedBox(
-          width:  32,
-          height: 32,
+          width:  outerSize,
+          height: outerSize,
           child: Stack(
             alignment: Alignment.center,
             children: [
               // Pulse ring
               Container(
-                width:  32 * t,
-                height: 32 * t,
+                width:  outerSize * t,
+                height: outerSize * t,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -825,15 +852,15 @@ class _RadarBlipState extends State<_RadarBlip>
               ),
               // Core
               Container(
-                width:  10,
-                height: 10,
+                width:  coreSize,
+                height: coreSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _cyberRed,
                   boxShadow: [
                     BoxShadow(
                       color:       _cyberRed.withValues(alpha: 0.6),
-                      blurRadius:  8,
+                      blurRadius:  8 * scale,
                       spreadRadius: 1,
                     ),
                   ],
