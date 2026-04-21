@@ -369,13 +369,46 @@ class _IssueCard extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    _amber.withValues(alpha: 0.5),
-                    _amber.withValues(alpha: 0.85),
+                    const Color(0xFF34495E),
+                    const Color(0xFF2C3E50),
                   ],
                 ),
               ),
-              child: const Center(
-                child: Icon(Icons.location_on_rounded, color: _white, size: 44),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.location_on_rounded, color: _amber, size: 36),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _amber.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '${issue.lat.toStringAsFixed(2)}°',
+                            style: GoogleFonts.robotoMono(
+                              fontSize: 9,
+                              color: _amber,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            '${issue.lng.toStringAsFixed(2)}°',
+                            style: GoogleFonts.robotoMono(
+                              fontSize: 9,
+                              color: _amber,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Positioned(

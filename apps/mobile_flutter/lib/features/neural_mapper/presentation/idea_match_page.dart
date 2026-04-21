@@ -304,7 +304,7 @@ class _IdeaMatchPageState extends State<IdeaMatchPage> {
                 ],
               ),
             ),
-          if (matches.isNotEmpty && !_loading) ...[
+          if (matches.isNotEmpty && !_loading) ...[ 
             const SizedBox(height: 8),
             if (_connectedIssueId != null)
               Container(
@@ -497,6 +497,57 @@ class _MatchCard extends StatelessWidget {
                       height: 1.4,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  if (issue != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 120,
+                        height: 80,
+                        color: isDark
+                            ? const Color(0xFF3A3A3A)
+                            : const Color(0xFFF5F5F5),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              color: isDark
+                                  ? const Color(0xFF3A3A3A)
+                                  : const Color(0xFFF5F5F5),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.location_on_rounded,
+                                    color: const Color(0xFFFFD60A),
+                                    size: 28,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${issue?.lat?.toStringAsFixed(2) ?? '0.00'}°',
+                                    style: GoogleFonts.robotoMono(
+                                      fontSize: 9,
+                                      color: isDark
+                                          ? const Color(0xFF9E9E9E)
+                                          : const Color(0xFF666666),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${issue?.lng?.toStringAsFixed(2) ?? '0.00'}°',
+                                    style: GoogleFonts.robotoMono(
+                                      fontSize: 9,
+                                      color: isDark
+                                          ? const Color(0xFF9E9E9E)
+                                          : const Color(0xFF666666),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -538,4 +589,3 @@ class _MatchCard extends StatelessWidget {
     );
   }
 }
-
