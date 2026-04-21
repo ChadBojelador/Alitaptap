@@ -134,6 +134,8 @@ class _BottomNav extends StatelessWidget {
 }
 
 class _ProfilePage extends StatelessWidget {
+  const _ProfilePage();
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
