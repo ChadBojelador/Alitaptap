@@ -27,6 +27,14 @@ const _textPrimary = Color(0xFFE0E0E0);
 const _textMuted = Color(0xFF6B7280);
 const _gridLine = Color(0xFF1A2332);
 
+// Map overlay tokens — dark, readable over light map
+const _barBg        = Color(0xFF1A1A2E);
+const _barBorder    = Color(0xFF2D2D4A);
+const _barIcon      = Color(0xFFF1F1F1);
+const _barIconMuted = Color(0xFF9CA3AF);
+const _barTitle     = Color(0xFFFFFFFF);
+const _barSubtitle  = Color(0xFFB0B8C8);
+
 /// Full-screen cutesy map page for Alitaptap.
 /// Warm pastel palette, rounded cards, friendly Nunito font.
 class IssueMapPage extends StatefulWidget {
@@ -818,12 +826,16 @@ class _TerminalTopBar extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
+            color: _barBg.withValues(alpha: 0.82),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: const Color(0xFFFFD60A).withValues(alpha: 0.45),
-              width: 1,
-            ),
+            border: Border.all(color: _barBorder, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -850,7 +862,7 @@ class _TerminalTopBar extends StatelessWidget {
                     Text(
                       'ALITAPTAP // CIVIC-INTEL',
                       style: GoogleFonts.robotoMono(
-                        color: _cyberGreen,
+                        color: _barTitle,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.8,
@@ -859,7 +871,7 @@ class _TerminalTopBar extends StatelessWidget {
                     Text(
                       '${issueCount.toString().padLeft(4, '0')} ISSUES LOADED',
                       style: GoogleFonts.robotoMono(
-                        color: _textMuted,
+                        color: _barSubtitle,
                         fontSize: 8,
                         letterSpacing: 1.2,
                       ),
@@ -894,7 +906,7 @@ class _TBtn extends StatelessWidget {
       onTap: onPressed,
       child: Icon(
         icon,
-        color: onPressed == null ? _textMuted : _cyberGreen,
+        color: onPressed == null ? _barIconMuted : _barIcon,
         size: 18,
       ),
     );
