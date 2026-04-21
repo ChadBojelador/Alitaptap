@@ -6,12 +6,16 @@ import 'app.dart';
 import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
 import '../features/home/presentation/community_home_page.dart';
+import '../features/home/presentation/admin_home_page.dart';
+import '../features/home/presentation/dashboard_page.dart';
+import '../core/models/app_role.dart';
 
 const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key, this.onToggleTheme});
+  const MainShell({super.key, required this.role, this.onToggleTheme});
+  final String role;
   final VoidCallback? onToggleTheme;
 
   @override
@@ -34,7 +38,12 @@ class _MainShellState extends State<MainShell> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final pages = [
-      const StudentHomePage(),
+      if (widget.role == 'admin')
+        const AdminHomePage()
+      else if (widget.role == 'community')
+        DashboardPage(role: AppRole.community)
+      else
+        DashboardPage(role: AppRole.student),
       const ExpoFeedPage(),
       _ProfilePage(onToggleTheme: widget.onToggleTheme),
     ];

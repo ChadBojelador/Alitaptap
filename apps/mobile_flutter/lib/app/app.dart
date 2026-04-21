@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/home/presentation/onboarding_carousel_page.dart';
 import '../features/home/presentation/welcome_page.dart';
+import '../features/auth/presentation/sign_in_page.dart';
 import 'main_shell.dart';
 
 /// Provides [themeMode] and [toggleTheme] to the entire widget tree so any
@@ -180,16 +181,15 @@ class _RootRouter extends StatefulWidget {
 }
 
 class _RootRouterState extends State<_RootRouter> {
+  String? _role;
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<SharedPreferences>(
       future: SharedPreferences.getInstance(),
       builder: (context, snap) {
         if (!snap.hasData) {
-          // Brief blank while prefs load
-          return const Scaffold(
-            backgroundColor: Color(0xFFF7F8FA),
-          );
+          return const Scaffold(backgroundColor: Color(0xFFF7F8FA));
         }
         final prefs = snap.data!;
         final seenWelcome = prefs.getBool('seen_welcome') ?? false;
@@ -201,7 +201,12 @@ class _RootRouterState extends State<_RootRouter> {
         if (!seenOnboarding) {
           return OnboardingCarouselPage(onToggleTheme: widget.toggleTheme);
         }
-        return MainShell(onToggleTheme: widget.toggleTheme);
+        if (_role == null) {
+          return SignInPage(
+            onRoleSelected: (role) => setState(() => _role = role),
+          );
+        }
+        return MainShell(role: _role!, onToggleTheme: widget.toggleTheme);
       },
     );
   }
