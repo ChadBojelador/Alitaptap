@@ -7,7 +7,6 @@ import '../../../core/models/issue.dart';
 import '../../civic_intelligence/presentation/issue_detail_page.dart';
 import '../../civic_intelligence/presentation/issue_map_page.dart';
 import '../../civic_intelligence/presentation/issue_submit_page.dart';
-import '../../neural_mapper/presentation/idea_match_page.dart';
 
 const _amber = Color(0xFFFFA726);
 const _dark = Color(0xFF1A1A1A);

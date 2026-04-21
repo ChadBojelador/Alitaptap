@@ -585,15 +585,13 @@ class _IssueMapPageState extends State<IssueMapPage>
           // ── Idea dock ──────────────────────────────────────────────────────
           if (!_loading)
             Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: SafeArea(
-                child: _IdeaDock(
-                  controller: _ideaController,
-                  isMatching: _matchingIdea,
-                  onSubmit: _submitIdea,
-                ),
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _IdeaDock(
+                controller: _ideaController,
+                isMatching: _matchingIdea,
+                onSubmit: _submitIdea,
               ),
             ),
         ],
@@ -1283,8 +1281,8 @@ class _FabButton extends StatelessWidget {
   }
 }
 
-/// Cyber-styled idea matching input dock.
-class _IdeaDock extends StatelessWidget {
+/// Cyber-styled idea matching input dock with collapsible nav behavior.
+class _IdeaDock extends StatefulWidget {
   const _IdeaDock({
     required this.controller,
     required this.isMatching,
@@ -1296,92 +1294,215 @@ class _IdeaDock extends StatelessWidget {
   final VoidCallback onSubmit;
 
   @override
+  State<_IdeaDock> createState() => _IdeaDockState();
+}
+
+class _IdeaDockState extends State<_IdeaDock>
+    with SingleTickerProviderStateMixin {
+  static const double _collapsedHeight = 56;
+  static const double _expandedHeight = 128;
+
+  late final AnimationController _sheetController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    value: 0,
+  );
+
+  bool get _collapsed => _sheetController.value <= 0.02;
+
+  void _toggleCollapsed() {
+    if (_sheetController.value > 0.5) {
+      _sheetController.fling(velocity: -2.0);
+    } else {
+      _sheetController.fling(velocity: 2.0);
+    }
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    final dy = details.primaryDelta ?? 0;
+    final range = _expandedHeight - _collapsedHeight;
+    _sheetController.value = (_sheetController.value - (dy / range)).clamp(0, 1);
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+
+    if (velocity.abs() > 220) {
+      _sheetController.fling(velocity: velocity < 0 ? 2.2 : -2.2);
+      return;
+    }
+
+    if (_sheetController.value > 0.5) {
+      _sheetController.animateTo(1, curve: Curves.easeOutCubic);
+    } else {
+      _sheetController.animateTo(0, curve: Curves.easeOutCubic);
+    }
+  }
+
+  @override
+  void dispose() {
+    _sheetController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFFFD60A).withValues(alpha: 0.45),
-              width: 1,
+    return GestureDetector(
+      onVerticalDragUpdate: _onDragUpdate,
+      onVerticalDragEnd: _onDragEnd,
+      child: AnimatedBuilder(
+        animation: _sheetController,
+        builder: (context, _) {
+          final progress = Curves.easeOutCubic.transform(_sheetController.value);
+          final height =
+              _collapsedHeight + ((_expandedHeight - _collapsedHeight) * progress);
+
+          return Container(
+            height: height,
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.98),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              border: Border.all(
+                color: const Color(0xFFE5E7EB),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 18,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
-                blurRadius: 24,
-                spreadRadius: 0,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              const SizedBox(width: 14),
-              Text(
-                '> ',
-                style: GoogleFonts.robotoMono(
-                  color: _cyberGreen,
-                  fontSize: 14,
-                ),
-              ),
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (_) => onSubmit(),
-                  style: GoogleFonts.robotoMono(
-                    color: _textPrimary,
-                    fontSize: 13,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'ENTER RESEARCH IDEA...',
-                    hintStyle: GoogleFonts.robotoMono(
-                      color: _textMuted,
-                      fontSize: 12,
-                      letterSpacing: 0.8,
-                    ),
-                    border: InputBorder.none,
-                    filled: false,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: isMatching
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: _cyberGreen,
-                          strokeWidth: 1.5,
-                        ),
-                      )
-                    : GestureDetector(
-                        onTap: onSubmit,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: _toggleCollapsed,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 4,
                           decoration: BoxDecoration(
-                            color: _cyberGreen.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: _cyberGreen.withValues(alpha: 0.45),
+                            color: const Color(0xFFCBD5E1),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.lightbulb_rounded,
+                              color: Color(0xFF111827),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                progress < 0.3
+                                    ? 'Pull up for research input'
+                                    : 'Research idea input',
+                                style: GoogleFonts.robotoMono(
+                                  color: const Color(0xFF111827),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.7,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              progress < 0.5
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              color: const Color(0xFF111827),
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (progress > 0.05) ...[
+                  Divider(
+                    color: const Color(0xFFE5E7EB),
+                    height: 1,
+                    thickness: 1,
+                  ),
+                  Opacity(
+                    opacity: progress,
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        const Icon(
+                          Icons.edit_rounded,
+                          color: Color(0xFF111827),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: widget.controller,
+                            textInputAction: TextInputAction.search,
+                            onSubmitted: (_) => widget.onSubmit(),
+                            style: GoogleFonts.robotoMono(
+                              color: const Color(0xFF111827),
+                              fontSize: 13,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Enter research idea...',
+                              hintStyle: GoogleFonts.robotoMono(
+                                color: const Color(0xFF6B7280),
+                                fontSize: 12,
+                              ),
+                              border: InputBorder.none,
+                              filled: false,
                             ),
                           ),
-                          child: const Icon(
-                            Icons.arrow_forward_rounded,
-                            color: _cyberGreen,
-                            size: 16,
-                          ),
                         ),
-                      ),
-              ),
-            ],
-          ),
-        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: widget.isMatching
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFF111827),
+                                    strokeWidth: 1.8,
+                                  ),
+                                )
+                              : GestureDetector(
+                                  onTap: widget.onSubmit,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF3F4F6),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: const Color(0xFFD1D5DB),
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Color(0xFF111827),
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }

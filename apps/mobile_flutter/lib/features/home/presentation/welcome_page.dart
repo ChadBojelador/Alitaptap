@@ -28,8 +28,13 @@ class _WelcomePageState extends State<WelcomePage>
     begin: const Offset(0, 0.12),
     end: Offset.zero,
   ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeOut));
+  bool _starting = false;
 
   Future<void> _getStarted() async {
+    if (_starting) return;
+    setState(() => _starting = true);
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('seen_welcome', true);
     if (!mounted) return;
@@ -135,10 +140,10 @@ class _WelcomePageState extends State<WelcomePage>
 
                       // Headline
                       Text(
-                        'Ready to tap\nyour next research\nproject',
+                        'Ready to tap your next research project',
                         style: GoogleFonts.poppins(
                           color: _dark,
-                          fontSize: 36,
+                          fontSize: 34,
                           fontWeight: FontWeight.w800,
                           height: 1.15,
                         ),
@@ -173,36 +178,50 @@ class _WelcomePageState extends State<WelcomePage>
 
                       // Get Started button
                       GestureDetector(
-                        onTap: _getStarted,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          decoration: BoxDecoration(
-                            color: _amber,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _amber.withValues(alpha: 0.45),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
+                        onTap: _starting ? null : _getStarted,
+                        child: AnimatedScale(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOut,
+                          scale: _starting ? 0.98 : 1,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 220),
+                            opacity: _starting ? 0.85 : 1,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              decoration: BoxDecoration(
+                                color: _amber,
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _amber.withValues(alpha: 0.45),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Get Started',
-                                style: GoogleFonts.poppins(
-                                  color: _dark,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    _starting ? 'Starting...' : 'Get Started',
+                                    style: GoogleFonts.poppins(
+                                      color: _dark,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Icon(
+                                    _starting
+                                        ? Icons.hourglass_top_rounded
+                                        : Icons.arrow_forward_rounded,
+                                    color: _dark,
+                                    size: 20,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 10),
-                              const Icon(Icons.arrow_forward_rounded,
-                                  color: _dark, size: 20),
-                            ],
+                            ),
                           ),
                         ),
                       ),
