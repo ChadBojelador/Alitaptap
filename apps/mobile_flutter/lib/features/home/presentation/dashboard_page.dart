@@ -31,7 +31,6 @@ class _DashboardPageState extends State<DashboardPage>
   final _api = ApiService();
   List<Issue> _issues = [];
   bool _loading = true;
-  int _navIndex = 0;
   late final TabController _tabController;
 
   @override
@@ -244,45 +243,6 @@ class _DashboardPageState extends State<DashboardPage>
           ),
         ),
       ),
-
-      // ── Bottom nav ───────────────────────────────────────────────────
-      bottomNavigationBar: _BottomNav(
-        index: _navIndex,
-        isDark: isDark,
-        cardBg: cardBg,
-        onTap: (i) {
-          if (i == 2) {
-            // FAB handled separately
-            return;
-          }
-          setState(() => _navIndex = i);
-          if (i == 1) {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const IssueMapPage()),
-            );
-          } else if (i == 3) {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ExpoFeedPage()),
-            );
-          }
-        },
-      ),
-
-      // ── FAB ──────────────────────────────────────────────────────────
-      floatingActionButton: isCommunity
-          ? FloatingActionButton(
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(
-                    builder: (_) => IssueSubmitPage(reporterId: uid),
-                  ))
-                  .then((_) => _loadData()),
-              backgroundColor: _amber,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add_rounded, color: _dark, size: 28),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
@@ -689,92 +649,4 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-// ── Bottom nav ────────────────────────────────────────────────────────────────
-class _BottomNav extends StatelessWidget {
-  const _BottomNav({
-    required this.index,
-    required this.isDark,
-    required this.cardBg,
-    required this.onTap,
-  });
-  final int index;
-  final bool isDark;
-  final Color cardBg;
-  final void Function(int) onTap;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: cardBg,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavIcon(
-              icon: Icons.home_rounded,
-              selected: index == 0,
-              onTap: () => onTap(0),
-              isDark: isDark),
-          _NavIcon(
-              icon: Icons.map_rounded,
-              selected: index == 1,
-              onTap: () => onTap(1),
-              isDark: isDark),
-          const SizedBox(width: 56), // FAB space
-          _NavIcon(
-              icon: Icons.notifications_rounded,
-              selected: index == 3,
-              onTap: () => onTap(3),
-              isDark: isDark),
-          _NavIcon(
-              icon: Icons.person_rounded,
-              selected: index == 4,
-              onTap: () => onTap(4),
-              isDark: isDark),
-        ],
-      ),
-    );
-  }
-}
-
-class _NavIcon extends StatelessWidget {
-  const _NavIcon({
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-    required this.isDark,
-  });
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Icon(
-          icon,
-          color: selected
-              ? _amber
-              : isDark
-                  ? const Color(0xFF757575)
-                  : const Color(0xFFBDBDBD),
-          size: 26,
-        ),
-      ),
-    );
-  }
-}
