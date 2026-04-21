@@ -111,7 +111,7 @@ class _IssueMapPageState extends State<IssueMapPage>
   );
   late final AnimationController _connectionAnim = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1180),
+    duration: const Duration(milliseconds: 840),
   );
 
   // ── Lifecycle ───────────────────────────────────────────────────────────────
@@ -351,6 +351,81 @@ class _IssueMapPageState extends State<IssueMapPage>
     }
   }
 
+  Future<void> _seedTwoIdeaTestProblems() async {
+    if (_generatingDemoIssue) return;
+
+    Position? position = _userPosition;
+    if (position == null) {
+      await _resolveCurrentLocation();
+      position = _userPosition;
+    }
+
+    if (position == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Location not available. Allow location access.'),
+        ),
+      );
+      return;
+    }
+
+    const floodTitle = 'Demo: Flooded drainage near school gate';
+    const wasteTitle = 'Demo: Uncollected garbage at public market';
+
+    final existingTitles = _issues.map((issue) => issue.title.toLowerCase()).toSet();
+
+    final seeds = <SubmitIssueInput>[
+      SubmitIssueInput(
+        reporterId: 'demo-seed-user',
+        title: floodTitle,
+        description:
+            'Recurring flood after rain due to blocked drainage canal near the main school entrance. Keywords: flood drainage rain warning.',
+        lat: position.latitude + 0.0009,
+        lng: position.longitude - 0.0011,
+      ),
+      SubmitIssueInput(
+        reporterId: 'demo-seed-user',
+        title: wasteTitle,
+        description:
+            'Garbage is not collected regularly causing bad odor and waste pileup in the market area. Keywords: garbage waste trash collection.',
+        lat: position.latitude - 0.0010,
+        lng: position.longitude + 0.0012,
+      ),
+    ];
+
+    setState(() => _generatingDemoIssue = true);
+    try {
+      var created = 0;
+      for (final seed in seeds) {
+        if (existingTitles.contains(seed.title.toLowerCase())) {
+          continue;
+        }
+        await _submitIssueUseCase(seed);
+        created += 1;
+      }
+
+      if (!mounted) return;
+      await _loadIssues();
+      if (!mounted) return;
+
+      final message = created == 0
+          ? 'Demo test problems already exist. Try words: flood, garbage.'
+          : 'Added $created demo problems. Try words: flood, garbage.';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to seed test problems: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _generatingDemoIssue = false);
+    }
+  }
+
   void _onMapTap(Point<double> point, LatLng latLng) {
     const threshold = 0.006;
     for (final candidate in _issues) {
@@ -530,13 +605,13 @@ class _IssueMapPageState extends State<IssueMapPage>
                   animation: _connectionAnim,
                   builder: (context, _) {
                     final t = _connectionAnim.value;
-                    final drawProgress = Curves.easeOutCubic
-                        .transform((t / 0.68).clamp(0.0, 1.0));
-                    final headProgress = Curves.easeOutExpo
-                        .transform((t / 0.82).clamp(0.0, 1.0));
-                    final fade = t < 0.72
+                    final drawProgress = Curves.easeOutQuart
+                      .transform((t / 0.46).clamp(0.0, 1.0));
+                    final headProgress = Curves.easeOutQuart
+                      .transform((t / 0.60).clamp(0.0, 1.0));
+                    final fade = t < 0.50
                         ? 1.0
-                        : 1 - Curves.easeIn.transform(((t - 0.72) / 0.28).clamp(0.0, 1.0));
+                      : 1 - Curves.easeIn.transform(((t - 0.50) / 0.50).clamp(0.0, 1.0));
                     return CustomPaint(
                       painter: _ConnectionLinePainter(
                         source: _ideaDockAnchor!,
@@ -577,7 +652,7 @@ class _IssueMapPageState extends State<IssueMapPage>
                   }),
                   onAddPin: _generatingDemoIssue
                       ? null
-                      : _generateProblemAtUserLocation,
+                      : _seedTwoIdeaTestProblems,
                   onBack: Navigator.of(context).canPop()
                       ? () => Navigator.of(context).pop()
                       : null,
@@ -1088,15 +1163,27 @@ class _ConnectionLinePainter extends CustomPainter {
     final clampedOpacity = opacity.clamp(0.0, 1.0);
     if (clampedProgress <= 0 || clampedOpacity <= 0) return;
 
-    final arcHeight = 80 + ((source - target).distance * 0.06);
-    final control = Offset(
-      (source.dx + target.dx) * 0.5,
-      min(source.dy, target.dy) - arcHeight,
+    final arcHeight = 120 + ((source - target).distance * 0.10);
+    final horizontal = target.dx - source.dx;
+    final firstControl = Offset(
+      source.dx + (horizontal * 0.22),
+      source.dy - arcHeight,
+    );
+    final secondControl = Offset(
+      source.dx + (horizontal * 0.78),
+      target.dy - (arcHeight * 0.88),
     );
 
     final path = Path()
       ..moveTo(source.dx, source.dy)
-      ..quadraticBezierTo(control.dx, control.dy, target.dx, target.dy);
+      ..cubicTo(
+        firstControl.dx,
+        firstControl.dy,
+        secondControl.dx,
+        secondControl.dy,
+        target.dx,
+        target.dy,
+      );
 
     final metric = path.computeMetrics().first;
     final drawPath = metric.extractPath(0, metric.length * clampedProgress);
@@ -1106,20 +1193,20 @@ class _ConnectionLinePainter extends CustomPainter {
     final glow = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 7
+      ..strokeWidth = 5.8
       ..color = color.withValues(alpha: 0.24 * clampedOpacity)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 2.6
+      ..strokeWidth = 1.85
       ..color = color.withValues(alpha: 0.92 * clampedOpacity);
 
     final trace = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 1.15
+      ..strokeWidth = 0.8
       ..color = Colors.white.withValues(alpha: 0.62 * clampedOpacity);
 
     canvas.drawPath(drawPath, glow);
@@ -1127,30 +1214,30 @@ class _ConnectionLinePainter extends CustomPainter {
     canvas.drawPath(drawPath, trace);
 
     if (headTangent != null) {
-      final pulse = 0.88 + (0.12 * sin(phase * pi * 8));
+      final pulse = 0.92 + (0.08 * sin(phase * pi * 12));
       canvas.drawCircle(
         headTangent.position,
-        9 * pulse,
+        6 * pulse,
         Paint()
-          ..color = color.withValues(alpha: 0.28 * clampedOpacity)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+          ..color = color.withValues(alpha: 0.22 * clampedOpacity)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
       );
       canvas.drawCircle(
         headTangent.position,
-        3.2,
+        2.2,
         Paint()..color = Colors.white.withValues(alpha: 0.95 * clampedOpacity),
       );
     }
 
-    if (clampedProgress > 0.95) {
-      final pulse = (1 - clampedOpacity) * 9;
+    if (clampedProgress > 0.97) {
+      final pulse = (1 - clampedOpacity) * 5;
       canvas.drawCircle(
         target,
-        10 + pulse,
+        7 + pulse,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
-          ..color = color.withValues(alpha: 0.55 * clampedOpacity),
+          ..strokeWidth = 1.4
+          ..color = color.withValues(alpha: 0.45 * clampedOpacity),
       );
     }
   }
