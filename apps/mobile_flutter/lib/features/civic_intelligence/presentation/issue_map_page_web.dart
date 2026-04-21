@@ -1,17 +1,14 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../core/models/issue.dart';
 import '../application/usecases/get_validated_issues_use_case.dart';
-import '../application/usecases/submit_issue_use_case.dart';
 import '../data/repositories/api_issue_repository.dart';
 import '../../neural_mapper/presentation/idea_match_page.dart';
 import '../../../app/app.dart' show AppTheme;
@@ -69,8 +66,6 @@ class _IssueMapPageState extends State<IssueMapPage>
 
   late final GetValidatedIssuesUseCase _getValidatedIssues =
       GetValidatedIssuesUseCase(_issueRepository);
-  late final SubmitIssueUseCase _submitIssueUseCase =
-      SubmitIssueUseCase(_issueRepository);
 
   List<Issue> _issues      = [];
   
@@ -79,16 +74,13 @@ class _IssueMapPageState extends State<IssueMapPage>
   bool _styleLoaded        = false;
   
   bool _matchingIdea       = false;
-  final bool _generatingDemoIssue= false;
   bool _sidebarOpen        = false;
 
-  // Γ£à≡ƒöÑ THIS IS THE FIX (missing variable)
   String? _errorMessage;
 
   MapLibreMapController? _mapController;
   final Map<String, Offset> _issueScreenPositions = {};
   double  _bearing         = 0.0;
-  String? _patchedStyle;
 
   bool _isDarkMode         = true;
   bool get _isDark         => _isDarkMode;
@@ -103,11 +95,6 @@ class _IssueMapPageState extends State<IssueMapPage>
     parent: _sidebarAnim,
     curve: Curves.easeOutExpo,
   );
-
-  late final AnimationController _scanAnim = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 4),
-  )..repeat();
 
   // ΓöÇΓöÇ Lifecycle ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
@@ -131,7 +118,6 @@ class _IssueMapPageState extends State<IssueMapPage>
     _isDarkMode = currentMode == ThemeMode.dark;
     if (_lastThemeMode != currentMode) {
       _styleLoaded  = false;
-      _patchedStyle = null;
       _lastThemeMode = currentMode;
     }
   }
@@ -141,101 +127,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     _mapController?.removeListener(_onCameraMove);
     _ideaController.dispose();
     _sidebarAnim.dispose();
-    _scanAnim.dispose();
     super.dispose();
-  }
-
-  // ΓöÇΓöÇ Map style patching ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
-  /// Fetches and patches the liberty style to a deep-space cyber aesthetic.
-  Future<void> _loadPatchedStyle() async {
-    try {
-      final res = await http.get(Uri.parse(_mapStyleUrl));
-      if (res.statusCode != 200) return;
-      final style  = jsonDecode(res.body) as Map<String, dynamic>;
-      final layers = style['layers'] as List<dynamic>;
-
-      // Cyber-terminal dark palette ΓÇö near-black land, deep cyan water.
-      const patches = <String, String>{
-        'background':                     '#080C14',
-        'park':                           '#081A10',
-        'landuse_residential':            '#0A1018',
-        'landcover_wood':                 '#061410',
-        'landcover_grass':                '#081610',
-        'landcover_wetland':              '#071218',
-        'landcover_sand':                 '#0C140C',
-        'landcover_ice':                  '#0C1420',
-        'landuse_cemetery':               '#090F18',
-        'landuse_hospital':               '#090F18',
-        'landuse_school':                 '#090F18',
-        'landuse_pitch':                  '#071410',
-        'landuse_track':                  '#071410',
-        'aeroway_fill':                   '#080C14',
-        'water':                          '#003A4A',
-        'waterway_river':                 '#004D5E',
-        'waterway_other':                 '#003A4A',
-        'waterway_tunnel':                '#002A36',
-        'road_motorway':                  '#FFD60A',
-        'road_motorway_casing':           '#B38300',
-        'road_motorway_link':             '#FFD60A',
-        'road_motorway_link_casing':      '#B38300',
-        'road_trunk_primary':             '#FFC300',
-        'road_trunk_primary_casing':      '#8F6A00',
-        'road_secondary_tertiary':        '#E6B800',
-        'road_secondary_tertiary_casing': '#6E5200',
-        'road_minor':                     '#0D2030',
-        'road_minor_casing':              '#091828',
-        'road_link':                      '#E6B800',
-        'road_link_casing':               '#6E5200',
-        'road_service_track':             '#0B1C2C',
-        'road_service_track_casing':      '#071420',
-        'road_path_pedestrian':           '#0B1C2C',
-        'bridge_motorway':                '#FFD60A',
-        'bridge_motorway_casing':         '#B38300',
-        'bridge_trunk_primary':           '#FFC300',
-        'bridge_trunk_primary_casing':    '#8F6A00',
-        'bridge_secondary_tertiary':      '#E6B800',
-        'bridge_street':                  '#0D2030',
-        'bridge_motorway_link':           '#FFD60A',
-        'bridge_link':                    '#E6B800',
-        'bridge_service_track':           '#0B1C2C',
-        'bridge_path_pedestrian':         '#0B1C2C',
-        'tunnel_motorway':                '#B38300',
-        'tunnel_trunk_primary':           '#8F6A00',
-        'tunnel_secondary_tertiary':      '#6E5200',
-        'tunnel_minor':                   '#091828',
-        'building':                       '#0D1C30',
-        'road_major_rail':                '#1A3040',
-        'road_transit_rail':              '#1A3040',
-        'bridge_major_rail':              '#1A3040',
-        'bridge_transit_rail':            '#1A3040',
-        'boundary_2':                     '#FFD60A',
-        'boundary_3':                     '#FFC300',
-      };
-
-      for (final layer in layers) {
-        final map   = layer as Map<String, dynamic>;
-        final id    = map['id']   as String? ?? '';
-        final type  = map['type'] as String? ?? '';
-        final paint = Map<String, dynamic>.from(
-            map['paint'] as Map<String, dynamic>? ?? {});
-
-        if (patches.containsKey(id)) {
-          final color = patches[id]!;
-          if (type == 'background') {
-            paint['background-color'] = color;
-          } else if (type == 'fill') {
-            paint['fill-color']    = color;
-            paint['fill-opacity']  = 1.0;
-          } else if (type == 'line') {
-            paint['line-color'] = color;
-          }
-          map['paint'] = paint;
-        }
-      }
-
-      if (mounted) setState(() => _patchedStyle = jsonEncode(style));
-    } catch (_) {}
   }
 
   // ΓöÇΓöÇ Data ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
@@ -262,7 +154,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     }
   }
 
-  // ΓöÇΓöÇ Map callbacks ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // ΓöÇΓöÇ Map callbacks ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   void _onMapCreated(MapLibreMapController controller) {
     _mapController = controller;
@@ -351,14 +243,6 @@ class _IssueMapPageState extends State<IssueMapPage>
         ..clear()
         ..addAll(positions);
     });
-  }
-
-  // Web: pin generation disabled — no GPS available.
-  Future<void> _generateProblemAtUserLocation() async {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pin generation requires the mobile app.')),
-    );
   }
 
   void _onMapTap(Point<double> point, LatLng latLng) {
@@ -452,17 +336,6 @@ class _IssueMapPageState extends State<IssueMapPage>
           ),
           ),
 
-          // ΓöÇΓöÇ Scanline overlay ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-          IgnorePointer(
-            child: CustomPaint(
-              painter: _ScanlinePainter(_scanAnim),
-              child: const SizedBox.expand(),
-            ),
-          ),
-
-          // ΓöÇΓöÇ User location blip ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-          
-
           // ΓöÇΓöÇ Issue pin overlays ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
           for (final issue in _issues)
             if (_issueScreenPositions[issue.issueId] != null)
@@ -494,9 +367,7 @@ class _IssueMapPageState extends State<IssueMapPage>
                     _errorMessage = null;
                     _loadIssues();
                   }),
-                  onAddPin: _generatingDemoIssue
-                      ? null
-                      : _generateProblemAtUserLocation,
+                  // Pin generation not available on web
                   onBack: Navigator.of(context).canPop()
                       ? () => Navigator.of(context).pop()
                       : null,
@@ -607,38 +478,9 @@ class _IssueMapPageState extends State<IssueMapPage>
 // Sub-widgets
 // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-/// Horizontal scanline grid drawn over the entire screen.
-class _ScanlinePainter extends CustomPainter {
-  _ScanlinePainter(this.animation) : super(repaint: animation);
-  final Animation<double> animation;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFFFD60A).withValues(alpha: 0.028)
-      ..strokeWidth = 1;
-
-    const spacing = 4.0;
-    final rows = (size.height / spacing).ceil();
-    for (var i = 0; i < rows; i++) {
-      final y = i * spacing;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    // Animated sweep line
-    final sweepY = size.height * animation.value;
-    canvas.drawLine(
-      Offset(0, sweepY),
-      Offset(size.width, sweepY),
-      Paint()
-        ..color = const Color(0xFFFFD60A).withValues(alpha: 0.12)
-        ..strokeWidth = 1.5,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ScanlinePainter old) => true;
-}
+// _ScanlinePainter removed — it drew hundreds of horizontal lines across
+// the entire screen every single frame (shouldRepaint => true), which was
+// the primary cause of lag/jank on both web and mobile.
 
 /// Terminal-style top navigation bar.
 class _TerminalTopBar extends StatelessWidget {
@@ -649,7 +491,6 @@ class _TerminalTopBar extends StatelessWidget {
     required this.onToggleSidebar,
     required this.onLocate,
     required this.onRefresh,
-    this.onAddPin,
     this.onBack,
   });
 
@@ -659,7 +500,6 @@ class _TerminalTopBar extends StatelessWidget {
   final VoidCallback  onToggleSidebar;
   final VoidCallback? onLocate;
   final VoidCallback  onRefresh;
-  final VoidCallback? onAddPin;
   final VoidCallback? onBack;
 
   @override
@@ -728,10 +568,6 @@ class _TerminalTopBar extends StatelessWidget {
               _TBtn(icon: Icons.my_location_rounded,  onPressed: onLocate),
               const SizedBox(width: 8),
               _TBtn(icon: Icons.refresh_rounded,       onPressed: onRefresh),
-              const SizedBox(width: 8),
-              _TBtn(
-                  icon: Icons.add_location_alt_rounded,
-                  onPressed: onAddPin),
             ],
           ),
         ),
