@@ -31,6 +31,7 @@ class _CreatePageState extends State<CreatePage> {
   
   // Saved projects list
   List<Map<String, String>> _savedProjects = [];
+  int? _editingProjectIndex;
 
   @override
   void dispose() {
@@ -45,13 +46,44 @@ class _CreatePageState extends State<CreatePage> {
 
   void _saveProject(String title, String description, String sdg) {
     setState(() {
-      _savedProjects.add({
-        'title': title,
-        'description': description,
-        'sdg': sdg,
-        'date': DateTime.now().toString().split(' ')[0],
-      });
+      if (_editingProjectIndex != null) {
+        _savedProjects[_editingProjectIndex!] = {
+          'title': title,
+          'description': description,
+          'sdg': sdg,
+          'date': _savedProjects[_editingProjectIndex!]['date']!,
+        };
+        _editingProjectIndex = null;
+      } else {
+        _savedProjects.add({
+          'title': title,
+          'description': description,
+          'sdg': sdg,
+          'date': DateTime.now().toString().split(' ')[0],
+        });
+      }
     });
+  }
+
+  void _loadProjectForEdit(int index) {
+    final project = _savedProjects[index];
+    setState(() {
+      _titleCtrl.text = project['title']!;
+      _descriptionCtrl.text = project['description']!;
+      _sdgCtrl.text = project['sdg']!;
+      _editingProjectIndex = index;
+      _showModeSelection = false;
+      _isAIGuided = false;
+    });
+  }
+
+  void _deleteProject(int index) {
+    setState(() {
+      _savedProjects.removeAt(index);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✓ Project deleted')),
+    );
   }
 
   Future<void> _generateWithAI() async {
@@ -302,75 +334,111 @@ class _CreatePageState extends State<CreatePage> {
             ),
             const SizedBox(height: 12),
             ..._savedProjects.asMap().entries.map((entry) {
+              final index = entry.key;
               final project = entry.value;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: _amber.withValues(alpha: 0.2),
+                child: GestureDetector(
+                  onTap: () => _loadProjectForEdit(index),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _amber.withValues(alpha: 0.2),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              project['title']!,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: textColor,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                project['title']!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: textColor,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            project['date']!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              color: subtleColor,
+                            PopupMenuButton(
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _loadProjectForEdit(index);
+                                } else if (value == 'delete') {
+                                  _deleteProject(index);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Edit'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete, size: 18, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text('Delete', style: TextStyle(color: Colors.red)),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        project['description']!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: subtleColor,
-                          height: 1.4,
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _amber.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          project['sdg']!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        const SizedBox(height: 8),
+                        Text(
+                          project['date']!,
                           style: GoogleFonts.poppins(
                             fontSize: 10,
-                            color: _amber,
-                            fontWeight: FontWeight.w600,
+                            color: subtleColor,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          project['description']!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: subtleColor,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _amber.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            project['sdg']!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: _amber,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -520,54 +588,97 @@ class _CreatePageState extends State<CreatePage> {
         const SizedBox(height: 32),
 
         // Save Button
-        GestureDetector(
-          onTap: () {
-            if (_titleCtrl.text.isEmpty ||
-                _descriptionCtrl.text.isEmpty ||
-                _sdgCtrl.text.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Please fill all fields')),
-              );
-              return;
-            }
-            _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text);
-            _titleCtrl.clear();
-            _descriptionCtrl.clear();
-            _sdgCtrl.clear();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('✓ Project saved successfully')),
-            );
-            setState(() => _showModeSelection = true);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: _amberBright,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: _amberBright.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.check_rounded, color: _dark, size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  'Save Project',
-                  style: GoogleFonts.poppins(
-                    color: _dark,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
+        Row(
+          children: [
+            if (_editingProjectIndex != null)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    _titleCtrl.clear();
+                    _descriptionCtrl.clear();
+                    _sdgCtrl.clear();
+                    setState(() {
+                      _editingProjectIndex = null;
+                      _showModeSelection = true;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: subtleColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: subtleColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ),
-              ],
+              ),
+            if (_editingProjectIndex != null) const SizedBox(width: 12),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  if (_titleCtrl.text.isEmpty ||
+                      _descriptionCtrl.text.isEmpty ||
+                      _sdgCtrl.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please fill all fields')),
+                    );
+                    return;
+                  }
+                  _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text);
+                  _titleCtrl.clear();
+                  _descriptionCtrl.clear();
+                  _sdgCtrl.clear();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        _editingProjectIndex == null
+                            ? '✓ Project saved successfully'
+                            : '✓ Project updated successfully',
+                      ),
+                    ),
+                  );
+                  setState(() => _showModeSelection = true);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: _amberBright,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _amberBright.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_rounded, color: _dark, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        _editingProjectIndex != null ? 'Update Project' : 'Save Project',
+                        style: GoogleFonts.poppins(
+                          color: _dark,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
         const SizedBox(height: 24),
       ],
