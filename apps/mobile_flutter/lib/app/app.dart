@@ -181,7 +181,15 @@ class _RootRouter extends StatefulWidget {
 }
 
 class _RootRouterState extends State<_RootRouter> {
+  // DEMO BYPASS NOTE:
+  // Role is stored in-memory only — no Firebase Auth email/password required.
+  // On sign-out, _role resets to null and the role picker shows again.
+  // This allows switching roles freely during demo without real accounts.
   String? _role;
+
+  void _onSignOut() {
+    setState(() => _role = null);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +214,7 @@ class _RootRouterState extends State<_RootRouter> {
             onRoleSelected: (role) => setState(() => _role = role),
           );
         }
-        return MainShell(role: _role!, onToggleTheme: widget.toggleTheme);
+        return MainShell(role: _role!, onToggleTheme: widget.toggleTheme, onSignOut: _onSignOut);
       },
     );
   }

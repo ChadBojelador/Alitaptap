@@ -14,9 +14,11 @@ const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key, required this.role, this.onToggleTheme});
+  const MainShell({super.key, required this.role, this.onToggleTheme, this.onSignOut});
   final String role;
   final VoidCallback? onToggleTheme;
+  // DEMO BYPASS: onSignOut resets role in _RootRouter so user can switch roles.
+  final VoidCallback? onSignOut;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -45,7 +47,7 @@ class _MainShellState extends State<MainShell> {
       else
         DashboardPage(role: AppRole.student),
       const ExpoFeedPage(),
-      _ProfilePage(onToggleTheme: widget.onToggleTheme),
+      _ProfilePage(onToggleTheme: widget.onToggleTheme, onSignOut: widget.onSignOut),
     ];
 
     final safeIndex = _index.clamp(0, pages.length - 1);
@@ -204,9 +206,10 @@ class _BottomNav extends StatelessWidget {
 }
 
 class _ProfilePage extends StatelessWidget {
-  const _ProfilePage({this.onToggleTheme});
+  const _ProfilePage({this.onToggleTheme, this.onSignOut});
 
   final VoidCallback? onToggleTheme;
+  final VoidCallback? onSignOut;
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +278,10 @@ class _ProfilePage extends StatelessWidget {
                 icon: Icons.logout_rounded,
                 label: 'Sign Out',
                 isDark: isDark,
-                onTap: () => FirebaseAuth.instance.signOut(),
+                onTap: () async {
+                  await FirebaseAuth.instance.signOut();
+                  onSignOut?.call();
+                },
               ),
             ],
           ),
