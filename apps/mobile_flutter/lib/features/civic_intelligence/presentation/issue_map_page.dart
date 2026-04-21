@@ -1724,7 +1724,8 @@ class _IdeaDockState extends State<_IdeaDock>
                 ),
                 if (progress > 0.05) ...[
                   Divider(color: _barBorder, height: 1, thickness: 1),
-                  Opacity(
+                  Flexible(
+                    child: Opacity(
                     opacity: progress,
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
@@ -1802,6 +1803,7 @@ class _IdeaDockState extends State<_IdeaDock>
                       ),
                     ),
                   ),
+                  ),  // Flexible
                 ],
               ],
             ),
