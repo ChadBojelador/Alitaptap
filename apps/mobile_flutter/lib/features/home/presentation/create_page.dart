@@ -605,22 +605,13 @@ class _CreatePageState extends State<CreatePage> {
             color: textColor,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Timeline • Resources • Methods • Expected outcomes',
-          style: GoogleFonts.poppins(
-            fontSize: 11,
-            color: subtleColor,
-            height: 1.5,
-          ),
-        ),
         const SizedBox(height: 8),
         TextField(
           controller: _aiDescriptionCtrl,
           maxLines: 4,
           style: GoogleFonts.poppins(fontSize: 14, color: textColor),
           decoration: InputDecoration(
-            hintText: 'How will you implement this solution?',
+            hintText: 'Add timeline, resources, methods, expected outcomes...',
             hintStyle: GoogleFonts.poppins(
               fontSize: 13,
               color: subtleColor,
