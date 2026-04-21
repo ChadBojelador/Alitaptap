@@ -1805,6 +1805,7 @@ class _IdeaDockState extends State<_IdeaDock>
                 ],
               ],
             ),
+          ),  // ClipRRect
           );
         },
       ),
