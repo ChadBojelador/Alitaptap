@@ -969,7 +969,7 @@ class _CreatePageState extends State<CreatePage> {
           const SizedBox(height: 24),
           GestureDetector(
             onTap: () {
-              _saveProject(_titleCtrl.text, _descriptionCtrl.text, 'AI-Assisted');
+              _saveProject(_titleCtrl.text, _descriptionCtrl.text, 'AI-Assisted Project');
               _titleCtrl.clear();
               _descriptionCtrl.clear();
               _problemCtrl.clear();
