@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../core/models/issue.dart';
 import '../core/models/match_result.dart';
+import '../core/models/research_post.dart';
 import '../core/models/title_suggestions.dart';
 
 /// HTTP client wrapper for calling the FastAPI backend.
@@ -46,6 +47,37 @@ class ApiService {
         'Request timed out. Please check if the backend is running and reachable.',
       );
     }
+  }
+
+  // -----------------------------------------------------------------------
+  // Auth
+  // -----------------------------------------------------------------------
+
+  /// Save user role to Firestore via backend.
+  Future<void> setUserRole({
+    required String userId,
+    required String role,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/auth/role'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId, 'role': role}),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save role: ${response.body}');
+    }
+  }
+
+  /// Fetch user role from Firestore via backend.
+  Future<String?> getUserRole(String userId) async {
+    final response = await _sendWithTimeout(
+      http.get(Uri.parse('$_baseUrl/auth/role/$userId')),
+    );
+    if (response.statusCode != 200) return null;
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return data['role'] as String?;
   }
 
   // -----------------------------------------------------------------------
@@ -153,6 +185,124 @@ class ApiService {
     return TitleSuggestions.fromJson(
       jsonDecode(response.body) as Map<String, dynamic>,
     );
+  }
+
+  // -----------------------------------------------------------------------
+  // Neural Mapper
+  // -----------------------------------------------------------------------
+
+  // -----------------------------------------------------------------------
+  // Expo / Research Posts
+  // -----------------------------------------------------------------------
+
+  Future<List<ResearchPost>> getPosts() async {
+    final response = await _sendWithTimeout(
+      http.get(Uri.parse('$_baseUrl/posts')),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch posts: ${response.body}');
+    }
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list.map((e) => ResearchPost.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<ResearchPost> createPost({
+    required String authorId,
+    required String authorEmail,
+    required String title,
+    required String abstract,
+    required String problemSolved,
+    required List<String> sdgTags,
+    required double fundingGoal,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/posts'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'author_id': authorId,
+          'author_email': authorEmail,
+          'title': title,
+          'abstract': abstract,
+          'problem_solved': problemSolved,
+          'sdg_tags': sdgTags,
+          'funding_goal': fundingGoal,
+        }),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to create post: ${response.body}');
+    }
+    return ResearchPost.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<ResearchPost> toggleLike({
+    required String postId,
+    required String userId,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/posts/$postId/like'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId}),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to toggle like: ${response.body}');
+    }
+    return ResearchPost.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<ResearchPost> fundPost({
+    required String postId,
+    required String userId,
+    required double amount,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/posts/$postId/fund'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId, 'amount': amount}),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fund post: ${response.body}');
+    }
+    return ResearchPost.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<Map<String, dynamic>> addComment({
+    required String postId,
+    required String authorId,
+    required String authorEmail,
+    required String text,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/posts/$postId/comments'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'author_id': authorId,
+          'author_email': authorEmail,
+          'text': text,
+        }),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to add comment: ${response.body}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<List<Map<String, dynamic>>> getComments(String postId) async {
+    final response = await _sendWithTimeout(
+      http.get(Uri.parse('$_baseUrl/posts/$postId/comments')),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch comments: ${response.body}');
+    }
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list.map((e) => e as Map<String, dynamic>).toList();
   }
 
   // -----------------------------------------------------------------------

@@ -156,7 +156,7 @@ def create_issue(payload: IssueCreate) -> IssueCreateResponse:
             'lng': payload.lng,
         },
         'image_url': payload.image_url,
-        'status': IssueStatus.validated.value,  # Auto-validated — no admin review needed for MVP.
+        'status': IssueStatus.pending.value,  # Requires admin validation before appearing on map.
         'tags': [],
         'created_at': now,
         'updated_at': None,
@@ -166,7 +166,7 @@ def create_issue(payload: IssueCreate) -> IssueCreateResponse:
 
     return IssueCreateResponse(
         issue_id=doc_ref.id,
-        status=IssueStatus.validated.value,
+        status=IssueStatus.pending.value,
         created_at=now.isoformat(),
     )
 
