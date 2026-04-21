@@ -47,7 +47,7 @@ class _MainShellState extends State<MainShell> {
       else
         DashboardPage(role: AppRole.student),
       const ExpoFeedPage(),
-      _ProfilePage(onToggleTheme: widget.onToggleTheme, onSignOut: widget.onSignOut),
+      _ProfilePage(onToggleTheme: widget.onToggleTheme, onSignOut: widget.onSignOut, role: widget.role),
     ];
 
     final safeIndex = _index.clamp(0, pages.length - 1);
@@ -206,10 +206,11 @@ class _BottomNav extends StatelessWidget {
 }
 
 class _ProfilePage extends StatelessWidget {
-  const _ProfilePage({this.onToggleTheme, this.onSignOut});
+  const _ProfilePage({this.onToggleTheme, this.onSignOut, required this.role});
 
   final VoidCallback? onToggleTheme;
   final VoidCallback? onSignOut;
+  final String role;
 
   @override
   Widget build(BuildContext context) {
@@ -258,9 +259,20 @@ class _ProfilePage extends StatelessWidget {
               const SizedBox(height: 16),
               Center(
                 child: Text(
-                  user?.email ?? 'Guest',
+                  _roleDisplayName(role),
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : _dark,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  user?.email ?? 'Anonymous',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
                     color: isDark
                         ? const Color(0xFF9E9E9E)
                         : const Color(0xFF757575),
@@ -288,6 +300,15 @@ class _ProfilePage extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _roleDisplayName(String role) {
+  switch (role) {
+    case 'student': return 'Student / Researcher';
+    case 'community': return 'Community Member';
+    case 'admin': return 'Administrator';
+    default: return role;
   }
 }
 
