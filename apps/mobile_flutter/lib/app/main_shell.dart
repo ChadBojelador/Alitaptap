@@ -81,7 +81,7 @@ class _BottomNav extends StatelessWidget {
 
   static const _items = [
     (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.bar_chart_rounded, label: 'Analytics'),
+    (icon: Icons.edit_note_rounded, label: 'Create'),
     (icon: Icons.lightbulb_rounded, label: 'Expo'),
     (icon: Icons.person_rounded, label: 'Profile'),
   ];
