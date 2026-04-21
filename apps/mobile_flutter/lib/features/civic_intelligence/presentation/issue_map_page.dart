@@ -30,8 +30,8 @@ const _gridLine = Color(0xFF1A2332);
 // Map overlay tokens — dark, readable over light map
 const _barBg        = Color(0xFF1A1A2E);
 const _barBorder    = Color(0xFF2D2D4A);
-const _barIcon      = Color(0xFFF1F1F1);
-const _barIconMuted = Color(0xFF9CA3AF);
+const _barIcon      = Color(0xFFFFC700);
+const _barIconMuted = Color(0xFFFFE066);
 const _barTitle     = Color(0xFFFFC700);
 const _barSubtitle  = Color(0xFFFFE066);
 
