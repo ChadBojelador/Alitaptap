@@ -4,7 +4,7 @@ import '../styles/gradient-icon.css';
 import { FaQuestionCircle, FaUserCircle, FaSearch, FaExclamationTriangle, FaUndo, FaTrashAlt, FaTrash } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import AlitaptapLogo from '../AlitaptapLogo';
+import IThinkLogo from '../IThinkLogo';
 import { useTheme } from '../ThemeContext';
 import Sidebar from '../components/Sidebar';
 import ThemeToggle from '../components/ThemeToggle';

@@ -62,7 +62,7 @@ html:has(.ws2-root) {
 	--bg-dark: #1a1a1a;
 	--card-bg: rgba(46, 46, 46, 0.7);
 	--sidebar-bg: rgba(42, 42, 42, 0.8);
-	--accent-teal: #FFC700;
+	--accent-teal: #5ce1e6;
 	--text-main: #ffffff;
 	--text-muted: #888888;
 	--border-color: #3a3a3a;
@@ -74,7 +74,7 @@ html:has(.ws2-root) {
 	--bg-dark: #f0f0f0;
 	--card-bg: rgba(255, 255, 255, 0.7);
 	--sidebar-bg: rgba(232, 232, 232, 0.8);
-	--accent-teal: #FFC700;
+	--accent-teal: #1a9ea3;
 	--text-main: #1a1a1a;
 	--text-muted: #666666;
 	--border-color: #d0d0d0;
@@ -541,7 +541,7 @@ html:has(.ws2-root) {
 
 .restore-btn:hover {
 	background: var(--accent-teal);
-	color: #1A1A1A;
+	color: #1a6d70;
 }
 
 .delete-btn {
@@ -617,7 +617,7 @@ html:has(.ws2-root) {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #1A1A1A;
+	color: #1a6d70;
 	flex-shrink: 0;
 }
 
@@ -904,7 +904,7 @@ html:has(.ws2-root) {
 
 .chat-bubble.user {
 	background: var(--accent-teal);
-	color: #1A1A1A;
+	color: #1a6d70;
 	border-bottom-right-radius: 4px;
 	font-weight: 600;
 }
@@ -990,7 +990,7 @@ html:has(.ws2-root) {
 	background: var(--accent-teal);
 	border: none;
 	border-radius: 8px;
-	color: #1A1A1A;
+	color: #1a6d70;
 	padding: 6px 10px;
 	cursor: pointer;
 	font-size: 0.9rem;
@@ -1032,7 +1032,7 @@ html:has(.ws2-root) {
 	background: var(--accent-teal);
 	border: none;
 	border-radius: 8px;
-	color: #1A1A1A;
+	color: #1a6d70;
 	width: 26px;
 	height: 26px;
 	display: flex;
@@ -1515,14 +1515,14 @@ html:has(.ws2-root) {
 .ws2-avatar {
 	width: 32px;
 	height: 32px;
-	background: #FFC700;
+	background: #5ce1e6;
 	border-radius: 50%;
 	cursor: pointer;
 	box-shadow: 0 0 15px rgba(92,225,230,0.3);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #1A1A1A;
+	color: #1a6d70;
 	flex-shrink: 0;
 	text-decoration: none;
 	transition: transform 0.2s, box-shadow 0.2s;
@@ -1704,7 +1704,7 @@ html:has(.ws2-root) {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #1A1A1A;
+	color: #1a6d70;
 	transition: transform 0.3s cubic-bezier(.4,0,.2,1), background 0.3s;
 	transform: translateX(0);
 	flex-shrink: 0;
@@ -1790,7 +1790,7 @@ html:has(.ws2-root) {
 
 .ws2-float-chat-btn {
 	background: var(--accent-teal);
-	color: #1A1A1A;
+	color: #1a6d70;
 	font-weight: 700;
 	font-size: 0.9rem;
 	padding: 10px 20px;
@@ -1919,7 +1919,7 @@ html:has(.ws2-root) {
 		height: 48px;
 		border-radius: 50%;
 		background: var(--accent-teal);
-		color: #1A1A1A;
+		color: #1a6d70;
 		border: none;
 		align-items: center;
 		justify-content: center;

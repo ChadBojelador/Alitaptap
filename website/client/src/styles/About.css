@@ -2,7 +2,7 @@
   font-family: 'Inter', sans-serif;
   color: #ffffff;
   padding-top: 65px;
-  background: #1A1A1A;
+  background: #000000;
 }
 
 .about-hero {
@@ -57,7 +57,7 @@
 }
 
 .gradient-mesh-about {
-  background: linear-gradient(135deg, #FFC700 0%, #E6B400 100%);
+  background: linear-gradient(135deg, #4F46E5 0%, #0EA5E9 100%);
 }
 
 .split-text {
@@ -145,7 +145,7 @@
 }
 
 .btn-signup {
-  background: linear-gradient(90deg, #FFC700, #E6B400);
+  background: linear-gradient(90deg, #4F46E5, #0ea5e9);
   color: white;
   border: none;
   padding: 15px 30px;

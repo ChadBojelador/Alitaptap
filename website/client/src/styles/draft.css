@@ -424,12 +424,12 @@
 }
 
 .sidebar-tab.active {
-  color: #B28700;
-  border-bottom-color: #B28700;
+  color: #6a11cb;
+  border-bottom-color: #6a11cb;
 }
 
 .sidebar-tab:hover {
-  color: #B28700;
+  color: #6a11cb;
 }
 
 
@@ -577,8 +577,8 @@
   margin-bottom: -1px;
   transition: color 0.2s, border-color 0.2s;
 }
-.draft-panel-tab.active { color: #B28700; border-bottom-color: #B28700; }
-.draft-panel-tab:hover { color: #B28700; }
+.draft-panel-tab.active { color: #6a11cb; border-bottom-color: #6a11cb; }
+.draft-panel-tab:hover { color: #6a11cb; }
 
 .draft-panel-close {
   margin-left: auto;

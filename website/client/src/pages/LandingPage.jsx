@@ -1,207 +1,136 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from '../App';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import '../styles/landingpage.css';
-import '../styles/FeatureCarousel.css';
-import Navbar from '../components/Navbar';
-import FloatingLines from '../components/FloatingLines';
-import imgSourceValidation from '../images/card-source.svg';
-import imgHighlight from '../images/card-factcheck.svg';
-import imgScore from '../images/card-credibility.svg';
-import imgClarity from '../images/card-clarity.svg';
-import imgNavigate from '../images/card-navigate.svg';
+import '../styles/landing.css';
 
-const CARDS = [
-  { title: 'Source Validation',  description: 'Checks if sources are peer-reviewed, authoritative, and recent.', gradient: 'linear-gradient(135deg, #FFC700 0%, #E6B400 100%)', img: imgSourceValidation },
-  { title: 'Fact Cross-Check',   description: 'Compares claims with verified datasets and academic papers.',       gradient: 'linear-gradient(135deg, #FFC700 0%, #a855f7 100%)', img: imgHighlight },
-  { title: 'Credibility Scoring',description: 'Analyzes language patterns and potential biases in real-time.',     gradient: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)', img: imgScore },
-  { title: 'Clarity Score',      description: 'Rates how clearly and logically an argument is structured.',        gradient: 'linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)', img: imgClarity },
-];
-
-function GoogleIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M19.6 10.23c0-.68-.06-1.36-.18-2H10v3.79h5.48a4.7 4.7 0 0 1-2.04 3.08v2.56h3.3c1.93-1.78 3.06-4.4 3.06-7.43z" fill="#4285F4"/>
-      <path d="M10 20c2.7 0 4.97-.89 6.63-2.41l-3.3-2.56c-.92.62-2.1.99-3.33.99-2.56 0-4.73-1.73-5.5-4.07H1.1v2.6A10 10 0 0 0 10 20z" fill="#34A853"/>
-      <path d="M4.5 12.95A5.99 5.99 0 0 1 4.06 10c0-.51.09-1.01.14-1.49V5.91H1.1A10 10 0 0 0 0 10c0 1.56.37 3.03 1.1 4.09l3.4-1.14z" fill="#FBBC05"/>
-      <path d="M10 4.01c1.47 0 2.78.51 3.81 1.51l2.85-2.85C14.97 1.13 12.7.01 10 .01A10 10 0 0 0 1.1 5.91l3.4 2.6C5.27 5.74 7.44 4.01 10 4.01z" fill="#EA4335"/>
-    </svg>
-  );
-}
-
-function LandingPage() {
+export default function LandingPage() {
   const navigate = useNavigate();
 
-  const handleGoogleSignup = () => {
-    window.location.href = `${BACKEND_URL}/auth/google`;
-  };
-
   return (
-    <div className="App">
-      <Navbar />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-        <FloatingLines enabledWaves={['top', 'middle', 'bottom']} lineCount={5} lineDistance={5} bendRadius={5} bendStrength={-0.5} interactive={true} parallax={true} />
-      </div>
-      <div style={{ position: 'relative', zIndex: 1 }}>
-
-      <main className="main-content">
-        <h1 className="main-heading">Think deeper. We'll help<br /> you make sense of it all.</h1>
-        <p className="main-description">
-          Work with Alitaptap—your AI partner in identifying truth,<br />
-          exposing inaccuracies, and navigating knowledge with<br />
-          clarity and confidence.
-        </p>
-
-        <div className="signup-buttons">
-          <button className="signup-free-btn" onClick={() => navigate('/login')}>Sign up for free</button>
-          <button className="signup-google-btn" onClick={handleGoogleSignup}>
-            <GoogleIcon /> Sign up with Google
-          </button>
+    <div className="land-root">
+      {/* Nav */}
+      <nav className="land-nav">
+        <div className="land-nav-logo">
+          <span className="land-logo-dot">●</span> ALITAPTAP
         </div>
-
-        <p className="legal-text">
-          By signing up, you agree to the <a href="/terms">Terms and Conditions and Privacy Policy</a>.<br />
-          Learn how we assist you in our <a href="/how-it-works">Help Center</a>.
-        </p>
-
-        <div className="carousel-container">
-          <Swiper
-            modules={[Pagination, Autoplay]}
-            spaceBetween={20}
-            slidesPerView={1.2}
-            centeredSlides={true}
-            loop={true}
-            loopAdditionalSlides={4}
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 3000 }}
-            breakpoints={{
-              640: { slidesPerView: 1.5 },
-              1024: { slidesPerView: 2.2 }
-            }}
-          >
-            {CARDS.map((card, i) => (
-              <SwiperSlide key={i}>
-                <div className="feature-card">
-                  <div className="card-img" style={{ backgroundImage: `url(${card.img})` }} />
-                  <div className="card-content">
-                    <h2>{card.title}</h2>
-                    <p>{card.description}</p>
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+        <div className="land-nav-links">
+          <a href="#how">How it works</a>
+          <a href="#features">Features</a>
         </div>
-      </main>
+        <button className="land-nav-cta" onClick={() => navigate('/login')}>
+          Get Started
+        </button>
+      </nav>
 
-      <section className="feature-row">
-        <div className="feature-text">
-          <h1>Identify truth, cut through the noise</h1>
-          <p>Detect real claims from your RRL and separate facts from misleading information in seconds.</p>
-        </div>
-        <div className="feature-visual"><img src={imgSourceValidation} alt="Source Validation" /></div>
-      </section>
-
-      <section className="feature-row reverse">
-        <div className="feature-text">
-          <h1>Highlight inaccuracies, verify every source</h1>
-          <p>Check if information is credible, peer-reviewed, and up-to-date.</p>
-        </div>
-        <div className="feature-visual"><img src={imgHighlight} alt="Highlight Inaccuracies" /></div>
-      </section>
-
-      <section className="feature-row">
-        <div className="feature-text">
-          <h1>Navigate knowledge, with confidence</h1>
-          <p>Cross-check facts across reliable sources and ensure accuracy in every detail.</p>
-        </div>
-        <div className="feature-visual"><img src={imgNavigate} alt="AI Chatbot" /></div>
-      </section>
-
-      <section className="feature-row reverse">
-        <div className="feature-text">
-          <h1>Understand credibility, instantly</h1>
-          <p>Get clear ratings like High Credibility, Needs Verification, or Likely False—so decisions are easier.</p>
-        </div>
-        <div className="feature-visual"><img src={imgScore} alt="Credibility Score" /></div>
-      </section>
-
-      <section className="cta-full-width">
-        <div className="cta-content">
-          <h2>Alitaptap is your AI truth partner</h2>
-          <p>Love the clarity Alitaptap gives you in identifying truth? Alitaptap brings that same confidence to every claim, source, and piece of information, with tools and insights designed to help you think smarter and make decisions you can trust.</p>
-          <button className="learn-more-btn">Learn more</button>
-        </div>
-      </section>
-
-      <section className="final-signup">
-        <div className="brand-logo-large">
-          <div className="logo-icon">i</div>
-          <span className="logo-text-large">think.</span>
-        </div>
-        <h2>Truth powers better decisions</h2>
-        <p>Rely on Alitaptap to highlight inaccuracies, verify sources, and navigate knowledge with ease.</p>
-        <div className="btn-group">
-          <button className="signup-free" onClick={() => navigate('/login')}>Sign up for free</button>
-          <button className="signup-google" onClick={handleGoogleSignup}>
-            <GoogleIcon /> Sign up with Google
-          </button>
-        </div>
-        <p className="legal-footer-text">
-          By signing up, you agree to the <a href="/terms" style={{ color: '#fff', fontWeight: 600 }}>Terms and Conditions and Privacy Policy</a>.<br />
-          Learn how we assist you in our <a href="/how-it-works" style={{ color: '#fff', fontWeight: 600 }}>Help Center</a>.
-        </p>
-      </section>
-
-      <div className="purple-banner">
-        <div className="banner-logo">Alitaptap</div>
-        <p>Identify <b>T</b>ruth. <b>H</b>ighlight <b>I</b>naccuracies. <b>N</b>avigate <b>K</b>nowledge.</p>
-      </div>
-
-      <footer className="main-footer">
-        <div className="footer-grid">
-          <div className="footer-col about">
-            <h3>About Us</h3>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-            <a href="#">Learn More</a>
+      {/* Hero */}
+      <section className="land-hero">
+        <div className="land-hero-glow land-hero-glow--1" />
+        <div className="land-hero-glow land-hero-glow--2" />
+        <div className="land-hero-content">
+          <div className="land-hero-badge">🚀 AI Execution Platform</div>
+          <h1 className="land-hero-title">
+            From community problem<br />
+            <span className="land-hero-accent">to executed project.</span>
+          </h1>
+          <p className="land-hero-desc">
+            Save research ideas on mobile. Come to desktop and let AI turn them
+            into a full project plan, tech stack, and starter code — instantly.
+          </p>
+          <div className="land-hero-actions">
+            <button className="land-btn-primary" onClick={() => navigate('/login')}>
+              Start Building Free
+            </button>
+            <a href="#how" className="land-btn-ghost">See how it works →</a>
           </div>
-          <div className="footer-col">
-            <h3>Features</h3>
-            <ul>
-              <li>Claim Detection</li>
-              <li>Source Validation</li>
-              <li>Fact Cross-Verification</li>
-              <li>Credibility Scoring</li>
-            </ul>
-          </div>
-          <div className="footer-col">
-            <h3>Quick Links</h3>
-            <div className="link-double-grid">
-              <a href="#">Link</a><a href="#">Link</a>
-              <a href="#">Link</a><a href="#">Link</a>
-              <a href="#">Link</a><a href="#">Link</a>
+          <p className="land-hero-sub">
+            Connected to the Alitaptap mobile app · No credit card required
+          </p>
+        </div>
+
+        {/* Mock UI preview */}
+        <div className="land-hero-preview">
+          <div className="land-preview-card">
+            <div className="land-preview-header">
+              <span className="land-preview-dot red" />
+              <span className="land-preview-dot yellow" />
+              <span className="land-preview-dot green" />
+              <span className="land-preview-title">AI Project Planner</span>
             </div>
-          </div>
-          <div className="footer-col">
-            <h3>Connect</h3>
-            <div className="social-links">
-              <span className="social-item"><div className="dot-social blue"></div> Facebook</span>
-              <span className="social-item"><div className="dot-social blue"></div> Instagram</span>
-              <span className="social-item"><div className="dot-social blue"></div> X</span>
-              <span className="social-item"><div className="dot-social blue"></div> TikTok</span>
-              <span className="social-item"><div className="dot-social blue"></div> Gmail</span>
+            <div className="land-preview-body">
+              <div className="land-preview-idea">
+                <span className="land-preview-label">💡 Saved Idea</span>
+                <p>Low-cost flood warning system for urban barangays</p>
+              </div>
+              <div className="land-preview-arrow">↓ Generate Plan with AI</div>
+              <div className="land-preview-output">
+                <div className="land-preview-line land-preview-line--yellow">📋 Project Breakdown</div>
+                <div className="land-preview-line">⚙️ Tech Stack: React, FastAPI, Firebase</div>
+                <div className="land-preview-line">📁 Folder Structure Generated</div>
+                <div className="land-preview-line land-preview-line--green">✅ Starter Code Ready</div>
+              </div>
             </div>
           </div>
         </div>
-        <div className="copyright">2026 Alitaptap. All Right Reserved.</div>
+      </section>
+
+      {/* How it works */}
+      <section className="land-how" id="how">
+        <h2 className="land-section-title">How it works</h2>
+        <p className="land-section-sub">Three steps from idea to execution</p>
+        <div className="land-steps">
+          {[
+            { num: '01', icon: '📲', title: 'Save on Mobile', desc: 'Browse community problems on the Alitaptap app. Bookmark the ones you want to solve.' },
+            { num: '02', icon: '💻', title: 'Open on Desktop', desc: 'Log in with the same account. Your saved ideas sync automatically.' },
+            { num: '03', icon: '🤖', title: 'AI Builds the Plan', desc: 'Click "Generate Plan". AI returns a full project breakdown, tech stack, and starter code.' },
+          ].map(s => (
+            <div key={s.num} className="land-step">
+              <div className="land-step-num">{s.num}</div>
+              <div className="land-step-icon">{s.icon}</div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="land-features" id="features">
+        <h2 className="land-section-title">What AI generates for you</h2>
+        <div className="land-features-grid">
+          {[
+            { icon: '📋', title: 'Project Breakdown', desc: 'Clear scope, goals, and deliverables for your research idea.' },
+            { icon: '⚙️', title: 'Tech Stack', desc: 'Recommended tools, frameworks, and libraries based on your problem.' },
+            { icon: '🗺️', title: 'Step-by-Step Plan', desc: 'A development roadmap from setup to deployment.' },
+            { icon: '📁', title: 'Folder Structure', desc: 'Ready-to-use project scaffold with frontend, backend, and README.' },
+            { icon: '💻', title: 'Starter Code', desc: 'Basic working code to get you running in minutes, not days.' },
+            { icon: '🌍', title: 'SDG Alignment', desc: 'Maps your project to the UN Sustainable Development Goals.' },
+          ].map(f => (
+            <div key={f.title} className="land-feature-card">
+              <div className="land-feature-icon">{f.icon}</div>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="land-cta">
+        <div className="land-cta-glow" />
+        <h2>Your idea is waiting to be built.</h2>
+        <p>Log in, pick a saved problem, and let AI do the heavy lifting.</p>
+        <button className="land-btn-primary land-btn-large" onClick={() => navigate('/login')}>
+          Start Building Now →
+        </button>
+      </section>
+
+      {/* Footer */}
+      <footer className="land-footer">
+        <div className="land-footer-logo">
+          <span className="land-logo-dot">●</span> ALITAPTAP
+        </div>
+        <p>Community problems → Student research → Real impact.</p>
+        <p className="land-footer-copy">© 2026 Alitaptap. All rights reserved.</p>
       </footer>
-      </div>
     </div>
   );
 }
-
-export default LandingPage;

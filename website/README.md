@@ -1,4 +1,4 @@
-#Alitaptap
+#IThink
 
 install this 
 npm install express mongoose passport passport-local passport-google-oauth20 bcryptjs express-session

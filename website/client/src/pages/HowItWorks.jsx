@@ -11,12 +11,12 @@ import imgExport from '../images/card-export.svg';
 import imgImprove from '../images/card-improve.svg';
 
 const steps = [
-  { id: 1, title: "Create an Account", text: "Sign up for free using your email or Google account. Your Alitaptap workspace is ready in seconds.", img: imgAccount },
-  { id: 2, title: "Paste Your Text", text: "Copy and paste any article, claim, research excerpt, or statement into the Alitaptap editor.", img: imgPaste },
-  { id: 3, title: "Run a Credibility Check", text: "Click Analyze and let Alitaptap scan your text for source quality, factual accuracy, and potential bias.", img: imgAnalyze },
-  { id: 4, title: "Review the Results", text: "Alitaptap returns a detailed credibility score with highlighted inaccuracies and source validation notes.", img: imgResults },
+  { id: 1, title: "Create an Account", text: "Sign up for free using your email or Google account. Your IThink workspace is ready in seconds.", img: imgAccount },
+  { id: 2, title: "Paste Your Text", text: "Copy and paste any article, claim, research excerpt, or statement into the IThink editor.", img: imgPaste },
+  { id: 3, title: "Run a Credibility Check", text: "Click Analyze and let IThink scan your text for source quality, factual accuracy, and potential bias.", img: imgAnalyze },
+  { id: 4, title: "Review the Results", text: "IThink returns a detailed credibility score with highlighted inaccuracies and source validation notes.", img: imgResults },
   { id: 5, title: "Save or Export", text: "Save your analysis as a draft, export it as a report, or share it directly with your team or classmates.", img: imgExport },
-  { id: 6, title: "Keep Improving", text: "Use Alitaptap regularly to sharpen your critical thinking and build a habit of verifying information before acting on it.", img: imgImprove },
+  { id: 6, title: "Keep Improving", text: "Use IThink regularly to sharpen your critical thinking and build a habit of verifying information before acting on it.", img: imgImprove },
 ];
 
 const HowItWorks = () => {
@@ -38,7 +38,7 @@ const HowItWorks = () => {
       <div style={{ position: 'relative', zIndex: 1 }}>
       <section className="how-header animate-in fade-up">
         <div className="how-header-text">
-          <h1>How to use Alitaptap?</h1>
+          <h1>How to use IThink?</h1>
           <p>Follow these steps to identify truth and spot inaccuracies:</p>
         </div>
         <div className="how-header-step">
@@ -63,8 +63,8 @@ const HowItWorks = () => {
       </div>
 
       <section className="how-cta gradient-mesh animate-in fade-up">
-        <h2>Alitaptap is your AI truth partner</h2>
-        <p>Love the clarity Alitaptap gives you in identifying truth? Alitaptap brings that same confidence to every claim, source, and piece of information.</p>
+        <h2>IThink is your AI truth partner</h2>
+        <p>Love the clarity IThink gives you in identifying truth? IThink brings that same confidence to every claim, source, and piece of information.</p>
         <button className="white-btn">Learn more</button>
       </section>
 
@@ -78,7 +78,7 @@ const HowItWorks = () => {
         <div className="footer-grid">
           <div className="footer-main-info">
             <h4>About Us</h4>
-            <p>Alitaptap was built to help you think smarter. We combine AI with credibility research to give you tools that verify sources, detect bias, and score information accuracy.</p>
+            <p>IThink was built to help you think smarter. We combine AI with credibility research to give you tools that verify sources, detect bias, and score information accuracy.</p>
             <a href="#" className="learn-link">Learn More</a>
             <p className="footer-subtext">Review how we handle your data in our <br/> <b>Terms & Privacy Policy</b>. <br/> Learn how we assist you in our <b>Help Center</b>.</p>
           </div>
@@ -111,7 +111,7 @@ const HowItWorks = () => {
             </ul>
           </div>
         </div>
-        <p className="copyright-bar">2026 Alitaptap. All Rights Reserved.</p>
+        <p className="copyright-bar">2026 IThink. All Rights Reserved.</p>
       </footer>
       </div>
     </div>

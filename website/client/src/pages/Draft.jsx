@@ -69,7 +69,7 @@ function Draft({ user }) {
   const [draftId, setDraftId] = useState(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [textColor, setTextColor] = useState('#1A1A1A');
+  const [textColor, setTextColor] = useState('#000000');
   const [bgColor, setBgColor] = useState('#ffff00');
   const [fontSize, setFontSize] = useState('');
   const [wordCount, setWordCount] = useState(0);
@@ -574,12 +574,12 @@ function Draft({ user }) {
                 </div>
               ) : (
                 <div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#B28700', marginBottom: '12px' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#6a11cb', marginBottom: '12px' }}>
                     Score: {analysis.overall_credibility_score || analysis.score || '0'}%
                   </div>
                   <p style={{ margin: '0 0 16px', lineHeight: '1.5', color: '#333', fontSize: '0.9rem' }}>{analysis.summary || analysis.result}</p>
                   {(analysis.findings || analysis.details || []).map((item, i) => (
-                    <div key={i} className="analysis-card" style={{ background: '#f9f9f9', padding: '14px', borderRadius: '8px', marginBottom: '12px', borderLeft: '4px solid #B28700' }}>
+                    <div key={i} className="analysis-card" style={{ background: '#f9f9f9', padding: '14px', borderRadius: '8px', marginBottom: '12px', borderLeft: '4px solid #6a11cb' }}>
                       <p style={{ fontWeight: 'bold', marginBottom: '4px', color: '#000', fontSize: '0.9rem' }}>Claim: {item.claim || item.text}</p>
                       <div style={{ fontSize: '0.82rem', color: (item.accuracy_percentage || item.accuracy) > 70 ? 'green' : '#d97706', marginBottom: '8px', fontWeight: 'bold' }}>
                         Accuracy: {item.accuracy_percentage || item.accuracy || '0'}%
@@ -607,8 +607,8 @@ function Draft({ user }) {
                     ))}
                   </div>
                   {(analysis.apa_summary || analysis.summary_with_citations) && (
-                    <div className="analysis-card" style={{ background: '#f5f0ff', padding: '14px', borderRadius: '8px', marginBottom: '12px', borderLeft: '4px solid #B28700' }}>
-                      <p style={{ fontSize: '0.75rem', fontWeight: '700', color: '#B28700', marginBottom: '8px', textTransform: 'uppercase' }}>📝 APA Summary</p>
+                    <div className="analysis-card" style={{ background: '#f5f0ff', padding: '14px', borderRadius: '8px', marginBottom: '12px', borderLeft: '4px solid #6a11cb' }}>
+                      <p style={{ fontSize: '0.75rem', fontWeight: '700', color: '#6a11cb', marginBottom: '8px', textTransform: 'uppercase' }}>📝 APA Summary</p>
                       <p style={{ fontSize: '0.88rem', color: '#333', lineHeight: '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{analysis.apa_summary || analysis.summary_with_citations}</p>
                     </div>
                   )}
@@ -692,7 +692,7 @@ function Draft({ user }) {
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button onClick={() => setExitPrompt(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-color, #3a3a3a)', background: 'transparent', color: 'var(--text-main, #fff)', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
               <button onClick={() => { setIsDirty(false); navigate(exitPrompt); }} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #ff6b6b', background: 'transparent', color: '#ff6b6b', cursor: 'pointer', fontFamily: 'inherit' }}>Don't Save</button>
-              <button onClick={() => saveDraft(null, () => navigate(exitPrompt))} disabled={isSaving} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--accent-teal, #FFC700)', color: '#1A1A1A', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{isSaving ? 'Saving...' : 'Save'}</button>
+              <button onClick={() => saveDraft(null, () => navigate(exitPrompt))} disabled={isSaving} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--accent-teal, #5ce1e6)', color: '#1a6d70', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{isSaving ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>

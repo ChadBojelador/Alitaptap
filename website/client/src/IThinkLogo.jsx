@@ -3,12 +3,12 @@ import logo from './images/logo.png';
 import darkLogo from './images/darkmode-logo.png';
 import { useTheme } from './ThemeContext';
 
-export default function AlitaptapLogo({ size = 64 }) {
+export default function IThinkLogo({ size = 64 }) {
 	const { theme } = useTheme();
 	return (
 		<img
 			src={theme === 'dark' ? darkLogo : logo}
-			alt="Alitaptap"
+			alt="IThink"
 			width={size}
 			height={size}
 			style={{ objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle' }}

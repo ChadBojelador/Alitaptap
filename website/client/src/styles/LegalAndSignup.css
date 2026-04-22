@@ -1,7 +1,7 @@
 .legal-page-container {
   font-family: 'Inter', sans-serif;
   padding-top: 65px;
-  background: #1A1A1A;
+  background: #000000;
   color: #ffffff;
 }
 
@@ -63,7 +63,7 @@
 .logo-symbol {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #FFC700 0%, #E6B400 100%);
+  background: linear-gradient(135deg, #4F46E5 0%, #0EA5E9 100%);
   border-radius: 12px;
   color: white;
   font-size: 40px;
@@ -73,7 +73,7 @@
   justify-content: center;
 }
 
-.Alitaptap-logo-img {
+.ithink-logo-img {
   width: 120px;
   height: 120px;
   object-fit: contain;
@@ -92,7 +92,7 @@
 }
 
 .btn-primary-blue {
-  background: linear-gradient(90deg, #FFC700, #E6B400);
+  background: linear-gradient(90deg, #6366f1, #0ea5e9);
   color: white;
   padding: 15px 35px;
   border-radius: 10px;
@@ -134,7 +134,7 @@
   .button-group-horizontal { flex-direction: column; align-items: stretch; width: 100%; max-width: 320px; }
   .btn-primary-blue, .btn-google-outline { width: 100%; justify-content: center; }
   .branding-center .cta-tagline { font-size: 2.5rem; }
-  .Alitaptap-logo-img { width: 80px; height: 80px; }
+  .ithink-logo-img { width: 80px; height: 80px; }
 }
 
 @media (max-width: 480px) {
@@ -164,7 +164,7 @@
 }
 
 .branding-center .blue-it {
-  color: #FFC700;
+  color: #4F46E5;
 }
 
 .branding-center p {

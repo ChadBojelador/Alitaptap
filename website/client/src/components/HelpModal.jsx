@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import AlitaptapLogo from '../AlitaptapLogo';
+import IThinkLogo from '../IThinkLogo';
 
 export default function HelpModal({ onClose }) {
   const [helpTab, setHelpTab] = useState('about');
@@ -14,20 +14,20 @@ export default function HelpModal({ onClose }) {
         {helpTab === 'about' ? (
           <div className="help-body">
             <div className="help-logo-row">
-              <AlitaptapLogo size={48} />
+              <IThinkLogo size={48} />
               <div>
-                <div className="help-brand">Alitaptap</div>
+                <div className="help-brand">IThink</div>
                 <div className="help-tagline">Think smarter. Write with confidence.</div>
               </div>
             </div>
-            <p className="help-desc">Alitaptap is an AI-powered writing and fact-checking platform that helps students and professionals verify claims, analyze credibility, and write with confidence.</p>
+            <p className="help-desc">IThink is an AI-powered writing and fact-checking platform that helps students and professionals verify claims, analyze credibility, and write with confidence.</p>
             <div className="help-features">
               <div className="help-feature"><span className="help-feature-icon">🛡️</span><div><strong>Credibility Check</strong><p>Analyze any text or selected claim for accuracy using AI and real sources.</p></div></div>
-              <div className="help-feature"><span className="help-feature-icon">💬</span><div><strong>AI Chat</strong><p>Ask Alitaptap anything about fact-checking, sources, or writing tips.</p></div></div>
+              <div className="help-feature"><span className="help-feature-icon">💬</span><div><strong>AI Chat</strong><p>Ask IThink anything about fact-checking, sources, or writing tips.</p></div></div>
               <div className="help-feature"><span className="help-feature-icon">📝</span><div><strong>Smart Editor</strong><p>Write documents with inline highlights showing inaccurate claims.</p></div></div>
               <div className="help-feature"><span className="help-feature-icon">🎓</span><div><strong>Personas</strong><p>Tailor analysis depth for High School, College, or Professional level.</p></div></div>
             </div>
-            <div className="help-version">Version 1.0.0 · Built with ❤️ by the Alitaptap Team</div>
+            <div className="help-version">Version 1.0.0 · Built with ❤️ by the IThink Team</div>
           </div>
         ) : (
           <div className="help-body">

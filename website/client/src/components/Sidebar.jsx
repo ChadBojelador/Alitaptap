@@ -59,9 +59,9 @@ export default function Sidebar() {
       >
         <div className="ws2-sidebar-top">
           <Link to="/dashboard" className="ws2-sidebar-logo">
-            <img src={currentLogo} alt="Alitaptap" />
+            <img src={currentLogo} alt="IThink" />
             <div className={`ws2-sidebar-copy${isExpanded ? ' ws2-sidebar-copy--visible' : ''}`}>
-              <span className="ws2-sidebar-brand">Alitaptap</span>
+              <span className="ws2-sidebar-brand">IThink</span>
               <span className="ws2-sidebar-subtitle">Workspace</span>
             </div>
           </Link>

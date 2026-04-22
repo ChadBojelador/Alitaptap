@@ -4,7 +4,7 @@ import '../styles/gradient-icon.css';
 import { FaQuestionCircle, FaUserCircle, FaPaperPlane, FaPlus, FaTrashAlt } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import AlitaptapLogo from '../AlitaptapLogo';
+import IThinkLogo from '../IThinkLogo';
 import { useTheme } from '../ThemeContext';
 import Sidebar from '../components/Sidebar';
 import ThemeToggle from '../components/ThemeToggle';
@@ -28,7 +28,7 @@ function parseReply(text) {
   return { answer, sources };
 }
 
-const WELCOME = { role: 'bot', text: "Hi! I'm Alitaptap's research assistant. Ask me anything about fact-checking, source verification, or credibility analysis." };
+const WELCOME = { role: 'bot', text: "Hi! I'm IThink's research assistant. Ask me anything about fact-checking, source verification, or credibility analysis." };
 
 export default function Chat({ user }) {
   const { pathname } = useLocation();
@@ -160,7 +160,7 @@ export default function Chat({ user }) {
 
       <div className="chat-area">
         <header className="ws2-header">
-          <div className="ws2-header-title">Chat with Alitaptap</div>
+          <div className="ws2-header-title">Chat with IThink</div>
           <div className="ws2-header-controls">
             <ThemeToggle />
             <FaQuestionCircle size={20} className="ws2-header-icon" style={{ cursor: 'pointer' }} onClick={() => setHelpOpen(true)} title="Help & About" />

@@ -2,7 +2,7 @@
   font-family: 'Inter', sans-serif;
   color: #ffffff;
   padding-top: 65px;
-  background: #1A1A1A;
+  background: #000000;
 }
 
 /* Header Section */
@@ -84,7 +84,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 40px rgba(99, 102, 241, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
   transition: transform 0.4s ease, box-shadow 0.4s ease;
-  background: #141414;
+  background: #0a0a0f;
   position: relative;
 }
 
@@ -120,7 +120,7 @@
 }
 
 .cta-btn {
-  background: linear-gradient(90deg, #FFC700 0%, #E6B400 100%);
+  background: linear-gradient(90deg, #7C3AED 0%, #0EA5E9 100%);
   color: white;
   border: none;
   padding: 12px 35px;
@@ -195,7 +195,7 @@
 }
 
 .blue-it {
-  color: #FFC700;
+  color: #4F46E5;
   font-weight: 800;
 }
 

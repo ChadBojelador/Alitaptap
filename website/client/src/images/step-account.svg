@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#141414"/>
+      <stop offset="0%" style="stop-color:#0a0a0f"/>
       <stop offset="100%" style="stop-color:#0f0f1a"/>
     </linearGradient>
     <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FFC700"/>
-      <stop offset="100%" style="stop-color:#E6B400"/>
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#0ea5e9"/>
     </linearGradient>
     <filter id="blur1"><feGaussianBlur stdDeviation="40"/></filter>
     <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
 
   <rect width="600" height="400" fill="url(#bg)"/>
-  <circle cx="180" cy="100" r="130" fill="#FFC700" opacity="0.12" filter="url(#blur1)"/>
-  <circle cx="480" cy="320" r="100" fill="#E6B400" opacity="0.1" filter="url(#blur1)"/>
+  <circle cx="180" cy="100" r="130" fill="#6366f1" opacity="0.12" filter="url(#blur1)"/>
+  <circle cx="480" cy="320" r="100" fill="#0ea5e9" opacity="0.1" filter="url(#blur1)"/>
 
   <!-- Card panel -->
   <rect x="150" y="40" width="300" height="320" rx="20" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
