@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FaFileAlt, FaTrash, FaUserTag, FaSignOutAlt, FaComments, FaPlus, FaBars, FaTimes, FaChevronRight, FaChevronLeft, FaRocket } from 'react-icons/fa';
+import { FaFileAlt, FaTrash, FaUserTag, FaSignOutAlt, FaComments, FaPlus, FaBars, FaTimes, FaChevronRight, FaChevronLeft, FaRocket, FaUserCircle } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import logo from '../images/logo.png';
@@ -44,6 +44,7 @@ export default function Sidebar() {
     { to: '/dashboard/chat',    icon: <FaComments size={20} />, label: 'Chat' },
     { to: '/expo',              icon: <FaRocket size={20} />,   label: 'Expo' },
     { to: '/dashboard/persona', icon: <FaUserTag size={20} />,  label: 'Persona' },
+    { to: '/dashboard/account', icon: <FaUserCircle size={20} />, label: 'Account' },
   ];
 
   const bottomLinks = [

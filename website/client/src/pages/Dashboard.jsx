@@ -116,7 +116,7 @@ export default function Dashboard({ user }) {
             <span>🚀</span> Expo
           </div>
         </nav>
-        <div className="plat-sidebar-user">
+        <div className="plat-sidebar-user" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/dashboard/account'}>
           <div className="plat-user-avatar">
             {user?.email?.[0]?.toUpperCase() || 'U'}
           </div>

@@ -1,0 +1,84 @@
+/* Account Page Styles - Theme: Modern, clean, blue/white accent (example)
+   Adjust colors to match your actual website theme if needed. */
+
+.account-container {
+  max-width: 500px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 80, 180, 0.08);
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.account-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #1976d2;
+  margin-bottom: 1.5rem;
+  background: #e3f0ff;
+}
+
+.account-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 0.5rem;
+}
+
+.account-email {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.account-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.account-form input {
+  padding: 0.8rem 1rem;
+  border: 1px solid #b3c6e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f7faff;
+  transition: border 0.2s;
+}
+
+.account-form input:focus {
+  border-color: #1976d2;
+  outline: none;
+}
+
+.account-form button {
+  padding: 0.9rem 1rem;
+  background: linear-gradient(90deg, #1976d2 60%, #42a5f5 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+}
+
+.account-form button:hover {
+  background: linear-gradient(90deg, #1565c0 60%, #1976d2 100%);
+}
+
+@media (max-width: 600px) {
+  .account-container {
+    padding: 1.2rem 0.5rem;
+  }
+  .account-title {
+    font-size: 1.4rem;
+  }
+}
