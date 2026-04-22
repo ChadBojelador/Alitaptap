@@ -19,8 +19,10 @@ class ExpoFeedPage extends StatefulWidget {
 
 class _ExpoFeedPageState extends State<ExpoFeedPage> {
   final _api = ApiService();
+  final _searchController = TextEditingController();
   List<ResearchPost> _posts = [];
   bool _loading = true;
+  String _searchQuery = '';
 
   static const _yellow = Color(0xFFFFD60A);
 
@@ -28,6 +30,12 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -59,6 +67,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     final email = FirebaseAuth.instance.currentUser?.email ?? '';
     final bg = isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF0F0F0);
+    final filteredPosts = _posts.where(_matchesSearch).toList();
 
     return Scaffold(
       backgroundColor: bg,
@@ -120,6 +129,17 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                 ],
               ),
             ),
+            _SearchBar(
+              isDark: isDark,
+              controller: _searchController,
+              onChanged: (value) => setState(() {
+                _searchQuery = value.trim().toLowerCase();
+              }),
+              onClear: () {
+                _searchController.clear();
+                setState(() => _searchQuery = '');
+              },
+            ),
 
             Expanded(
               child: RefreshIndicator(
@@ -155,8 +175,10 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                       )
                     else if (_posts.isEmpty)
                       _EmptyFeed(isDark: isDark)
+                    else if (filteredPosts.isEmpty)
+                      _EmptySearchResults(isDark: isDark)
                     else
-                      ..._posts.map((post) => _PostCard(
+                      ...filteredPosts.map((post) => _PostCard(
                             post: post,
                             currentUid: uid,
                             isDark: isDark,
@@ -195,6 +217,73 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
         text: '${post.title}\n\n${post.abstract}'));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Post link copied to clipboard!')),
+    );
+  }
+
+  bool _matchesSearch(ResearchPost post) {
+    if (_searchQuery.isEmpty) return true;
+    final haystack = [
+      post.title,
+      post.abstract,
+      post.problemSolved,
+      post.authorEmail,
+      ...post.sdgTags,
+    ].join(' ').toLowerCase();
+    return haystack.contains(_searchQuery);
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({
+    required this.isDark,
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final bool isDark;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+  static const _yellow = Color(0xFFFFD60A);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A),
+        ),
+        decoration: InputDecoration(
+          hintText: 'Search posts, SDGs, authors...',
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575),
+          ),
+          prefixIcon: Icon(Icons.search_rounded, color: _yellow, size: 20),
+          suffixIcon: controller.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: onClear,
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  color: isDark
+                      ? const Color(0xFF9E9E9E)
+                      : const Color(0xFF757575),
+                ),
+          filled: true,
+          fillColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(26),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -856,6 +945,38 @@ class _EmptyFeed extends StatelessWidget {
                       : const Color(0xFF666666),
                   fontSize: 14,
                 )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptySearchResults extends StatelessWidget {
+  const _EmptySearchResults({required this.isDark});
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 60),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 48,
+              color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'No posts match your search.',
+              style: GoogleFonts.poppins(
+                color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666),
+                fontSize: 13,
+              ),
+            ),
           ],
         ),
       ),
