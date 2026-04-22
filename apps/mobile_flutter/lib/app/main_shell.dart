@@ -3,13 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app.dart';
+import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
-import '../features/home/presentation/analytics_page.dart';
-import '../features/home/presentation/community_home_page.dart';
-import '../features/home/presentation/admin_home_page.dart';
 import '../features/home/presentation/dashboard_page.dart';
 import '../features/home/presentation/create_page.dart';
 import '../features/civic_intelligence/presentation/issue_submit_page.dart';
+import '../features/expo/presentation/chat_inbox_page.dart';
 import '../core/models/app_role.dart';
 
 const _amber = Color(0xFFFFC700);
@@ -29,41 +28,105 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
+  Future<void> _openActionSheet(String uid) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final subtle =
+        isDark ? const Color(0xFFBDBDBD) : const Color(0xFF666666);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        final canCreate = widget.role != 'community';
+        final canReport = widget.role != 'admin';
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'What would you like to do?',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : _dark,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (canReport)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.add_location_alt_rounded,
+                        color: _amber),
+                    title: Text('Report a Problem',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Submit a local issue for validation',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, color: subtle)),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => IssueSubmitPage(reporterId: uid),
+                        ),
+                      );
+                    },
+                  ),
+                if (canCreate)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading:
+                        const Icon(Icons.edit_note_rounded, color: _amber),
+                    title: Text('Create a Project',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Start a research project post',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, color: subtle)),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const CreatePage(),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final email = FirebaseAuth.instance.currentUser?.email ?? '';
 
-    final pages = widget.role == 'community'
-        ? [
-            const ExpoFeedPage(),
-            IssueSubmitPage(reporterId: uid),
-            DashboardPage(role: AppRole.community),
-            _ProfilePage(
-                onToggleTheme: widget.onToggleTheme,
-                onSignOut: widget.onSignOut,
-                role: widget.role),
-          ]
-        : widget.role == 'student'
-            ? [
-                const ExpoFeedPage(),
-                const CreatePage(),
-                IssueSubmitPage(reporterId: uid),
-                DashboardPage(role: AppRole.student),
-                _ProfilePage(
-                    onToggleTheme: widget.onToggleTheme,
-                    onSignOut: widget.onSignOut,
-                    role: widget.role),
-              ]
-            : [
-                const ExpoFeedPage(),
-                const CreatePage(),
-                const AdminHomePage(),
-                _ProfilePage(
-                    onToggleTheme: widget.onToggleTheme,
-                    onSignOut: widget.onSignOut,
-                    role: widget.role),
-              ];
+    final pages = [
+      const ExpoFeedPage(),
+      IssueMapPage(
+        studentId: uid,
+        showIdeaDock: false,
+      ),
+      ChatInboxPage(
+        currentUid: uid,
+        currentEmail: email,
+      ),
+      _ProfilePage(
+          onToggleTheme: widget.onToggleTheme,
+          onSignOut: widget.onSignOut,
+          role: widget.role),
+    ];
 
     final safeIndex = _index.clamp(0, pages.length - 1);
 
@@ -73,7 +136,7 @@ class _MainShellState extends State<MainShell> {
         index: safeIndex,
         isDark: isDark,
         onTap: (i) => setState(() => _index = i),
-        role: widget.role,
+        onActionTap: () => _openActionSheet(uid),
       ),
     );
   }
@@ -84,41 +147,20 @@ class _BottomNav extends StatelessWidget {
     required this.index,
     required this.isDark,
     required this.onTap,
-    required this.role,
+    required this.onActionTap,
   });
 
   final int index;
   final bool isDark;
   final ValueChanged<int> onTap;
-  final String role;
+  final VoidCallback onActionTap;
 
-  static const _adminItems = [
-    (icon: Icons.lightbulb_rounded, label: 'Expo'),
-    (icon: Icons.edit_note_rounded, label: 'Create'),
+  static const _items = [
     (icon: Icons.home_rounded, label: 'Home'),
+    (icon: Icons.explore_rounded, label: 'Explore'),
+    (icon: Icons.notifications_rounded, label: 'Inbox'),
     (icon: Icons.person_rounded, label: 'Profile'),
   ];
-
-  static const _studentItems = [
-    (icon: Icons.lightbulb_rounded, label: 'Expo'),
-    (icon: Icons.edit_note_rounded, label: 'Create'),
-    (icon: Icons.add_location_alt_rounded, label: 'Report'),
-    (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.person_rounded, label: 'Profile'),
-  ];
-
-  static const _communityItems = [
-    (icon: Icons.lightbulb_rounded, label: 'Expo'),
-    (icon: Icons.add_location_alt_rounded, label: 'Report'),
-    (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.person_rounded, label: 'Profile'),
-  ];
-
-  List<({IconData icon, String label})> _getItems() {
-    if (role == 'community') return _communityItems;
-    if (role == 'student') return _studentItems;
-    return _adminItems;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,68 +170,64 @@ class _BottomNav extends StatelessWidget {
         : const Color(0xFFE0E0E0);
 
     return SizedBox(
-      height: 72,
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border(top: BorderSide(color: border, width: 1)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 64,
-            child: Row(
-              children: List.generate(_getItems().length, (i) {
-                final item = _getItems()[i];
-                final selected = i == index;
-                return Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onTap(i),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? _amber.withValues(alpha: 0.15)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            item.icon,
-                            size: 22,
-                            color: selected
-                                ? _amber
-                                : isDark
-                                    ? const Color(0xFF616161)
-                                    : const Color(0xFF9E9E9E),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          item.label,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight:
-                                selected ? FontWeight.w600 : FontWeight.w400,
-                            color: selected
-                                ? _amber
-                                : isDark
-                                    ? const Color(0xFF616161)
-                                    : const Color(0xFF9E9E9E),
-                          ),
-                        ),
-                      ],
-                    ),
+      height: 84,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: bg,
+                border: Border(top: BorderSide(color: border, width: 1)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 64,
+                  child: Row(
+                    children: [
+                      Expanded(child: _NavItem(item: _items[0], selected: index == 0, isDark: isDark, onTap: () => onTap(0))),
+                      Expanded(child: _NavItem(item: _items[1], selected: index == 1, isDark: isDark, onTap: () => onTap(1))),
+                      const SizedBox(width: 64),
+                      Expanded(child: _NavItem(item: _items[2], selected: index == 2, isDark: isDark, onTap: () => onTap(2))),
+                      Expanded(child: _NavItem(item: _items[3], selected: index == 3, isDark: isDark, onTap: () => onTap(3))),
+                    ],
                   ),
-                );
-              }),
+                ),
+              ),
             ),
           ),
-        ),
+          Positioned(
+            top: -16,
+            child: GestureDetector(
+              onTap: onActionTap,
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: _amber,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: _amber.withValues(alpha: 0.4),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    width: 3,
+                  ),
+                ),
+                child: const Icon(Icons.add_rounded, color: _dark, size: 30),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -291,6 +329,67 @@ class _ProfilePage extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.item,
+    required this.selected,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  final ({IconData icon, String label}) item;
+  final bool selected;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color:
+                    selected ? _amber.withValues(alpha: 0.15) : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                item.icon,
+                size: 21,
+                color: selected
+                    ? _amber
+                    : isDark
+                        ? const Color(0xFF616161)
+                        : const Color(0xFF9E9E9E),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              item.label,
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected
+                    ? _amber
+                    : isDark
+                        ? const Color(0xFF616161)
+                        : const Color(0xFF9E9E9E),
+              ),
+            ),
+          ],
         ),
       ),
     );

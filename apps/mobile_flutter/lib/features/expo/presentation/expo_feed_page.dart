@@ -160,7 +160,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                           .then((_) => _load()),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 14),
 
                     // ── Feed ───────────────────────────────────────────
                     if (_loading)
@@ -394,11 +394,11 @@ class _StoriesRow extends StatelessWidget {
 
   static const _yellow = Color(0xFFFFD60A);
   static const _stories = [
-    ('SDG 3', Icons.favorite_rounded, Color(0xFFEF5350)),
-    ('SDG 13', Icons.eco_rounded, Color(0xFF66BB6A)),
-    ('SDG 4', Icons.school_rounded, Color(0xFF42A5F5)),
-    ('SDG 11', Icons.location_city_rounded, Color(0xFFAB47BC)),
-    ('SDG 6', Icons.water_drop_rounded, Color(0xFF26C6DA)),
+    ('SDG 3', 'Health', Icons.favorite_rounded, Color(0xFFEF5350)),
+    ('SDG 13', 'Climate', Icons.eco_rounded, Color(0xFF66BB6A)),
+    ('SDG 4', 'Education', Icons.school_rounded, Color(0xFF42A5F5)),
+    ('SDG 11', 'Cities', Icons.location_city_rounded, Color(0xFFAB47BC)),
+    ('SDG 6', 'Water', Icons.water_drop_rounded, Color(0xFF26C6DA)),
   ];
 
   @override
@@ -408,7 +408,7 @@ class _StoriesRow extends StatelessWidget {
       color: bg,
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: SizedBox(
-        height: 100,
+        height: 114,
         child: ListView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -416,6 +416,7 @@ class _StoriesRow extends StatelessWidget {
             // Add story
             _StoryBubble(
               label: 'Your Story',
+              subtitle: '',
               icon: Icons.add_rounded,
               color: _yellow,
               isDark: isDark,
@@ -423,8 +424,9 @@ class _StoriesRow extends StatelessWidget {
             ),
             ..._stories.map((s) => _StoryBubble(
                   label: s.$1,
-                  icon: s.$2,
-                  color: s.$3,
+                  subtitle: s.$2,
+                  icon: s.$3,
+                  color: s.$4,
                   isDark: isDark,
                 )),
           ],
@@ -437,12 +439,14 @@ class _StoriesRow extends StatelessWidget {
 class _StoryBubble extends StatelessWidget {
   const _StoryBubble({
     required this.label,
+    required this.subtitle,
     required this.icon,
     required this.color,
     required this.isDark,
     this.isAdd = false,
   });
   final String label;
+  final String subtitle;
   final IconData icon;
   final Color color;
   final bool isDark;
@@ -451,7 +455,7 @@ class _StoryBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
+      width: 84,
       margin: const EdgeInsets.only(right: 10),
       child: Column(
         children: [
@@ -491,6 +495,21 @@ class _StoryBubble extends StatelessWidget {
                     ? const Color(0xFFBDBDBD)
                     : const Color(0xFF424242),
               )),
+          if (!isAdd) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+                color:
+                    isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666),
+              ),
+            ),
+          ],
         ],
       ),
     );

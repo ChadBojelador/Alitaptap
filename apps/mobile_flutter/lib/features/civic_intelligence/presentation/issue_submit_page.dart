@@ -15,6 +15,10 @@ class IssueSubmitPage extends StatefulWidget {
 }
 
 class _IssueSubmitPageState extends State<IssueSubmitPage> {
+  static const int _minManualTitleChars = 8;
+  static const int _minManualDescriptionChars = 30;
+  static const int _minAiProblemChars = 20;
+
   bool _isAIGuided = false;
   final _problemCtrl = TextEditingController();
   final _titleCtrl = TextEditingController();
@@ -169,7 +173,12 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     final bg = isDark ? const Color(0xFF141414) : const Color(0xFFF7F8FA);
     final cardBg = isDark ? const Color(0xFF242424) : Colors.white;
     final textColor = isDark ? Colors.white : _dark;
-    final subtleColor = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
+    final subtleColor =
+        isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575);
+    final canSaveManual = _titleCtrl.text.trim().length >= _minManualTitleChars &&
+        _descriptionCtrl.text.trim().length >= _minManualDescriptionChars;
+    final canAnalyzeAi = _problemCtrl.text.trim().length >= _minAiProblemChars;
+    final canSaveAi = _elaboratedText != null && canAnalyzeAi;
 
     return Scaffold(
       backgroundColor: bg,
@@ -232,7 +241,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: !_isAIGuided
-                              ? _amber
+                              ? _amber.withValues(alpha: 0.16)
                               : (isDark
                                   ? const Color(0xFF242424)
                                   : const Color(0xFFF5F5F5)),
@@ -248,7 +257,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                           children: [
                             Icon(
                               Icons.edit_note_rounded,
-                              color: !_isAIGuided ? _dark : subtleColor,
+                              color: !_isAIGuided ? _amber : subtleColor,
                               size: 18,
                             ),
                             const SizedBox(width: 6),
@@ -257,7 +266,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: !_isAIGuided ? _dark : subtleColor,
+                                color: !_isAIGuided ? _amber : subtleColor,
                               ),
                             ),
                           ],
@@ -273,7 +282,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: _isAIGuided
-                              ? _amberBright
+                              ? _amberBright.withValues(alpha: 0.16)
                               : (isDark
                                   ? const Color(0xFF242424)
                                   : const Color(0xFFF5F5F5)),
@@ -289,7 +298,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                           children: [
                             Icon(
                               Icons.auto_awesome_rounded,
-                              color: _isAIGuided ? _dark : subtleColor,
+                              color: _isAIGuided ? _amberBright : subtleColor,
                               size: 18,
                             ),
                             const SizedBox(width: 6),
@@ -298,7 +307,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: _isAIGuided ? _dark : subtleColor,
+                                color: _isAIGuided ? _amberBright : subtleColor,
                               ),
                             ),
                           ],
@@ -357,11 +366,11 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               const SizedBox(height: 24),
 
               GestureDetector(
-                onTap: _elaborating ? null : _elaborateWithAI,
+                onTap: (_elaborating || !canAnalyzeAi) ? null : _elaborateWithAI,
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: _elaborating
+                    color: (_elaborating || !canAnalyzeAi)
                         ? _amberBright.withValues(alpha: 0.5)
                         : _amberBright,
                     borderRadius: BorderRadius.circular(16),
@@ -392,7 +401,9 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                             color: _dark, size: 20),
                       const SizedBox(width: 10),
                       Text(
-                        _elaborating ? 'Analyzing...' : 'Analyze with AI',
+                        _elaborating
+                            ? 'Analyzing...'
+                            : 'Analyze with AI',
                         style: GoogleFonts.poppins(
                           color: _dark,
                           fontWeight: FontWeight.w700,
@@ -403,6 +414,13 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   ),
                 ),
               ),
+              if (!canAnalyzeAi) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Add at least $_minAiProblemChars characters to analyze.',
+                  style: GoogleFonts.poppins(fontSize: 11, color: subtleColor),
+                ),
+              ],
 
               if (_elaboratedText != null) ...[
                 const SizedBox(height: 24),
@@ -466,7 +484,9 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 ),
                 const SizedBox(height: 24),
                 GestureDetector(
-                  onTap: () {
+                  onTap: !canSaveAi
+                      ? null
+                      : () {
                     _saveReport(_problemCtrl.text, _elaboratedText!, _suggestedSDG ?? 'SDG 17');
                     _problemCtrl.clear();
                     setState(() {
@@ -480,7 +500,9 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: _amberBright,
+                      color: canSaveAi
+                          ? _amberBright
+                          : _amberBright.withValues(alpha: 0.45),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -507,6 +529,14 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                     ),
                   ),
                 ),
+                if (!canSaveAi) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Complete AI analysis before saving this report.',
+                    style:
+                        GoogleFonts.poppins(fontSize: 11, color: subtleColor),
+                  ),
+                ],
               ],
             ] else if (!_isAIGuided || _isEditingMode) ...[
               Text(
@@ -669,13 +699,9 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                 )
               else
                 GestureDetector(
-                  onTap: () {
-                    if (_titleCtrl.text.isEmpty || _descriptionCtrl.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please fill all fields')),
-                      );
-                      return;
-                    }
+                  onTap: !canSaveManual
+                      ? null
+                      : () {
                     _saveReport(_titleCtrl.text, _descriptionCtrl.text, 'Manual Report');
                     _titleCtrl.clear();
                     _descriptionCtrl.clear();
@@ -686,7 +712,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: _amber,
+                      color:
+                          canSaveManual ? _amber : _amber.withValues(alpha: 0.45),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -713,6 +740,13 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                     ),
                   ),
                 ),
+              if (!_isEditingMode && !canSaveManual) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Title: $_minManualTitleChars+ chars, Description: $_minManualDescriptionChars+ chars.',
+                  style: GoogleFonts.poppins(fontSize: 11, color: subtleColor),
+                ),
+              ],
             ],
 
             if (_savedReports.isNotEmpty) ...[

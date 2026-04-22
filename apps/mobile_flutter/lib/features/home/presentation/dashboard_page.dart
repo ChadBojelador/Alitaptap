@@ -413,16 +413,17 @@ class _IssueImageCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 160,
+        width: 150,
         margin: const EdgeInsets.only(right: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: _amber.withValues(alpha: 0.15),
+          border: Border.all(color: _amber.withValues(alpha: 0.18)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -543,12 +544,24 @@ class _EmptyCard extends StatelessWidget {
                   color: _amber.withValues(alpha: 0.5), size: 36),
               const SizedBox(height: 8),
               Text(
-                'No issues yet',
+                'The world is quiet... for now.',
                 style: GoogleFonts.poppins(
                   color: isDark
                       ? const Color(0xFF9E9E9E)
                       : const Color(0xFF757575),
                   fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Be the first to report a local problem!',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: isDark
+                      ? const Color(0xFFBDBDBD)
+                      : const Color(0xFF757575),
+                  fontSize: 12,
                 ),
               ),
             ],

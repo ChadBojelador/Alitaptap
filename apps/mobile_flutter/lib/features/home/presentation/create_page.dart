@@ -374,7 +374,8 @@ ${project['feasibility'] ?? 'N/A'}
     final bg = isDark ? const Color(0xFF141414) : const Color(0xFFF7F8FA);
     final cardBg = isDark ? const Color(0xFF242424) : Colors.white;
     final textColor = isDark ? Colors.white : _dark;
-    final subtleColor = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
+    final subtleColor =
+        isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575);
 
     return Scaffold(
       backgroundColor: bg,
