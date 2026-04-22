@@ -2,12 +2,13 @@
   "name": "ithink",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd client && npm install && npm run build && cd ../server && npm install && pip3 install -r credibility_checker/requirements.txt",
-    "start": "cd server && node server.js",
-    "dev:server": "cd server && node server.js",
-    "dev:client": "cd client && npm run dev"
+    "dev": "concurrently \"npm --prefix client run dev\" \"npm --prefix server run dev\"",
+    "dev:frontend": "npm --prefix client run dev",
+    "dev:backend": "npm --prefix server run dev",
+    "install:all": "npm --prefix client install ; npm --prefix server install"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  }
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "private": true
 }
