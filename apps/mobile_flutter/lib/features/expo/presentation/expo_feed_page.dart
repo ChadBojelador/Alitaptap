@@ -63,6 +63,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // ── Header ──────────────────────────────────────────────────

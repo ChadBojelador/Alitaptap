@@ -572,13 +572,11 @@ class _IssueMapPageState extends State<IssueMapPage>
             Positioned(
               left:   16,
               right:  16,
-              bottom: 16,
-              child: SafeArea(
-                child: _IdeaDock(
-                  controller:  _ideaController,
-                  isMatching:  _matchingIdea,
-                  onSubmit:    _submitIdea,
-                ),
+              bottom: 60, // Flush with navbar
+              child: _IdeaDock(
+                controller:  _ideaController,
+                isMatching:  _matchingIdea,
+                onSubmit:    _submitIdea,
               ),
             ),
         ],
