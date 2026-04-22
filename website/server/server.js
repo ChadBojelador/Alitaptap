@@ -129,6 +129,8 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, passwor
     } catch (err) { return done(err); }
 }));
 
+// Google OAuth — only register if credentials are configured
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -148,6 +150,7 @@ passport.use(new GoogleStrategy({
     } catch (err) { return done(err); }
   }
 ));
+}
 
 // JWT auth middleware — checks Authorization header first, falls back to session
 const authMiddleware = async (req, res, next) => {
@@ -388,6 +391,52 @@ app.post('/api/user/agree-terms', authMiddleware, apiLimiter, async (req, res) =
         await req.user.update({ agreedToTerms: true });
         res.json({ ok: true });
     } catch (err) { res.status(500).json({ error: 'Failed to update' }); }
+});
+
+// Update profile
+app.put('/api/user/profile', authMiddleware, apiLimiter,
+    [
+        body('displayName').optional().isString().trim().isLength({ max: 100 }),
+        body('bio').optional().isString().trim().isLength({ max: 500 }),
+        body('institution').optional().isString().trim().isLength({ max: 200 }),
+        body('location').optional().isString().trim().isLength({ max: 100 }),
+        body('avatarUrl').optional().isString().isLength({ max: 2000 }),
+    ],
+    validate,
+    async (req, res) => {
+        try {
+            const { displayName, bio, institution, location, avatarUrl } = req.body;
+            await req.user.update({
+                ...(displayName !== undefined && { displayName: xss(displayName) }),
+                ...(bio !== undefined && { bio: xss(bio) }),
+                ...(institution !== undefined && { institution: xss(institution) }),
+                ...(location !== undefined && { location: xss(location) }),
+                ...(avatarUrl !== undefined && { avatarUrl }),
+            });
+            res.json({ user: req.user });
+        } catch (err) { res.status(500).json({ error: 'Failed to update profile' }); }
+    }
+);
+
+// Generate QR login token
+app.get('/api/user/qr-token', authMiddleware, apiLimiter, async (req, res) => {
+    try {
+        const qrToken = jwt.sign({ id: req.user.id, qr: true }, JWT_SECRET, { expiresIn: '5m' });
+        res.json({ qrToken, expiresIn: 300 });
+    } catch (err) { res.status(500).json({ error: 'Failed to generate QR token' }); }
+});
+
+// Verify QR token and return auth token
+app.post('/api/auth/qr-verify', async (req, res) => {
+    try {
+        const { qrToken } = req.body;
+        const payload = jwt.verify(qrToken, JWT_SECRET);
+        if (!payload.qr) return res.status(400).json({ error: 'Invalid QR token' });
+        const user = await User.findByPk(payload.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '7d' });
+        res.json({ token, user: { id: user.id, email: user.email, displayName: user.displayName } });
+    } catch (err) { res.status(401).json({ error: 'QR token expired or invalid' }); }
 });
 
 app.put('/api/user/persona', authMiddleware, apiLimiter,
