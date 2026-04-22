@@ -1,0 +1,19 @@
+[
+  {
+    "reporter_id": "community_user_001",
+    "reporter_name": "Maria Santos",
+    "title": "Recurring Flooding Near Market Street",
+    "description": "Floodwater rises quickly during heavy rain and blocks access to homes and stores.",
+    "lat": 14.5995,
+    "lng": 120.9842,
+    "image_url": "https://example.com/flood-1.jpg"
+  },
+  {
+    "reporter_id": "community_user_002",
+    "reporter_name": "John Dela Cruz",
+    "title": "Plastic Waste Along Riverbank",
+    "description": "Accumulated plastic waste along the river causes foul odor and clogged drainage.",
+    "lat": 14.5547,
+    "lng": 121.0244
+  }
+]

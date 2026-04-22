@@ -1,0 +1,20 @@
+[
+  {
+    "author_id": "student_001",
+    "author_email": "student1@example.com",
+    "title": "River Plastic Recovery Through Community Sorting Stations",
+    "abstract": "This project evaluates low-cost sorting stations near waterways to reduce plastic runoff.",
+    "problem_solved": "Plastic waste in waterways",
+    "sdg_tags": ["SDG 6", "SDG 11", "SDG 12"],
+    "funding_goal": 50000
+  },
+  {
+    "author_id": "student_002",
+    "author_email": "student2@example.com",
+    "title": "Barangay Flood Early Warning with Low-Cost Sensors",
+    "abstract": "This project studies flood-level alerting using simple IoT water-level sensors and SMS notifications.",
+    "problem_solved": "Recurring community flooding",
+    "sdg_tags": ["SDG 9", "SDG 11", "SDG 13"],
+    "funding_goal": 75000
+  }
+]
