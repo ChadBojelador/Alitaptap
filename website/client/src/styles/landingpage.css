@@ -1,6 +1,6 @@
 :root {
-  --primary-gradient: linear-gradient(90deg, #7C3AED 0%, #0EA5E9 100%);
-  --text-dark: #000000;
+  --primary-gradient: linear-gradient(90deg, #FFC700 0%, #E6B400 100%);
+  --text-dark: #1A1A1A;
   --text-gray: #52525b;
 }
 
@@ -9,18 +9,18 @@ html, body {
   height: auto;
   overflow-x: hidden;
   overflow-y: auto;
-  background: #000000;
+  background: #1A1A1A;
 }
 
 body {
   font-family: 'Inter', sans-serif;
-  background: #000000;
+  background: #1A1A1A;
 }
 
 .App {
   color: #ffffff;
   padding-top: 65px;
-  background: #000000;
+  background: #1A1A1A;
 }
 
 /* Header */
@@ -59,7 +59,7 @@ body {
 .logo-gradient {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #A855F7 0%, #1D4ED8 100%);
+  background: linear-gradient(135deg, #A855F7 0%, #C99700 100%);
   border-radius: 50%;
 }
 
@@ -70,7 +70,7 @@ body {
 }
 
 .logo-text::first-letter {
-  color: #1D4ED8;
+  color: #C99700;
 }
 
 .nav {
@@ -102,7 +102,7 @@ body {
 }
 
 .get-started-btn {
-  background-color: #1D4ED8;
+  background-color: #C99700;
   color: #FAFAFA;
   border: none;
   padding: 10px 20px;
@@ -114,7 +114,7 @@ body {
 }
 
 .get-started-btn:hover {
-  background-color: #1E3A8A;
+  background-color: #B28700;
 }
 
 /* Hamburger */
@@ -284,7 +284,7 @@ body {
   box-shadow: 0 8px 40px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(255,255,255,0.05);
   transition: transform 0.4s ease, box-shadow 0.4s ease;
   position: relative;
-  background: #0a0a0f;
+  background: #141414;
 }
 
 .feature-visual::after {

@@ -9,10 +9,12 @@ import Draft from './pages/Draft';
 import Account from './pages/Account';
 import Persona from './pages/Persona';
 import LandingPage from './pages/LandingPage';
+import Features from './pages/Features';
+import HowItWorks from './pages/HowItWorks';
+import LegalAndSignup from './pages/LegalAndSignup';
+import AboutPage from './pages/About';
 import Chat from './pages/Chat';
 import Trash from './pages/Trash';
-import ResearchDraft from './pages/ResearchDraft';
-import Expo from './pages/Expo';
 
 // Set global axios defaults for the entire app
 axios.defaults.withCredentials = true;
@@ -47,12 +49,13 @@ function TermsRequired({ user, setUser }) {
       <div className="terms-modal">
         <h3>Before you continue</h3>
         <p>
-          By using ALITAPTAP, you agree to our{' '}
+          By using Alitaptap, you agree to our{' '}
           <a href="/terms" target="_blank" rel="noreferrer">Terms and Conditions</a>{' '}and{' '}
           <a href="/terms" target="_blank" rel="noreferrer">Privacy Policy</a>.
+          Please read them before proceeding.
         </p>
         <div className="terms-modal-actions">
-          <button className="terms-modal-agree" onClick={handleAgree}>I Agree — Continue to ALITAPTAP</button>
+          <button className="terms-modal-agree" onClick={handleAgree}>I Agree — Continue to Alitaptap</button>
           <button className="terms-modal-decline" onClick={handleDecline}>Decline — Go back to login</button>
         </div>
       </div>
@@ -112,6 +115,10 @@ function App() {
     <Router>
       <Routes>
         {/* 1. Root Route: Send to dashboard if logged in, else login */}
+        <Route path="/features" element={<Features />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/terms" element={<LegalAndSignup />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/auth/callback" element={<OAuthCallback setUser={setUser} />} />
         <Route path="/" element={
           user ? <Navigate to="/dashboard" replace /> : <LandingPage />
@@ -137,9 +144,6 @@ function App() {
         <Route path="/dashboard/account" element={<Account user={user} setUser={setUser} />} />
         <Route path="/dashboard/persona" element={<Persona user={user} setUser={setUser} />} />
         <Route path="/dashboard/chat" element={<Chat user={user} />} />
-        <Route path="/research" element={<ResearchDraft user={user} />} />
-        <Route path="/research/:id" element={<ResearchDraft user={user} />} />
-        <Route path="/expo" element={<Expo user={user} />} />
         {/* 4. Catch-all: Redirect unknown URLs to login or dashboard */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

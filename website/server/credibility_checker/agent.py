@@ -88,9 +88,9 @@ REQUIRED JSON FORMAT:
         session_service = InMemorySessionService()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        session = loop.run_until_complete(session_service.create_session(app_name="IThinkApp", user_id="user"))
+        session = loop.run_until_complete(session_service.create_session(app_name="AlitaptapApp", user_id="user"))
 
-        agent_runner = Runner(agent=agent, app_name="IThinkApp", session_service=session_service)
+        agent_runner = Runner(agent=agent, app_name="AlitaptapApp", session_service=session_service)
         message = Content(parts=[Part(text=user_query)], role="user")
         events = agent_runner.run(user_id="user", session_id=session.id, new_message=message)
 

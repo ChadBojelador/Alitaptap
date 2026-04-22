@@ -1,98 +1,60 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from 'react';
+import Toast from '../components/Toast';
+import '../styles/workspace.css';
+import '../styles/gradient-icon.css';
+import { FaUserCircle } from 'react-icons/fa';
+import { useLocation, useNavigate } from 'react-router-dom';
+import AlitaptapLogo from '../AlitaptapLogo';
+import { useTheme } from '../ThemeContext';
+import Sidebar from '../components/Sidebar';
+import ThemeToggle from '../components/ThemeToggle';
+
 import { BACKEND_URL } from '../App';
+<<<<<<< HEAD
 import '../styles/account.css';
 // import Sidebar from '../components/Sidebar';
 import ThemeToggle from '../components/ThemeToggle';
 import { FaUserCircle, FaQuestionCircle, FaArrowLeft } from 'react-icons/fa';
+=======
+>>>>>>> 6fc21a23771319b9a26fef2c7cf86a18d092d2d6
 
 export default function Account({ user, setUser }) {
-  const navigate = useNavigate();
-  const fileRef = useRef(null);
-
-  const [form, setForm] = useState({
-    displayName: user?.displayName || '',
-    bio: user?.bio || '',
-    institution: user?.institution || '',
-    location: user?.location || '',
-    avatarUrl: user?.avatarUrl || '',
-  });
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
-  const [qrData, setQrData] = useState(null);
-  const [qrLoading, setQrLoading] = useState(false);
-  const [qrExpiry, setQrExpiry] = useState(0);
+  const [usage, setUsage] = useState(user?.persona || '1');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
-  const [pwMsg, setPwMsg] = useState('');
+  const [toast, setToast] = useState(null);
+  const { pathname } = useLocation();
+  const { theme } = useTheme();
+  const navigate = useNavigate();
 
-  // QR countdown
-  useEffect(() => {
-    if (!qrExpiry) return;
-    const t = setInterval(() => {
-      setQrExpiry(e => {
-        if (e <= 1) { clearInterval(t); setQrData(null); return 0; }
-        return e - 1;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, [qrExpiry]);
-
-  const handleAvatarFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setForm(p => ({ ...p, avatarUrl: ev.target.result }));
-    reader.readAsDataURL(file);
-  };
-
-  const saveProfile = async () => {
-    setSaving(true);
-    try {
-      const res = await axios.put(`${BACKEND_URL}/api/user/profile`, form, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setUser(prev => ({ ...prev, ...res.data.user }));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch {}
-    setSaving(false);
-  };
-
-  const generateQR = async () => {
-    setQrLoading(true);
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/user/qr-token`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      // Build QR URL — points to login page with token pre-filled
-      const qrUrl = `${window.location.origin}/login?qr=${res.data.qrToken}`;
-      // Use QR Server API to generate QR image
-      const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrUrl)}&bgcolor=0a0a0a&color=ffd60a&margin=10`;
-      setQrData({ img: qrImg, token: res.data.qrToken, url: qrUrl });
-      setQrExpiry(res.data.expiresIn);
-    } catch {}
-    setQrLoading(false);
-  };
-
-  const deleteAccount = async () => {
+  const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
-      await axios.delete(`${BACKEND_URL}/api/user`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      const res = await fetch(`${BACKEND_URL}/api/user`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
+      if (!res.ok) throw new Error();
       localStorage.removeItem('token');
       setUser(null);
       navigate('/login');
-    } catch { setDeleting(false); }
+    } catch {
+      setToast({ message: 'Failed to delete account. Please try again.', type: 'error' });
+      setDeleting(false);
+    }
   };
 
-  const initials = (form.displayName || user?.email || 'U')[0].toUpperCase();
-
+  const handlePersonaChange = async (val) => {
+    setUsage(val);
+    await fetch(`${BACKEND_URL}/api/user/persona`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      body: JSON.stringify({ persona: val })
+    });
+    setUser(prev => ({ ...prev, persona: val }));
+  };
   return (
+<<<<<<< HEAD
     <div className="ws2-root" style={{ background: 'linear-gradient(120deg, #181818 0%, #ffd60a 100%)', minHeight: '100vh' }}>
       <main className="ws2-main">
         <header className="ws2-header" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)', background: '#181818', borderRadius: '0 0 18px 18px', color: '#ffd60a' }}>
@@ -297,6 +259,52 @@ export default function Account({ user, setUser }) {
           </div>
         )}
       </main>
+=======
+    <div className="ws2-root">
+      <Sidebar />
+
+      <main className="ws2-main">
+        <header className="ws2-header">
+          <div className="ws2-header-title">Account</div>
+          <div className="ws2-header-controls">
+            <ThemeToggle />
+            <div className="ws2-avatar ws2-avatar--active" title="Account"><FaUserCircle size={18} /></div>
+          </div>
+        </header>
+
+        <div className="account-page">
+          {/* Profile Card */}
+          <div className="account-card">
+            <div className="account-avatar-large"><FaUserCircle size={48} /></div>
+            <div className="account-card-info">
+              <div className="account-card-name">{user?.displayName || user?.name || 'N/A'}</div>
+              <div className="account-card-email">{user?.email || 'N/A'}</div>
+            </div>
+          </div>
+
+          {/* Danger Card */}
+          <div className="account-card account-card--danger">
+            <div className="account-card-title" style={{ color: '#ff6b6b' }}>Delete Account</div>
+            <div className="account-card-desc">Permanently removes all your data. This cannot be undone.</div>
+            <button className="account-delete-btn" onClick={() => setConfirmDelete(true)}>Delete Account</button>
+          </div>
+        </div>
+      </main>
+
+      {confirmDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid rgba(255,107,107,0.3)', borderRadius: 16, padding: 28, maxWidth: 360, width: '90%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ff6b6b' }}>Delete Account?</div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>This will permanently delete your account, all drafts, and chat history. This cannot be undone.</div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setConfirmDelete(false)} style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-main)', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={handleDeleteAccount} disabled={deleting} style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#ff6b6b', color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{deleting ? 'Deleting...' : 'Yes, Delete'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+>>>>>>> 6fc21a23771319b9a26fef2c7cf86a18d092d2d6
     </div>
   );
 }

@@ -15,8 +15,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,214,10,0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(255,170,0,0.05) 0%, transparent 60%);
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(92,225,230,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(106,17,203,0.07) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -30,19 +30,19 @@
 }
 .ls-orb--1 {
   width: 340px; height: 340px;
-  background: #ffd60a;
+  background: #FFC700;
   top: -80px; left: -80px;
   animation-delay: 0s;
 }
 .ls-orb--2 {
   width: 260px; height: 260px;
-  background: #ffaa00;
+  background: #B28700;
   bottom: -60px; right: -60px;
   animation-delay: -3s;
 }
 .ls-orb--3 {
   width: 180px; height: 180px;
-  background: #ffd60a;
+  background: #FFC700;
   bottom: 20%; left: 10%;
   animation-delay: -5s;
   opacity: 0.1;
@@ -77,16 +77,16 @@
   inset: 0;
   border-radius: 50%;
   border: 2px solid transparent;
-  border-top-color: #ffd60a;
-  border-right-color: rgba(255,214,10,0.3);
+  border-top-color: #FFC700;
+  border-right-color: rgba(92,225,230,0.3);
   animation: ls-spin 1.2s linear infinite;
 }
 
 .ls-logo-ring--2 {
   inset: 10px;
   border-top-color: transparent;
-  border-bottom-color: #ffaa00;
-  border-left-color: rgba(255,170,0,0.3);
+  border-bottom-color: #B28700;
+  border-left-color: rgba(106,17,203,0.3);
   animation: ls-spin 1.8s linear infinite reverse;
 }
 
@@ -97,41 +97,36 @@
 .ls-logo-core {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #ffd60a 0%, #ffaa00 100%);
+  background: linear-gradient(135deg, #FFC700 0%, #B28700 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 32px rgba(255,214,10,0.4), 0 0 64px rgba(255,214,10,0.15);
+  box-shadow: 0 0 32px rgba(92,225,230,0.4), 0 0 64px rgba(92,225,230,0.15);
   animation: ls-pulse 2s ease-in-out infinite;
 }
 
-.ls-logo-dot {
-  font-size: 10px;
-  color: #1a1a1a;
-}
-
 @keyframes ls-pulse {
-  0%, 100% { box-shadow: 0 0 32px rgba(255,214,10,0.4), 0 0 64px rgba(255,214,10,0.15); }
-  50%       { box-shadow: 0 0 48px rgba(255,214,10,0.65), 0 0 80px rgba(255,214,10,0.25); }
+  0%, 100% { box-shadow: 0 0 32px rgba(92,225,230,0.4), 0 0 64px rgba(92,225,230,0.15); }
+  50%       { box-shadow: 0 0 48px rgba(92,225,230,0.65), 0 0 80px rgba(92,225,230,0.25); }
 }
 
 /* ---- Brand name ---- */
 .ls-brand {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
-  font-size: 2rem;
-  font-weight: 900;
-  letter-spacing: 4px;
-  color: #ffd60a;
-  text-shadow: 0 0 32px rgba(255,214,10,0.3);
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  background: linear-gradient(90deg, #FFC700 0%, #E6B400 50%, #FFC700 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: ls-shimmer 2.4s linear infinite;
 }
 
-.ls-tagline {
-  font-size: 11px;
-  color: rgba(255,255,255,0.3);
-  letter-spacing: 2px;
-  font-weight: 500;
-  margin-top: -12px;
+@keyframes ls-shimmer {
+  to { background-position: 200% center; }
 }
 
 /* ---- Progress bar ---- */
@@ -146,7 +141,7 @@
 .ls-bar-fill {
   height: 100%;
   width: 40%;
-  background: linear-gradient(90deg, #ffd60a, #ffaa00, #ffd60a);
+  background: linear-gradient(90deg, #FFC700, #B28700, #FFC700);
   background-size: 200% auto;
   border-radius: 99px;
   animation: ls-bar 1.6s ease-in-out infinite;
@@ -166,10 +161,10 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ffd60a;
+  background: #FFC700;
   animation: ls-bounce 1.2s ease-in-out infinite;
 }
-.ls-dots span:nth-child(2) { animation-delay: 0.2s; background: #ffaa00; }
+.ls-dots span:nth-child(2) { animation-delay: 0.2s; background: #E6B400; }
 .ls-dots span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes ls-bounce {

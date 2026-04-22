@@ -18,7 +18,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-sizing: border-box;
-  background: #0a0a0f;
+  background: #141414;
   position: relative;
 }
 
@@ -81,7 +81,7 @@
 }
 
 .swiper-pagination-bullet-active {
-  background: #6366f1 !important;
+  background: #FFC700 !important;
   width: 30px;
   border-radius: 6px;
 }

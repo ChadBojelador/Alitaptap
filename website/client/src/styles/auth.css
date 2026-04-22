@@ -1,8 +1,13 @@
-*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --primary-cyan: #FFC700;
+  --dark-bg: #232323;
+  --input-border: #999;
+}
 
 body, html {
-  margin: 0; padding: 0;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 .login-container {
@@ -10,246 +15,210 @@ body, html {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background: #0a0a0a;
-}
-
-/* ── Left Panel ─────────────────────────────────────────────────────────── */
-.left-panel {
-  flex: 1;
-  background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
-  border-right: 1px solid rgba(255, 214, 10, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: slideInLeft 0.6s ease both;
 }
 
 @keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-40px); }
+  from { opacity: 0; transform: translateX(-60px); }
   to   { opacity: 1; transform: translateX(0); }
-}
-
-.content-wrapper { max-width: 380px; padding: 40px; }
-
-.brand-logo-mark {
-  font-size: 10px;
-  color: #ffd60a;
-  margin-bottom: 16px;
-  display: block;
-}
-
-.brand-title {
-  font-size: 3.5rem;
-  font-weight: 900;
-  color: #ffd60a;
-  margin: 0 0 16px;
-  letter-spacing: 4px;
-}
-
-.brand-subtitle {
-  font-size: 1rem;
-  color: #9e9e9e;
-  line-height: 1.7;
-  margin-bottom: 32px;
-}
-
-.learn-more-btn {
-  background: #ffd60a;
-  border: none;
-  padding: 12px 32px;
-  border-radius: 24px;
-  font-weight: 700;
-  font-size: 14px;
-  color: #1a1a1a;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.learn-more-btn:hover { opacity: 0.85; }
-
-/* ── Right Panel ────────────────────────────────────────────────────────── */
-.right-panel {
-  flex: 1;
-  background: #0d0d0d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: slideInRight 0.6s ease both;
 }
 
 @keyframes slideInRight {
-  from { opacity: 0; transform: translateX(40px); }
+  from { opacity: 0; transform: translateX(60px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.left-panel {
+  flex: 1;
+  background-color: var(--dark-bg);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top-right-radius: 60px;
+  border-bottom-right-radius: 60px;
+  z-index: 2;
+  animation: slideInLeft 0.7s ease both;
+}
+
+.content-wrapper {
+  max-width: 400px;
+  padding: 40px;
+}
+
+.brand-title {
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--primary-cyan);
+  margin-bottom: 10px;
+}
+
+.brand-subtitle {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  margin-bottom: 30px;
+}
+
+.learn-more-btn {
+  background-color: var(--primary-cyan);
+  border: none;
+  padding: 12px 40px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #1A1A1A;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.learn-more-btn:hover {
+  background-color: #E6B400;
+  transform: scale(1.05);
+}
+
+.right-panel {
+  animation: slideInRight 0.7s ease both;
+  flex: 1.2;
+  background-color: #f0f0f0;
+  background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-box {
   width: 100%;
   max-width: 400px;
-  padding: 40px 32px;
-  background: #161616;
-  border: 1px solid rgba(255, 214, 10, 0.12);
-  border-radius: 24px;
+  text-align: center;
+  padding: 20px;
 }
 
-.login-brand-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 28px;
-}
-
-.login-brand-dot { font-size: 8px; color: #ffd60a; }
-
-.login-brand-name {
-  font-size: 13px;
-  font-weight: 800;
-  color: #ffd60a;
-  letter-spacing: 2px;
+.logo-img {
+  animation: fadeUp 0.6s ease 0.4s both;
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  margin-bottom: 5px;
 }
 
 .login-header {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #f0f0f0;
-  margin: 0 0 6px;
+  animation: fadeUp 0.6s ease 0.55s both;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #333;
 }
 
-.login-subheader {
-  font-size: 13px;
-  color: #9e9e9e;
-  margin: 0 0 28px;
+.login-header span {
+  color: #666;
 }
 
-/* ── Form ───────────────────────────────────────────────────────────────── */
 .login-form {
+  animation: fadeUp 0.6s ease 0.7s both;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 15px;
 }
 
 .input-field {
-  padding: 13px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #1e1e1e;
-  font-size: 14px;
-  color: #f0f0f0;
-  outline: none;
-  transition: border-color 0.2s;
-  font-family: inherit;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: transparent;
+  font-size: 1rem;
+  font-style: normal;
 }
 
-.input-field::placeholder { color: #616161; }
-.input-field:focus { border-color: rgba(255, 214, 10, 0.5); }
+.input-field::placeholder {
+  font-style: italic;
+}
 
 .login-submit-btn {
-  background: #ffd60a;
+  background-color: var(--primary-cyan);
   border: none;
-  padding: 14px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  color: #1a1a1a;
+  padding: 15px;
+  border-radius: 15px;
+  font-size: 1.3rem;
+  color: #1A1A1A;
   cursor: pointer;
-  margin-top: 4px;
-  transition: opacity 0.2s;
-  font-family: inherit;
+  margin-top: 10px;
+  transition: background-color 0.2s, transform 0.2s;
 }
 
-.login-submit-btn:hover:not(:disabled) { opacity: 0.85; }
-.login-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-submit-btn:hover:not(:disabled) {
+  background-color: #E6B400;
+  transform: scale(1.02);
+}
 
-.msg-success { color: #66bb6a; text-align: center; font-size: 13px; margin: 4px 0 0; }
-.msg-error   { color: #ef5350; text-align: center; font-size: 13px; margin: 4px 0 0; }
+.login-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
-/* ── Terms ──────────────────────────────────────────────────────────────── */
+/* T&C Checkbox */
 .terms-checkbox-wrap {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   cursor: pointer;
+  text-align: left;
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 214, 10, 0.15);
-  background: rgba(255, 214, 10, 0.04);
+  border: 1px solid rgba(99,102,241,0.25);
+  background: rgba(99,102,241,0.06);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.terms-checkbox-wrap:hover {
+  border-color: rgba(99,102,241,0.5);
+  background: rgba(99,102,241,0.1);
 }
 
 .terms-checkbox-wrap input[type="checkbox"] {
   margin-top: 2px;
-  accent-color: #ffd60a;
-  cursor: pointer;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
-}
-
-.terms-checkbox-wrap span { font-size: 12px; color: #9e9e9e; line-height: 1.5; }
-
-/* ── Divider ────────────────────────────────────────────────────────────── */
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 20px 0;
-}
-
-.line { height: 1px; background: rgba(255,255,255,0.08); flex: 1; }
-.or-text { margin: 0 14px; color: #616161; font-size: 12px; }
-
-/* ── Google Button ──────────────────────────────────────────────────────── */
-.google-login-btn {
-  width: 100%;
-  padding: 12px;
-  background: #1e1e1e;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  accent-color: #FFC700;
   cursor: pointer;
-  font-size: 14px;
+}
+
+.terms-checkbox-wrap span {
+  font-size: 0.82rem;
+  color: rgba(0,0,0,0.55);
+  line-height: 1.5;
+}
+
+.terms-checkbox-wrap a {
+  color: #FFC700;
+  text-decoration: underline;
   font-weight: 600;
-  color: #f0f0f0;
-  transition: border-color 0.2s, background 0.2s;
-  font-family: inherit;
 }
 
-.google-login-btn:hover {
-  background: #242424;
-  border-color: rgba(255,255,255,0.2);
+.terms-checkbox-wrap a:hover {
+  color: #E6B400;
 }
 
-/* ── Switch ─────────────────────────────────────────────────────────────── */
-.auth-switch {
-  margin-top: 20px;
-  font-size: 13px;
-  color: #9e9e9e;
-  text-align: center;
-}
-
-.switch-btn {
-  background: none;
-  border: none;
-  color: #ffd60a;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 13px;
-  font-family: inherit;
-}
-
-/* ── Terms Modal ────────────────────────────────────────────────────────── */
+/* T&C Modal Overlay */
 .terms-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.75);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  animation: fadeUp 0.2s ease;
 }
 
 .terms-modal {
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 214, 10, 0.2);
+  background: #1a1a2e;
+  border: 1px solid rgba(99,102,241,0.3);
   border-radius: 20px;
   padding: 32px;
   max-width: 480px;
@@ -257,40 +226,141 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
 }
 
-.terms-modal h3 { font-size: 1.1rem; font-weight: 700; color: #f0f0f0; margin: 0; }
-.terms-modal p  { font-size: 13px; color: #9e9e9e; line-height: 1.6; margin: 0; }
-.terms-modal a  { color: #ffd60a; text-decoration: underline; }
+.terms-modal h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
 
-.terms-modal-actions { display: flex; flex-direction: column; gap: 10px; }
+.terms-modal p {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.terms-modal a {
+  color: #E6B400;
+  text-decoration: underline;
+}
+
+.terms-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
 
 .terms-modal-agree {
-  background: #ffd60a;
-  color: #1a1a1a;
+  background: linear-gradient(90deg, #FFC700, #E6B400);
+  color: #fff;
   border: none;
   padding: 13px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
+  transition: opacity 0.2s;
 }
+
+.terms-modal-agree:hover { opacity: 0.88; }
 
 .terms-modal-decline {
   background: transparent;
-  color: #9e9e9e;
+  color: rgba(255,255,255,0.4);
   border: 1px solid rgba(255,255,255,0.1);
   padding: 11px;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 0.88rem;
   cursor: pointer;
+  transition: border-color 0.2s;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────────────── */
+.terms-modal-decline:hover { border-color: rgba(255,255,255,0.25); }
+
+.divider {
+  animation: fadeUp 0.6s ease 0.85s both;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 25px 0;
+}
+
+.line {
+  height: 2px;
+  background-color: #bbb;
+  flex: 1;
+}
+
+.or-text {
+  margin: 0 15px;
+  color: #888;
+}
+
+.google-login-btn {
+  animation: fadeUp 0.6s ease 0.95s both;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--primary-cyan);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #444;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.google-login-btn:hover {
+  background-color: rgba(92, 225, 230, 0.15);
+  transform: scale(1.02);
+}
+
+.auth-switch {
+  animation: fadeUp 0.6s ease 1.05s both;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.switch-btn {
+  background: none;
+  border: none;
+  color: #4285F4;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 768px) {
   .login-container { flex-direction: column; height: auto; min-height: 100vh; }
-  .left-panel { flex: none; padding: 48px 24px; min-height: 200px; border-right: none; border-bottom: 1px solid rgba(255,214,10,0.1); }
-  .brand-title { font-size: 2.5rem; }
-  .right-panel { flex: 1; padding: 32px 20px; }
-  .login-box { padding: 28px 20px; }
+
+  .left-panel {
+    flex: none;
+    border-radius: 0 0 40px 40px;
+    padding: 48px 24px;
+    min-height: 220px;
+  }
+
+  .content-wrapper { padding: 0; text-align: center; }
+  .brand-title { font-size: 2.8rem; }
+  .brand-subtitle { font-size: 1rem; }
+
+  .right-panel {
+    flex: 1;
+    padding: 40px 20px;
+    align-items: center;
+  }
+
+  .login-box { max-width: 100%; padding: 0; }
+  .logo-placeholder { display: block !important; }
+  .logo-img { display: block !important; width: 100px; height: 100px; margin: 0 auto 5px; }
+  .login-header { font-size: 1.6rem; }
 }

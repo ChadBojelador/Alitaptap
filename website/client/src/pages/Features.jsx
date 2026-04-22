@@ -46,7 +46,7 @@ const FeaturesPage = () => {
       <section className="feature-block blue-bg animate-in fade-up">
         <div className="feature-content">
           <h2>Source Validation</h2>
-          <p>IThink checks whether your sources are peer-reviewed, authoritative, and up-to-date — so you only cite what's credible.</p>
+          <p>Alitaptap checks whether your sources are peer-reviewed, authoritative, and up-to-date — so you only cite what's credible.</p>
         </div>
         <div className="feature-placeholder"><img src={imgSource} alt="Source Validation" /></div>
       </section>
@@ -62,7 +62,7 @@ const FeaturesPage = () => {
       <section className="feature-block blue-bg animate-in fade-up">
         <div className="feature-content">
           <h2>AI Chat Assistant</h2>
-          <p>Ask IThink anything. Our built-in AI chatbot helps you dig deeper into claims, get instant explanations, and explore topics with guided, intelligent conversation — all in real time.</p>
+          <p>Ask Alitaptap anything. Our built-in AI chatbot helps you dig deeper into claims, get instant explanations, and explore topics with guided, intelligent conversation — all in real time.</p>
         </div>
         <div className="feature-placeholder"><img src={imgClarity} alt="AI Chat Assistant" /></div>
       </section>
@@ -76,8 +76,8 @@ const FeaturesPage = () => {
       </section>
 
       <section className="cta-section animate-in fade-up">
-        <h2>IThink is your AI truth partner</h2>
-        <p>Love the clarity IThink gives you in identifying truth? IThink brings that same 
+        <h2>Alitaptap is your AI truth partner</h2>
+        <p>Love the clarity Alitaptap gives you in identifying truth? Alitaptap brings that same 
            confidence to every claim, source, and piece of information.</p>
         <button className="cta-btn">Learn more</button>
         <p className="cta-this-is">This is</p>
@@ -92,7 +92,7 @@ const FeaturesPage = () => {
         <div className="footer-grid">
           <div className="footer-col">
             <h4>About Us</h4>
-            <p>IThink was built to help you think smarter. We combine AI with credibility research to give you tools that verify sources, detect bias, and score information accuracy.</p>
+            <p>Alitaptap was built to help you think smarter. We combine AI with credibility research to give you tools that verify sources, detect bias, and score information accuracy.</p>
             <a href="#" className="footer-link-bold">Learn More</a>
           </div>
           <div className="footer-col">
@@ -122,7 +122,7 @@ const FeaturesPage = () => {
             </div>
           </div>
         </div>
-        <p className="copyright">2026 IThink. All Right Reserved.</p>
+        <p className="copyright">2026 Alitaptap. All Right Reserved.</p>
       </footer>
       </div>
     </div>

@@ -1,5 +1,5 @@
 {
-  "name": "ithink",
+  "name": "Alitaptap",
   "version": "1.0.0",
   "scripts": {
     "dev": "concurrently \"npm --prefix client run dev\" \"npm --prefix server run dev\"",

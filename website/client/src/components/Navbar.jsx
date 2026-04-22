@@ -10,7 +10,7 @@ export default function Navbar() {
   return (
     <header className="header">
       <div className="logo-container">
-        <img src={logo} alt="IThink" className="nav-logo-img" />
+        <img src={logo} alt="Alitaptap" className="nav-logo-img" />
       </div>
 
       <nav className={`nav${open ? ' nav--open' : ''}`}>
