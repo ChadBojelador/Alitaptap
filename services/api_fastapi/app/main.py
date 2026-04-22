@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -29,6 +31,11 @@ def create_app() -> FastAPI:
         allow_methods=['*'],
         allow_headers=['*'],
     )
+
+    # Serve local images from scripts/images folder
+    images_path = Path(__file__).parent.parent / "scripts" / "images"
+    if images_path.exists():
+        application.mount("/images", StaticFiles(directory=str(images_path)), name="images")
 
     application.include_router(api_router)
     return application
