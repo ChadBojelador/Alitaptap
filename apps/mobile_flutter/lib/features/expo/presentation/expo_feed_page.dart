@@ -19,10 +19,8 @@ class ExpoFeedPage extends StatefulWidget {
 
 class _ExpoFeedPageState extends State<ExpoFeedPage> {
   final _api = ApiService();
-  final _searchController = TextEditingController();
   List<ResearchPost> _posts = [];
   bool _loading = true;
-  String _searchQuery = '';
 
   static const _yellow = Color(0xFFFFD60A);
 
@@ -30,12 +28,6 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   void initState() {
     super.initState();
     _load();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   Future<void> _load() async {
@@ -67,7 +59,6 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     final email = FirebaseAuth.instance.currentUser?.email ?? '';
     final bg = isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF0F0F0);
-    final filteredPosts = _posts.where(_matchesSearch).toList();
 
     return Scaffold(
       backgroundColor: bg,
@@ -111,6 +102,24 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  // Search icon
+                  GestureDetector(
+                    onTap: () => _openSearchOverlay(
+                      currentUid: uid,
+                      currentEmail: email,
+                      isDark: isDark,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _yellow.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.search_rounded,
+                          color: _yellow, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   // Messenger icon
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
@@ -129,18 +138,6 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                 ],
               ),
             ),
-            _SearchBar(
-              isDark: isDark,
-              controller: _searchController,
-              onChanged: (value) => setState(() {
-                _searchQuery = value.trim().toLowerCase();
-              }),
-              onClear: () {
-                _searchController.clear();
-                setState(() => _searchQuery = '');
-              },
-            ),
-
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _load,
@@ -175,10 +172,8 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                       )
                     else if (_posts.isEmpty)
                       _EmptyFeed(isDark: isDark)
-                    else if (filteredPosts.isEmpty)
-                      _EmptySearchResults(isDark: isDark)
                     else
-                      ...filteredPosts.map((post) => _PostCard(
+                      ..._posts.map((post) => _PostCard(
                             post: post,
                             currentUid: uid,
                             isDark: isDark,
@@ -220,70 +215,173 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
     );
   }
 
-  bool _matchesSearch(ResearchPost post) {
-    if (_searchQuery.isEmpty) return true;
-    final haystack = [
-      post.title,
-      post.abstract,
-      post.problemSolved,
-      post.authorEmail,
-      ...post.sdgTags,
-    ].join(' ').toLowerCase();
-    return haystack.contains(_searchQuery);
-  }
-}
+  Future<void> _openSearchOverlay({
+    required String currentUid,
+    required String currentEmail,
+    required bool isDark,
+  }) async {
+    final controller = TextEditingController();
+    final overlayBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final fieldBg = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF2F2F2);
+    final subtle = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666);
 
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({
-    required this.isDark,
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-  });
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        String query = '';
+        return StatefulBuilder(
+          builder: (context, setOverlayState) {
+            final filtered = _posts.where((post) {
+              if (query.isEmpty) return true;
+              final haystack = [
+                post.title,
+                post.abstract,
+                post.problemSolved,
+                post.authorEmail,
+                ...post.sdgTags,
+              ].join(' ').toLowerCase();
+              return haystack.contains(query);
+            }).toList();
 
-  final bool isDark;
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-  static const _yellow = Color(0xFFFFD60A);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A),
-        ),
-        decoration: InputDecoration(
-          hintText: 'Search posts, SDGs, authors...',
-          hintStyle: GoogleFonts.poppins(
-            fontSize: 13,
-            color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575),
-          ),
-          prefixIcon: Icon(Icons.search_rounded, color: _yellow, size: 20),
-          suffixIcon: controller.text.isEmpty
-              ? null
-              : IconButton(
-                  onPressed: onClear,
-                  icon: const Icon(Icons.close_rounded, size: 18),
-                  color: isDark
-                      ? const Color(0xFF9E9E9E)
-                      : const Color(0xFF757575),
+            return Dialog(
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              backgroundColor: overlayBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: _yellow.withValues(alpha: 0.3)),
+              ),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.78,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            icon: const Icon(Icons.arrow_back_rounded, color: _yellow),
+                          ),
+                          Expanded(
+                            child: Text(
+                              'Search Posts',
+                              style: GoogleFonts.poppins(
+                                color: _yellow,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+                      child: TextField(
+                        controller: controller,
+                        autofocus: true,
+                        onChanged: (value) => setOverlayState(() {
+                          query = value.trim().toLowerCase();
+                        }),
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search posts, SDGs, authors...',
+                          hintStyle: GoogleFonts.poppins(fontSize: 13, color: subtle),
+                          prefixIcon: const Icon(Icons.search_rounded, color: _yellow, size: 20),
+                          suffixIcon: query.isEmpty
+                              ? null
+                              : IconButton(
+                                  onPressed: () => setOverlayState(() {
+                                    controller.clear();
+                                    query = '';
+                                  }),
+                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  color: subtle,
+                                ),
+                          filled: true,
+                          fillColor: fieldBg,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Divider(
+                      height: 1,
+                      color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEAEAEA),
+                    ),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No matching posts.',
+                                style: GoogleFonts.poppins(color: subtle, fontSize: 13),
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: filtered.length,
+                              separatorBuilder: (_, __) => Divider(
+                                height: 1,
+                                color: isDark
+                                    ? const Color(0xFF2A2A2A)
+                                    : const Color(0xFFEAEAEA),
+                              ),
+                              itemBuilder: (context, index) {
+                                final post = filtered[index];
+                                return ListTile(
+                                  onTap: () {
+                                    Navigator.of(dialogContext).pop();
+                                    Navigator.of(this.context)
+                                        .push(
+                                          MaterialPageRoute(
+                                            builder: (_) => ExpoPostDetailPage(
+                                              post: post,
+                                              currentUid: currentUid,
+                                              currentEmail: currentEmail,
+                                            ),
+                                          ),
+                                        )
+                                        .then((_) => _load());
+                                  },
+                                  title: Text(
+                                    post.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: isDark
+                                          ? const Color(0xFFF0F0F0)
+                                          : const Color(0xFF1A1A1A),
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    post.authorEmail,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      color: subtle,
+                                    ),
+                                  ),
+                                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                                      size: 14, color: _yellow),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
                 ),
-          filled: true,
-          fillColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(26),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -952,34 +1050,3 @@ class _EmptyFeed extends StatelessWidget {
   }
 }
 
-class _EmptySearchResults extends StatelessWidget {
-  const _EmptySearchResults({required this.isDark});
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 60),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 48,
-              color: const Color(0xFFFFD60A).withValues(alpha: 0.3),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'No posts match your search.',
-              style: GoogleFonts.poppins(
-                color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666),
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

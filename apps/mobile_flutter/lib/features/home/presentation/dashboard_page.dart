@@ -280,8 +280,8 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  List<Widget> _buildActions(BuildContext context, bool isCommunity,
-      String uid, bool isDark, Color cardBg) {
+  List<Widget> _buildActions(BuildContext context, bool isCommunity, String uid,
+      bool isDark, Color cardBg) {
     final actions = isCommunity
         ? [
             _ActionTile(
@@ -330,16 +330,14 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ];
 
-    return actions
-        .expand((w) => [w, const SizedBox(height: 12)])
-        .toList()
+    return actions.expand((w) => [w, const SizedBox(height: 12)]).toList()
       ..removeLast();
   }
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good Morning!';
-    if (h < 17) return 'Good Afternoon!';
+    if (h < 12) return 'Good Day, there!';
+    if (h < 17) return 'Good Day, there!';
     return 'Good Evening!';
   }
 
@@ -444,8 +442,7 @@ class _IssueImageCard extends StatelessWidget {
                 ),
               ),
               child: const Center(
-                child: Icon(Icons.location_on_rounded,
-                    color: _white, size: 40),
+                child: Icon(Icons.location_on_rounded, color: _white, size: 40),
               ),
             ),
             // Bottom overlay
@@ -456,8 +453,8 @@ class _IssueImageCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(20)),
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(20)),
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
@@ -508,14 +505,12 @@ class _IssueImageCard extends StatelessWidget {
               top: 10,
               left: 10,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: _amber,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.flag_rounded,
-                    color: _dark, size: 12),
+                child: const Icon(Icons.flag_rounded, color: _dark, size: 12),
               ),
             ),
           ],
@@ -607,9 +602,8 @@ class _ActionTile extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isPrimary
-                ? Colors.transparent
-                : _amber.withValues(alpha: 0.2),
+            color:
+                isPrimary ? Colors.transparent : _amber.withValues(alpha: 0.2),
           ),
           boxShadow: [
             BoxShadow(
@@ -631,8 +625,7 @@ class _ActionTile extends StatelessWidget {
                     : _amber.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon,
-                  color: isPrimary ? _dark : _amber, size: 24),
+              child: Icon(icon, color: isPrimary ? _dark : _amber, size: 24),
             ),
             const SizedBox(width: 14),
             Expanded(

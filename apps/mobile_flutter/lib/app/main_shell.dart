@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app.dart';
-import '../features/chat/presentation/chat_ai_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
 import '../features/home/presentation/analytics_page.dart';
 import '../features/home/presentation/community_home_page.dart';
@@ -30,32 +29,41 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
-  void _openChatAI() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const ChatAIPage(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  final pages = [
-      if (widget.role == 'admin')
-        const AdminHomePage()
-      else if (widget.role == 'community')
-        DashboardPage(role: AppRole.community)
-      else
-        DashboardPage(role: AppRole.student),
-      if (widget.role == 'community')
-        IssueSubmitPage(reporterId: FirebaseAuth.instance.currentUser?.uid ?? '')
-      else
-        const CreatePage(),
-      const ExpoFeedPage(),
-      _ProfilePage(onToggleTheme: widget.onToggleTheme, onSignOut: widget.onSignOut, role: widget.role),
-    ];
+    final pages = widget.role == 'community'
+        ? [
+            const ExpoFeedPage(),
+            IssueSubmitPage(reporterId: uid),
+            DashboardPage(role: AppRole.community),
+            _ProfilePage(
+                onToggleTheme: widget.onToggleTheme,
+                onSignOut: widget.onSignOut,
+                role: widget.role),
+          ]
+        : widget.role == 'student'
+            ? [
+                const ExpoFeedPage(),
+                const CreatePage(),
+                IssueSubmitPage(reporterId: uid),
+                DashboardPage(role: AppRole.student),
+                _ProfilePage(
+                    onToggleTheme: widget.onToggleTheme,
+                    onSignOut: widget.onSignOut,
+                    role: widget.role),
+              ]
+            : [
+                const ExpoFeedPage(),
+                const CreatePage(),
+                const AdminHomePage(),
+                _ProfilePage(
+                    onToggleTheme: widget.onToggleTheme,
+                    onSignOut: widget.onSignOut,
+                    role: widget.role),
+              ];
 
     final safeIndex = _index.clamp(0, pages.length - 1);
 
@@ -65,7 +73,6 @@ class _MainShellState extends State<MainShell> {
         index: safeIndex,
         isDark: isDark,
         onTap: (i) => setState(() => _index = i),
-        onChatAITap: _openChatAI,
         role: widget.role,
       ),
     );
@@ -77,32 +84,40 @@ class _BottomNav extends StatelessWidget {
     required this.index,
     required this.isDark,
     required this.onTap,
-    required this.onChatAITap,
     required this.role,
   });
 
   final int index;
   final bool isDark;
   final ValueChanged<int> onTap;
-  final VoidCallback onChatAITap;
   final String role;
 
-  static const _items = [
-    (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.edit_note_rounded, label: 'Create'),
+  static const _adminItems = [
     (icon: Icons.lightbulb_rounded, label: 'Expo'),
+    (icon: Icons.edit_note_rounded, label: 'Create'),
+    (icon: Icons.home_rounded, label: 'Home'),
+    (icon: Icons.person_rounded, label: 'Profile'),
+  ];
+
+  static const _studentItems = [
+    (icon: Icons.lightbulb_rounded, label: 'Expo'),
+    (icon: Icons.edit_note_rounded, label: 'Create'),
+    (icon: Icons.add_location_alt_rounded, label: 'Report'),
+    (icon: Icons.home_rounded, label: 'Home'),
     (icon: Icons.person_rounded, label: 'Profile'),
   ];
 
   static const _communityItems = [
-    (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.add_location_alt_rounded, label: 'Report'),
     (icon: Icons.lightbulb_rounded, label: 'Expo'),
+    (icon: Icons.add_location_alt_rounded, label: 'Report'),
+    (icon: Icons.home_rounded, label: 'Home'),
     (icon: Icons.person_rounded, label: 'Profile'),
   ];
 
   List<({IconData icon, String label})> _getItems() {
-    return role == 'community' ? _communityItems : _items;
+    if (role == 'community') return _communityItems;
+    if (role == 'student') return _studentItems;
+    return _adminItems;
   }
 
   @override
@@ -114,111 +129,67 @@ class _BottomNav extends StatelessWidget {
 
     return SizedBox(
       height: 72,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
-        children: [
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: bg,
-                border: Border(top: BorderSide(color: border, width: 1)),
-              ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: 64,
-                  child: Row(
-                    children: List.generate(_getItems().length, (i) {
-                      final item = _getItems()[i];
-                      final selected = i == index;
-                      return Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => onTap(i),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: selected
-                                      ? _amber.withValues(alpha: 0.15)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  item.icon,
-                                  size: 22,
-                                  color: selected
-                                      ? _amber
-                                      : isDark
-                                          ? const Color(0xFF616161)
-                                          : const Color(0xFF9E9E9E),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                item.label,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: selected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: selected
-                                      ? _amber
-                                      : isDark
-                                          ? const Color(0xFF616161)
-                                          : const Color(0xFF9E9E9E),
-                                ),
-                              ),
-                            ],
+      child: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          border: Border(top: BorderSide(color: border, width: 1)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              children: List.generate(_getItems().length, (i) {
+                final item = _getItems()[i];
+                final selected = i == index;
+                return Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onTap(i),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? _amber.withValues(alpha: 0.15)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            item.icon,
+                            size: 22,
+                            color: selected
+                                ? _amber
+                                : isDark
+                                    ? const Color(0xFF616161)
+                                    : const Color(0xFF9E9E9E),
                           ),
                         ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: -30,
-            child: GestureDetector(
-              onTap: onChatAITap,
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _amber,
-                  boxShadow: [
-                    BoxShadow(
-                      color: _amber.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 8),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.label,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
+                            color: selected
+                                ? _amber
+                                : isDark
+                                    ? const Color(0xFF616161)
+                                    : const Color(0xFF9E9E9E),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    width: 3,
                   ),
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/branding/logo_source.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
+                );
+              }),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
