@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/home/presentation/onboarding_carousel_page.dart';
 import '../features/home/presentation/welcome_page.dart';
-import '../features/auth/presentation/sign_in_page.dart';
 import 'main_shell.dart';
 
 /// Provides [themeMode] and [toggleTheme] to the entire widget tree so any
@@ -181,15 +180,7 @@ class _RootRouter extends StatefulWidget {
 }
 
 class _RootRouterState extends State<_RootRouter> {
-  // DEMO BYPASS NOTE:
-  // Role is stored in-memory only — no Firebase Auth email/password required.
-  // On sign-out, _role resets to null and the role picker shows again.
-  // This allows switching roles freely during demo without real accounts.
-  String? _role;
-
-  void _onSignOut() {
-    setState(() => _role = null);
-  }
+  static const _defaultRole = 'student';
 
   @override
   Widget build(BuildContext context) {
@@ -209,12 +200,10 @@ class _RootRouterState extends State<_RootRouter> {
         if (!seenOnboarding) {
           return OnboardingCarouselPage(onToggleTheme: widget.toggleTheme);
         }
-        if (_role == null) {
-          return SignInPage(
-            onRoleSelected: (role) => setState(() => _role = role),
-          );
-        }
-        return MainShell(role: _role!, onToggleTheme: widget.toggleTheme, onSignOut: _onSignOut);
+        return MainShell(
+          role: _defaultRole,
+          onToggleTheme: widget.toggleTheme,
+        );
       },
     );
   }

@@ -55,7 +55,8 @@ class _StudentHomePageState extends State<StudentHomePage>
 
   List<Issue> get _filteredIssues {
     if (_tabController.index == 1) {
-      return [..._issues]..sort((a, b) => b.title.length.compareTo(a.title.length));
+      return [..._issues]
+        ..sort((a, b) => b.title.length.compareTo(a.title.length));
     }
     if (_tabController.index == 2) {
       return _issues.reversed.toList();
@@ -65,8 +66,8 @@ class _StudentHomePageState extends State<StudentHomePage>
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good Morning!';
-    if (h < 17) return 'Good Afternoon!';
+    if (h < 12) return 'Good Day, there!';
+    if (h < 17) return 'Good Day, there!';
     return 'Good Evening!';
   }
 
@@ -199,8 +200,7 @@ class _StudentHomePageState extends State<StudentHomePage>
                           ? _EmptyCard(isDark: isDark)
                           : ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              padding:
-                                  const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                               itemCount: _filteredIssues.length,
                               itemBuilder: (_, i) => _IssueCard(
                                 issue: _filteredIssues[i],
@@ -369,7 +369,8 @@ class _IssueCard extends StatelessWidget {
                     Icon(Icons.location_on_rounded, color: _amber, size: 36),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: _amber.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
@@ -434,8 +435,8 @@ class _IssueCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: _statusColor.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(6),
@@ -457,8 +458,7 @@ class _IssueCard extends StatelessWidget {
               top: 10,
               left: 10,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: _amber,
                   borderRadius: BorderRadius.circular(8),
@@ -555,7 +555,8 @@ class _ActionTile extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isPrimary ? Colors.transparent : _amber.withValues(alpha: 0.2),
+            color:
+                isPrimary ? Colors.transparent : _amber.withValues(alpha: 0.2),
           ),
           boxShadow: [
             BoxShadow(

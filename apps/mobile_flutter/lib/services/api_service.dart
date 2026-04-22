@@ -32,7 +32,7 @@ class ApiService {
     // Android emulators map host localhost via 10.0.2.2.
     if (defaultTargetPlatform == TargetPlatform.android) {
       // Physical device: use your PC's LAN IP. Emulator: use 10.0.2.2.
-      return 'http://192.168.254.158:8000/api/v1';
+      return 'http://192.168.0.139:8000/api/v1';
     }
 
     return 'http://127.0.0.1:8000/api/v1';
@@ -133,9 +133,7 @@ class ApiService {
     }
 
     final list = jsonDecode(response.body) as List<dynamic>;
-    return list
-        .map((e) => Issue.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return list.map((e) => Issue.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   /// Get all AI-validated issues for the expo page.
@@ -149,9 +147,7 @@ class ApiService {
     }
 
     final list = jsonDecode(response.body) as List<dynamic>;
-    return list
-        .map((e) => Issue.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return list.map((e) => Issue.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   /// Get a single issue by ID.
@@ -220,7 +216,9 @@ class ApiService {
       throw Exception('Failed to fetch posts: ${response.body}');
     }
     final list = jsonDecode(response.body) as List<dynamic>;
-    return list.map((e) => ResearchPost.fromJson(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => ResearchPost.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<ResearchPost> createPost({
@@ -250,7 +248,8 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to create post: ${response.body}');
     }
-    return ResearchPost.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return ResearchPost.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<ResearchPost> toggleLike({
@@ -267,7 +266,8 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to toggle like: ${response.body}');
     }
-    return ResearchPost.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return ResearchPost.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<ResearchPost> fundPost({
@@ -285,7 +285,8 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to fund post: ${response.body}');
     }
-    return ResearchPost.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return ResearchPost.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<Map<String, dynamic>> addComment({
