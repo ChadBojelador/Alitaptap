@@ -45,8 +45,8 @@ def is_research_question(message):
         session_service = InMemorySessionService()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        session = loop.run_until_complete(session_service.create_session(app_name="IThinkApp", user_id="user"))
-        runner = Runner(agent=agent, app_name="IThinkApp", session_service=session_service)
+        session = loop.run_until_complete(session_service.create_session(app_name="AlitaptapApp", user_id="user"))
+        runner = Runner(agent=agent, app_name="AlitaptapApp", session_service=session_service)
         msg = Content(parts=[Part(text=message)], role="user")
         events = runner.run(user_id="user", session_id=session.id, new_message=msg)
         reply = ""
@@ -72,24 +72,24 @@ def chat(message):
 
         # Step 3: build instruction
         if not research:
-            instruction = """You are IThink's research assistant. Your ONLY purpose is to help with research-related questions.
+            instruction = """You are Alitaptap's research assistant. Your ONLY purpose is to help with research-related questions.
 If the user's question is NOT related to research, fact-checking, or information verification, respond ONLY with:
 "I'm only able to assist with research-related questions such as fact-checking, source verification, and credibility analysis." """
         elif urls_context:
-            instruction = f"""You are IThink's research assistant. Answer the research question clearly and helpfully.
+            instruction = f"""You are Alitaptap's research assistant. Answer the research question clearly and helpfully.
 At the end, include a "Sources:" section using ONLY these real URLs — do not invent any:
 {urls_context}
 List each URL on its own line starting with http."""
         else:
-            instruction = """You are IThink's research assistant. Answer the research question clearly and helpfully.
+            instruction = """You are Alitaptap's research assistant. Answer the research question clearly and helpfully.
 Do not include any source URLs."""
 
         agent = Agent(name="chat_agent", model=model_provider, instruction=instruction)
         session_service = InMemorySessionService()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        session = loop.run_until_complete(session_service.create_session(app_name="IThinkApp", user_id="user"))
-        runner = Runner(agent=agent, app_name="IThinkApp", session_service=session_service)
+        session = loop.run_until_complete(session_service.create_session(app_name="AlitaptapApp", user_id="user"))
+        runner = Runner(agent=agent, app_name="AlitaptapApp", session_service=session_service)
         msg = Content(parts=[Part(text=message)], role="user")
         events = runner.run(user_id="user", session_id=session.id, new_message=msg)
 

@@ -2,7 +2,7 @@
   font-family: 'Inter', sans-serif;
   color: #ffffff;
   padding-top: 65px;
-  background: #000000;
+  background: #1A1A1A;
 }
 
 /* Header */
@@ -45,7 +45,7 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 40px rgba(99, 102, 241, 0.15);
-  background: #0a0a0f;
+  background: #141414;
 }
 
 /* Steps */
@@ -101,7 +101,7 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 40px rgba(99, 102, 241, 0.15), 0 0 0 1px rgba(255,255,255,0.05);
-  background: #0a0a0f;
+  background: #141414;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
 
@@ -160,7 +160,7 @@
 
 .white-btn {
   background: white;
-  color: #4F46E5;
+  color: #FFC700;
   border: none;
   padding: 14px 40px;
   border-radius: 10px;
@@ -184,7 +184,7 @@
 }
 
 .branding-strip .logo-text span {
-  color: #0EA5E9;
+  color: #E6B400;
 }
 
 .branding-strip p {
@@ -234,7 +234,7 @@
 .learn-link {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #4F46E5;
+  color: #FFC700;
   text-decoration: none;
   display: block;
   margin: 8px 0 16px;
@@ -279,7 +279,7 @@
 
 .dot.fb { background: #1877F2; }
 .dot.ig { background: #E1306C; }
-.dot.x  { background: #000000; }
+.dot.x  { background: #1A1A1A; }
 .dot.tk { background: #010101; }
 .dot.gm { background: #EA4335; }
 
@@ -351,5 +351,5 @@
 }
 
 .branding-strip .blue-it {
-  color: #4F46E5;
+  color: #FFC700;
 }

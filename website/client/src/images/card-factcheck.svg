@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0a0a0f"/>
+      <stop offset="0%" style="stop-color:#141414"/>
       <stop offset="100%" style="stop-color:#0f0f1a"/>
     </linearGradient>
     <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="0%" style="stop-color:#FFC700"/>
       <stop offset="100%" style="stop-color:#a855f7"/>
     </linearGradient>
     <filter id="blur1"><feGaussianBlur stdDeviation="40"/></filter>
   </defs>
 
   <rect width="600" height="400" fill="url(#bg)"/>
-  <circle cx="500" cy="80" r="130" fill="#4f46e5" opacity="0.15" filter="url(#blur1)"/>
+  <circle cx="500" cy="80" r="130" fill="#FFC700" opacity="0.15" filter="url(#blur1)"/>
   <circle cx="100" cy="320" r="100" fill="#a855f7" opacity="0.12" filter="url(#blur1)"/>
 
   <!-- Main glass panel -->
@@ -25,7 +25,7 @@
   <rect x="105" y="130" width="130" height="7" rx="3" fill="rgba(255,255,255,0.2)"/>
   <rect x="105" y="145" width="140" height="7" rx="3" fill="rgba(255,255,255,0.2)"/>
   <rect x="105" y="165" width="80" height="18" rx="9" fill="rgba(79,70,229,0.3)" stroke="rgba(79,70,229,0.6)" stroke-width="1"/>
-  <text x="120" y="178" font-family="Inter,sans-serif" font-size="9" fill="#a78bfa">Unverified</text>
+  <text x="120" y="178" font-family="Inter,sans-serif" font-size="9" fill="#E6B400">Unverified</text>
 
   <!-- Right verified card -->
   <rect x="325" y="80" width="190" height="110" rx="14" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>

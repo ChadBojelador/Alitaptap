@@ -4,7 +4,7 @@ import '../styles/workspace.css';
 import '../styles/gradient-icon.css';
 import { FaUserCircle } from 'react-icons/fa';
 import { useLocation, useNavigate } from 'react-router-dom';
-import IThinkLogo from '../IThinkLogo';
+import AlitaptapLogo from '../AlitaptapLogo';
 import { useTheme } from '../ThemeContext';
 import Sidebar from '../components/Sidebar';
 import ThemeToggle from '../components/ThemeToggle';

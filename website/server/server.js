@@ -284,7 +284,7 @@ app.delete('/api/chat/sessions/:sessionId', authMiddleware, apiLimiter,
     }
 );
 
-// --- Chat with IThink (Python ADK + Groq) ---
+// --- Chat with Alitaptap (Python ADK + Groq) ---
 app.post('/api/chat', authMiddleware, apiLimiter,
     [body('message').isString().trim().isLength({ min: 1, max: 5000 }).withMessage('Message must be 1–5000 characters')],
     validate,
@@ -529,7 +529,7 @@ app.get('/logout', (req, res, next) => {
 });
 
 // Health check
-app.get('/', (req, res) => res.json({ status: 'IThink API running' }));
+app.get('/', (req, res) => res.json({ status: 'Alitaptap API running' }));
 
 // --- GLOBAL ERROR HANDLER ---
 // eslint-disable-next-line no-unused-vars

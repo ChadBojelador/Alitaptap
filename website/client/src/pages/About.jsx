@@ -39,7 +39,7 @@ const AboutPage = () => {
       <section className="about-hero animate-in fade-up">
         <h1>About Us</h1>
         <p className="hero-subtext">
-          IThink is an AI-powered platform built by students, for students. We created this tool to help learners like us verify information, detect bias, and navigate knowledge with clarity and confidence. In a world flooded with misinformation and unverified claims, we built IThink to be a trusted partner in critical thinking — giving you the tools to question what you read, validate what you share, and make decisions grounded in verified facts.
+          Alitaptap is an AI-powered platform built by students, for students. We created this tool to help learners like us verify information, detect bias, and navigate knowledge with clarity and confidence. In a world flooded with misinformation and unverified claims, we built Alitaptap to be a trusted partner in critical thinking — giving you the tools to question what you read, validate what you share, and make decisions grounded in verified facts.
         </p>
       </section>
 
@@ -48,10 +48,10 @@ const AboutPage = () => {
         <div className="split-text">
           <h2>Our Vision</h2>
           <p>
-            We envision a world where every student — regardless of background or technical expertise — has access to accurate, verified information. A world where misinformation cannot thrive because the tools to expose it are freely available and easy to use. As students ourselves, we built IThink to be the platform we wished we had — one that empowers learners to think critically, question sources, and make decisions grounded in truth.
+            We envision a world where every student — regardless of background or technical expertise — has access to accurate, verified information. A world where misinformation cannot thrive because the tools to expose it are freely available and easy to use. As students ourselves, we built Alitaptap to be the platform we wished we had — one that empowers learners to think critically, question sources, and make decisions grounded in truth.
           </p>
           <p style={{ marginTop: '16px' }}>
-            We see a future where students submit research backed by verified sources and can confidently distinguish fact from fiction in their feeds and readings. IThink is building toward that future — one analysis at a time. Our vision is not just a product goal; it is a commitment to helping students like us access better information.
+            We see a future where students submit research backed by verified sources and can confidently distinguish fact from fiction in their feeds and readings. Alitaptap is building toward that future — one analysis at a time. Our vision is not just a product goal; it is a commitment to helping students like us access better information.
           </p>
         </div>
       </section>
@@ -61,10 +61,10 @@ const AboutPage = () => {
         <div className="split-text">
           <h2>Our Mission</h2>
           <p>
-            Our mission is to make truth accessible to every student. We build intelligent tools that analyze claims, validate sources, and score credibility — so you can trust what you read, share, and cite in your work. Every feature we develop is guided by a single question: does this help students get closer to the truth? From source validation to credibility scoring, every tool in IThink is designed with that purpose at its core.
+            Our mission is to make truth accessible to every student. We build intelligent tools that analyze claims, validate sources, and score credibility — so you can trust what you read, share, and cite in your work. Every feature we develop is guided by a single question: does this help students get closer to the truth? From source validation to credibility scoring, every tool in Alitaptap is designed with that purpose at its core.
           </p>
           <p style={{ marginTop: '16px' }}>
-            We are students who got tired of not knowing whether the sources we were using were actually reliable. So we built something about it. IThink does not just tell you whether something is true or false — it shows you why, walks you through the evidence, and empowers you to reach your own informed conclusions. Our mission is to be a partner in your thinking process, not a replacement for it.
+            We are students who got tired of not knowing whether the sources we were using were actually reliable. So we built something about it. Alitaptap does not just tell you whether something is true or false — it shows you why, walks you through the evidence, and empowers you to reach your own informed conclusions. Our mission is to be a partner in your thinking process, not a replacement for it.
           </p>
         </div>
       </section>
@@ -81,33 +81,33 @@ const AboutPage = () => {
         <div className="split-text">
           <h2>Who We Are</h2>
           <p>
-            IThink was built by a group of students who were frustrated by the growing spread of misinformation and the lack of simple, accessible tools to verify what they were reading. We are college students from different fields — computer science, communications, and information technology — united by a shared frustration: why is it so hard to know if something is actually true?
+            Alitaptap was built by a group of students who were frustrated by the growing spread of misinformation and the lack of simple, accessible tools to verify what they were reading. We are college students from different fields — computer science, communications, and information technology — united by a shared frustration: why is it so hard to know if something is actually true?
           </p>
           <p style={{ marginTop: '16px' }}>
-            Our team is small but driven. We built IThink as a school project that grew into something we genuinely believe can help other students like us. We are not a big tech company — we are students who care about getting the right information and wanted to make that easier for everyone. Every feature in IThink was built with one person in mind: a student trying to do their best work with reliable sources.
+            Our team is small but driven. We built Alitaptap as a school project that grew into something we genuinely believe can help other students like us. We are not a big tech company — we are students who care about getting the right information and wanted to make that easier for everyone. Every feature in Alitaptap was built with one person in mind: a student trying to do their best work with reliable sources.
           </p>
         </div>
       </section>
 
       <section className="about-split reverse animate-in fade-left">
-        <div className="split-visual"><img src={imgDifferent} alt="What Makes IThink Different" style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:20 }} /></div>
+        <div className="split-visual"><img src={imgDifferent} alt="What Makes Alitaptap Different" style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:20 }} /></div>
         <div className="split-text">
-          <h2>What Makes IThink Different</h2>
+          <h2>What Makes Alitaptap Different</h2>
           <p>
-            Unlike generic AI assistants, IThink is purpose-built for credibility analysis. We designed it specifically to help students evaluate sources, cross-check claims, and understand why something is or is not reliable — not just get a yes or no answer. This focus means IThink actively evaluates the reliability of information against verified standards rather than just generating plausible-sounding responses.
+            Unlike generic AI assistants, Alitaptap is purpose-built for credibility analysis. We designed it specifically to help students evaluate sources, cross-check claims, and understand why something is or is not reliable — not just get a yes or no answer. This focus means Alitaptap actively evaluates the reliability of information against verified standards rather than just generating plausible-sounding responses.
           </p>
           <p style={{ marginTop: '16px' }}>
-            We also believe in explainability. When IThink flags a claim or rates a source, it tells you exactly why — so you can learn from it, not just copy it. As students, we know the difference between a tool that does your thinking for you and one that makes you a better thinker. IThink is built to be the second kind. That is what makes it different, and that is why we built it.
+            We also believe in explainability. When Alitaptap flags a claim or rates a source, it tells you exactly why — so you can learn from it, not just copy it. As students, we know the difference between a tool that does your thinking for you and one that makes you a better thinker. Alitaptap is built to be the second kind. That is what makes it different, and that is why we built it.
           </p>
         </div>
       </section>
 
       <section className="about-cta animate-in fade-up">
         <div className="cta-logo">
-          <img src={logo} alt="IThink Logo" className="about-logo-img" />
+          <img src={logo} alt="Alitaptap Logo" className="about-logo-img" />
         </div>
         <h3>Truth powers better decisions</h3>
-        <p>Rely on IThink to highlight inaccuracies, verify sources, and navigate knowledge with ease.</p>
+        <p>Rely on Alitaptap to highlight inaccuracies, verify sources, and navigate knowledge with ease.</p>
         <div className="cta-buttons">
           <button className="btn-signup" onClick={() => navigate('/login')}>Sign up for free</button>
           <button className="btn-google" onClick={handleGoogleSignup}>
@@ -133,7 +133,7 @@ const AboutPage = () => {
         <div className="footer-grid">
           <div className="footer-main-info">
             <h4>About Us</h4>
-            <p>IThink was built by a team passionate about truth and technology. We combine AI with credibility research to give you a smarter way to verify information and navigate knowledge.</p>
+            <p>Alitaptap was built by a team passionate about truth and technology. We combine AI with credibility research to give you a smarter way to verify information and navigate knowledge.</p>
             <a href="#" className="learn-link">Learn More</a>
             <p className="footer-subtext">Review how we handle your data in our <br/> <b>Terms &amp; Privacy Policy</b>. <br/> Learn how we assist you in our <b>Help Center</b>.</p>
           </div>
@@ -166,7 +166,7 @@ const AboutPage = () => {
             </ul>
           </div>
         </div>
-        <p className="copyright-bar">2026 IThink. All Rights Reserved.</p>
+        <p className="copyright-bar">2026 Alitaptap. All Rights Reserved.</p>
       </footer>
       </div>
     </div>

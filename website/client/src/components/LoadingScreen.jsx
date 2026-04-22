@@ -30,7 +30,7 @@ export default function LoadingScreen() {
           <div className="ls-logo-ring" />
           <div className="ls-logo-ring ls-logo-ring--2" />
           <div className="ls-logo-core">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1a6d70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a7 7 0 0 1 7 7c0 3.5-2.5 6-4 7.5V18a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-1.5C7.5 15 5 12.5 5 9a7 7 0 0 1 7-7z"/>
               <line x1="9" y1="21" x2="15" y2="21"/>
               <line x1="10" y1="23" x2="14" y2="23"/>
@@ -39,7 +39,7 @@ export default function LoadingScreen() {
         </div>
 
         {/* Brand name */}
-        <div className="ls-brand">IThink</div>
+        <div className="ls-brand">Alitaptap</div>
 
         {/* Animated bar */}
         <div className="ls-bar-track">

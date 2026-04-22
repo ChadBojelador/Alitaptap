@@ -49,13 +49,13 @@ function TermsRequired({ user, setUser }) {
       <div className="terms-modal">
         <h3>Before you continue</h3>
         <p>
-          By using IThink, you agree to our{' '}
+          By using Alitaptap, you agree to our{' '}
           <a href="/terms" target="_blank" rel="noreferrer">Terms and Conditions</a>{' '}and{' '}
           <a href="/terms" target="_blank" rel="noreferrer">Privacy Policy</a>.
           Please read them before proceeding.
         </p>
         <div className="terms-modal-actions">
-          <button className="terms-modal-agree" onClick={handleAgree}>I Agree — Continue to IThink</button>
+          <button className="terms-modal-agree" onClick={handleAgree}>I Agree — Continue to Alitaptap</button>
           <button className="terms-modal-decline" onClick={handleDecline}>Decline — Go back to login</button>
         </div>
       </div>

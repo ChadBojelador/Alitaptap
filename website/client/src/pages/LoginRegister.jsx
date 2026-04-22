@@ -98,7 +98,7 @@ export default function LoginRegister({ setUser }) {
       {/* Left Panel */}
       <div className="left-panel">
         <div className="content-wrapper">
-          <h1 className="brand-title">IThink</h1>
+          <h1 className="brand-title">Alitaptap</h1>
           <p className="brand-subtitle">
             Think deeper, organize smarter.<br />
             Join our community today.
@@ -111,11 +111,11 @@ export default function LoginRegister({ setUser }) {
       <div className="right-panel">
         <div className="login-box">
           <div className="logo-placeholder">
-            <img src={logo} alt="IThink Logo" className="logo-img" />
+            <img src={logo} alt="Alitaptap Logo" className="logo-img" />
           </div>
 
           <h2 className="login-header">
-            {isLogin ? <>Log in to <span>IThink</span></> : <>Create an <span>IThink</span> Account</>}
+            {isLogin ? <>Log in to <span>Alitaptap</span></> : <>Create an <span>Alitaptap</span> Account</>}
           </h2>
 
           <form className="login-form" onSubmit={handleSubmit} autoComplete="off">
@@ -153,7 +153,7 @@ export default function LoginRegister({ setUser }) {
             <button type="submit" className="login-submit-btn" disabled={loading || (!isLogin && !agreed)}>
               {loading ? 'Processing...' : (isLogin ? 'Log in' : 'Sign up')}
             </button>
-            {successMsg && <p style={{ color: '#5ce1e6', textAlign: 'center', marginTop: 8, fontSize: 14 }}>{successMsg}</p>}
+            {successMsg && <p style={{ color: '#FFC700', textAlign: 'center', marginTop: 8, fontSize: 14 }}>{successMsg}</p>}
             {error && <p style={{ color: '#ff6b6b', textAlign: 'center', marginTop: 8, fontSize: 14 }}>{error}</p>}
           </form>
 

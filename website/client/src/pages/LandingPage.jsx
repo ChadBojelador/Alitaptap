@@ -16,8 +16,8 @@ import imgClarity from '../images/card-clarity.svg';
 import imgNavigate from '../images/card-navigate.svg';
 
 const CARDS = [
-  { title: 'Source Validation',  description: 'Checks if sources are peer-reviewed, authoritative, and recent.', gradient: 'linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%)', img: imgSourceValidation },
-  { title: 'Fact Cross-Check',   description: 'Compares claims with verified datasets and academic papers.',       gradient: 'linear-gradient(135deg, #4f46e5 0%, #a855f7 100%)', img: imgHighlight },
+  { title: 'Source Validation',  description: 'Checks if sources are peer-reviewed, authoritative, and recent.', gradient: 'linear-gradient(135deg, #FFC700 0%, #E6B400 100%)', img: imgSourceValidation },
+  { title: 'Fact Cross-Check',   description: 'Compares claims with verified datasets and academic papers.',       gradient: 'linear-gradient(135deg, #FFC700 0%, #a855f7 100%)', img: imgHighlight },
   { title: 'Credibility Scoring',description: 'Analyzes language patterns and potential biases in real-time.',     gradient: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)', img: imgScore },
   { title: 'Clarity Score',      description: 'Rates how clearly and logically an argument is structured.',        gradient: 'linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)', img: imgClarity },
 ];
@@ -51,7 +51,7 @@ function LandingPage() {
       <main className="main-content">
         <h1 className="main-heading">Think deeper. We'll help<br /> you make sense of it all.</h1>
         <p className="main-description">
-          Work with IThink—your AI partner in identifying truth,<br />
+          Work with Alitaptap—your AI partner in identifying truth,<br />
           exposing inaccuracies, and navigating knowledge with<br />
           clarity and confidence.
         </p>
@@ -132,8 +132,8 @@ function LandingPage() {
 
       <section className="cta-full-width">
         <div className="cta-content">
-          <h2>IThink is your AI truth partner</h2>
-          <p>Love the clarity IThink gives you in identifying truth? IThink brings that same confidence to every claim, source, and piece of information, with tools and insights designed to help you think smarter and make decisions you can trust.</p>
+          <h2>Alitaptap is your AI truth partner</h2>
+          <p>Love the clarity Alitaptap gives you in identifying truth? Alitaptap brings that same confidence to every claim, source, and piece of information, with tools and insights designed to help you think smarter and make decisions you can trust.</p>
           <button className="learn-more-btn">Learn more</button>
         </div>
       </section>
@@ -144,7 +144,7 @@ function LandingPage() {
           <span className="logo-text-large">think.</span>
         </div>
         <h2>Truth powers better decisions</h2>
-        <p>Rely on IThink to highlight inaccuracies, verify sources, and navigate knowledge with ease.</p>
+        <p>Rely on Alitaptap to highlight inaccuracies, verify sources, and navigate knowledge with ease.</p>
         <div className="btn-group">
           <button className="signup-free" onClick={() => navigate('/login')}>Sign up for free</button>
           <button className="signup-google" onClick={handleGoogleSignup}>
@@ -158,7 +158,7 @@ function LandingPage() {
       </section>
 
       <div className="purple-banner">
-        <div className="banner-logo">IThink</div>
+        <div className="banner-logo">Alitaptap</div>
         <p>Identify <b>T</b>ruth. <b>H</b>ighlight <b>I</b>naccuracies. <b>N</b>avigate <b>K</b>nowledge.</p>
       </div>
 
@@ -197,7 +197,7 @@ function LandingPage() {
             </div>
           </div>
         </div>
-        <div className="copyright">2026 IThink. All Right Reserved.</div>
+        <div className="copyright">2026 Alitaptap. All Right Reserved.</div>
       </footer>
       </div>
     </div>

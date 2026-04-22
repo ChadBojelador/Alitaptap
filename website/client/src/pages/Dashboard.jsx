@@ -5,7 +5,7 @@ import '../styles/draft.css';
 import { FaQuestionCircle, FaUserCircle, FaPlus, FaFileAlt, FaTrash } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import IThinkLogo from '../IThinkLogo';
+import AlitaptapLogo from '../AlitaptapLogo';
 import { useTheme } from '../ThemeContext';
 import Sidebar from '../components/Sidebar';
 import ThemeToggle from '../components/ThemeToggle';

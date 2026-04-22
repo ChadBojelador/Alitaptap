@@ -1,5 +1,5 @@
 :root {
-  --primary-cyan: #5ce1e6;
+  --primary-cyan: #FFC700;
   --dark-bg: #232323;
   --input-border: #999;
 }
@@ -71,12 +71,12 @@ body, html {
   font-weight: bold;
   font-size: 1rem;
   cursor: pointer;
-  color: #1a6d70;
+  color: #1A1A1A;
   transition: background-color 0.2s, transform 0.2s;
 }
 
 .learn-more-btn:hover {
-  background-color: #3bbfc4;
+  background-color: #E6B400;
   transform: scale(1.05);
 }
 
@@ -143,14 +143,14 @@ body, html {
   padding: 15px;
   border-radius: 15px;
   font-size: 1.3rem;
-  color: #1a6d70;
+  color: #1A1A1A;
   cursor: pointer;
   margin-top: 10px;
   transition: background-color 0.2s, transform 0.2s;
 }
 
 .login-submit-btn:hover:not(:disabled) {
-  background-color: #3bbfc4;
+  background-color: #E6B400;
   transform: scale(1.02);
 }
 
@@ -183,7 +183,7 @@ body, html {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  accent-color: #6366f1;
+  accent-color: #FFC700;
   cursor: pointer;
 }
 
@@ -194,13 +194,13 @@ body, html {
 }
 
 .terms-checkbox-wrap a {
-  color: #6366f1;
+  color: #FFC700;
   text-decoration: underline;
   font-weight: 600;
 }
 
 .terms-checkbox-wrap a:hover {
-  color: #0ea5e9;
+  color: #E6B400;
 }
 
 /* T&C Modal Overlay */
@@ -244,7 +244,7 @@ body, html {
 }
 
 .terms-modal a {
-  color: #a78bfa;
+  color: #E6B400;
   text-decoration: underline;
 }
 
@@ -256,7 +256,7 @@ body, html {
 }
 
 .terms-modal-agree {
-  background: linear-gradient(90deg, #6366f1, #0ea5e9);
+  background: linear-gradient(90deg, #FFC700, #E6B400);
   color: #fff;
   border: none;
   padding: 13px;
