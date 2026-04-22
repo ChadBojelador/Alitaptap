@@ -1,0 +1,39 @@
+[
+  {
+    "reporter_id": "community_user_001",
+    "reporter_name": "Local Resident",
+    "title": "Road Damage and Potholes",
+    "description": "Our local roads are getting harder to navigate by the day. From deep potholes to crumbling asphalt, these conditions aren't just an inconvenience—they're a safety hazard for drivers, cyclists, and pedestrians alike.",
+    "lat": 14.5995,
+    "lng": 120.9842,
+    "caption": "Our local roads are getting harder to navigate by the day. From deep potholes to crumbling asphalt, these conditions aren't just an inconvenience—they're a safety hazard for drivers, cyclists, and pedestrians alike.",
+    "local_image_paths": [
+      "images/1.jpg"
+    ]
+  },
+  {
+    "reporter_id": "community_user_002",
+    "reporter_name": "Local Resident",
+    "title": "Snakes on Neighborhood Roads",
+    "description": "Looks like the local snakes are taking \"street food\" a bit too literally. We've spotted a few slithering friends trying to cross the neighborhood roads lately.",
+    "lat": 14.5547,
+    "lng": 121.0244,
+    "caption": "Looks like the local snakes are taking \"street food\" a bit too literally. We've spotted a few slithering friends trying to cross the neighborhood roads lately.",
+    "local_image_paths": [
+      "images/2.1.jpg",
+      "images/2.jpg"
+    ]
+  },
+  {
+    "reporter_id": "community_user_003",
+    "reporter_name": "Local Resident",
+    "title": "Parking Crisis in Local Area",
+    "description": "The lack of parking in our area has officially reached a breaking point. It's affecting local businesses and making daily commutes a nightmare for residents.",
+    "lat": 14.5833,
+    "lng": 121.0500,
+    "caption": "The lack of parking in our area has officially reached a breaking point. It's affecting local businesses and making daily commutes a nightmare for residents.",
+    "local_image_paths": [
+      "images/3.jpg"
+    ]
+  }
+]
