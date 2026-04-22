@@ -31,6 +31,7 @@ Request
 - `lat`: number (required)
 - `lng`: number (required)
 - `image_url`: string | null (optional)
+- `image_urls`: string[] (optional)
 
 Response
 - `issue_id`: string
@@ -53,6 +54,7 @@ Response (array)
 - `lat`: number
 - `lng`: number
 - `image_url`: string | null
+- `image_urls`: string[]
 - `status`: string
 - `tags`: string[]
 - `created_at`: string
@@ -70,6 +72,7 @@ Response
 - `lat`: number
 - `lng`: number
 - `image_url`: string | null
+- `image_urls`: string[]
 - `status`: string
 - `tags`: string[]
 - `created_at`: string

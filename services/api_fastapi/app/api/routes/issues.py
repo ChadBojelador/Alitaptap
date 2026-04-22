@@ -33,6 +33,8 @@ class IssueCreate(BaseModel):
     lat: float
     lng: float
     image_url: Optional[str] = None
+    image_urls: list[str] = []
+    caption: Optional[str] = None
     reporter_name: Optional[str] = None
 
 
@@ -51,6 +53,8 @@ class IssueListItem(BaseModel):
     lat: float
     lng: float
     image_url: Optional[str] = None
+    image_urls: list[str] = []
+    caption: Optional[str] = None
     status: str
     tags: list[str] = []
     ai_summary: Optional[str] = None
@@ -87,6 +91,12 @@ def _doc_to_issue(doc_id: str, data: dict) -> dict:
     location = data.get('location', {})
     created = data.get('created_at')
     updated = data.get('updated_at')
+    image_urls = data.get('image_urls') or []
+    image_url = data.get('image_url')
+    if image_url and image_url not in image_urls:
+        image_urls = [image_url, *image_urls]
+    if not image_url and image_urls:
+        image_url = image_urls[0]
     return {
         'issue_id': doc_id,
         'reporter_id': data.get('reporter_id', ''),
@@ -95,7 +105,9 @@ def _doc_to_issue(doc_id: str, data: dict) -> dict:
         'description': data.get('description', ''),
         'lat': location.get('lat', 0.0),
         'lng': location.get('lng', 0.0),
-        'image_url': data.get('image_url'),
+        'image_url': image_url,
+        'image_urls': image_urls,
+        'caption': data.get('caption'),
         'status': data.get('status', 'pending'),
         'tags': data.get('tags', []),
         'ai_summary': data.get('ai_summary'),
@@ -167,6 +179,11 @@ def create_issue(payload: IssueCreate) -> IssueCreateResponse:
     # Auto-approve if valid, otherwise reject
     status = IssueStatus.validated.value if validation_result.is_valid else IssueStatus.rejected.value
 
+    image_urls = list(dict.fromkeys(payload.image_urls or []))
+    if payload.image_url and payload.image_url not in image_urls:
+        image_urls = [payload.image_url, *image_urls]
+    image_url = payload.image_url or (image_urls[0] if image_urls else None)
+
     doc_data = {
         'reporter_id': payload.reporter_id,
         'reporter_name': payload.reporter_name,
@@ -176,7 +193,9 @@ def create_issue(payload: IssueCreate) -> IssueCreateResponse:
             'lat': payload.lat,
             'lng': payload.lng,
         },
-        'image_url': payload.image_url,
+        'image_url': image_url,
+        'image_urls': image_urls,
+        'caption': payload.caption,
         'status': status,
         'ai_summary': validation_result.ai_summary,
         'ai_sdg_tag': validation_result.auto_sdg_tag,

@@ -18,10 +18,27 @@
 - `location.lat`
 - `location.lng`
 - `image_url`
+- `image_urls` (string[] — optional gallery, first item should match `image_url`)
 - `status` (`pending`, `validated`, `rejected`)
 - `tags` (string[] — for SDG tagging in M3, default empty)
 - `created_at`
 - `updated_at`
+
+### research_posts
+- `id`
+- `author_id`
+- `author_email`
+- `title`
+- `abstract`
+- `problem_solved`
+- `image_url`
+- `image_urls` (string[] — optional gallery, first item should match `image_url`)
+- `sdg_tags` (string[])
+- `funding_goal`
+- `funding_raised`
+- `likes`
+- `liked_by` (string[])
+- `created_at`
 
 ### mapper_runs
 - `id`

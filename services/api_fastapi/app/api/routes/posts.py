@@ -15,6 +15,9 @@ class PostCreate(BaseModel):
     title: str
     abstract: str
     problem_solved: str
+    image_url: Optional[str] = None
+    image_urls: list[str] = []
+    caption: Optional[str] = None
     sdg_tags: list[str] = []
     funding_goal: float = 0.0
 
@@ -26,6 +29,9 @@ class PostResponse(BaseModel):
     title: str
     abstract: str
     problem_solved: str
+    image_url: Optional[str] = None
+    image_urls: list[str]
+    caption: Optional[str] = None
     sdg_tags: list[str]
     funding_goal: float
     funding_raised: float
@@ -59,6 +65,12 @@ class CommentResponse(BaseModel):
 
 def _doc_to_post(doc_id: str, data: dict) -> dict:
     created = data.get('created_at')
+    image_urls = data.get('image_urls') or []
+    image_url = data.get('image_url')
+    if image_url and image_url not in image_urls:
+        image_urls = [image_url, *image_urls]
+    if not image_url and image_urls:
+        image_url = image_urls[0]
     return {
         'post_id': doc_id,
         'author_id': data.get('author_id', ''),
@@ -66,6 +78,9 @@ def _doc_to_post(doc_id: str, data: dict) -> dict:
         'title': data.get('title', ''),
         'abstract': data.get('abstract', ''),
         'problem_solved': data.get('problem_solved', ''),
+        'image_url': image_url,
+        'image_urls': image_urls,
+        'caption': data.get('caption'),
         'sdg_tags': data.get('sdg_tags', []),
         'funding_goal': data.get('funding_goal', 0.0),
         'funding_raised': data.get('funding_raised', 0.0),
@@ -79,12 +94,20 @@ def _doc_to_post(doc_id: str, data: dict) -> dict:
 def create_post(payload: PostCreate) -> PostResponse:
     db = get_db()
     now = datetime.now(timezone.utc)
+    image_urls = list(dict.fromkeys(payload.image_urls or []))
+    if payload.image_url and payload.image_url not in image_urls:
+        image_urls = [payload.image_url, *image_urls]
+    image_url = payload.image_url or (image_urls[0] if image_urls else None)
+
     data = {
         'author_id': payload.author_id,
         'author_email': payload.author_email,
         'title': payload.title,
         'abstract': payload.abstract,
         'problem_solved': payload.problem_solved,
+        'image_url': image_url,
+        'image_urls': image_urls,
+        'caption': payload.caption,
         'sdg_tags': payload.sdg_tags,
         'funding_goal': payload.funding_goal,
         'funding_raised': 0.0,

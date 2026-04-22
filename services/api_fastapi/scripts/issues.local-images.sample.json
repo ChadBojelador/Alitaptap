@@ -6,7 +6,12 @@
     "description": "Floodwater rises quickly during heavy rain and blocks access to homes and stores.",
     "lat": 14.5995,
     "lng": 120.9842,
-    "local_image_path": "images/flood-1.jpg"
+    "caption": "Our local roads are getting harder to navigate by the day. From deep potholes to crumbling asphalt, these conditions aren't just an inconvenience-they're a safety hazard for drivers, cyclists, and pedestrians alike.",
+    "local_image_paths": [
+      "images/flood-1.jpg",
+      "images/flood-2.jpg",
+      "images/flood-3.jpg"
+    ]
   },
   {
     "reporter_id": "community_user_002",
@@ -15,6 +20,7 @@
     "description": "Accumulated plastic waste along the river causes foul odor and clogged drainage.",
     "lat": 14.5547,
     "lng": 121.0244,
+    "caption": "Looks like the local snakes are taking \"street food\" a bit too literally. We've spotted a few slithering friends trying to cross the neighborhood roads lately.",
     "local_image_path": "images/river-plastic.jpg"
   }
 ]

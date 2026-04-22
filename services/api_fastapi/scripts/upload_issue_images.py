@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Upload local issue images to Firebase Storage and write image_url back to JSON.
+"""Upload local issue images to Firebase Storage and write image URLs back to JSON.
 
 Input JSON is expected to be an array of issue objects.
-Each issue may include one of these helper fields:
+Each issue may include any of these helper fields:
 - local_image_path
 - image_path
+- local_image_paths (array)
+- image_paths (array)
 
-The script uploads that local file to Firebase Storage and writes image_url.
+The script uploads local files to Firebase Storage and writes:
+- image_urls (array)
+- image_url (first image, for backward compatibility)
+
 Helper fields are removed in output JSON.
 """
 
@@ -53,6 +58,29 @@ def _resolve_image_path(raw_path: str, images_root: Path | None) -> Path:
     if images_root is not None:
         return (images_root / p).resolve()
     return p.resolve()
+
+
+def _collect_local_paths(item: dict[str, Any]) -> list[str]:
+    single = item.get("local_image_path") or item.get("image_path")
+    many = item.get("local_image_paths") or item.get("image_paths") or []
+
+    collected: list[str] = []
+    if single:
+        collected.append(str(single))
+    if isinstance(many, list):
+        for p in many:
+            if p:
+                collected.append(str(p))
+
+    # Keep order while removing duplicates.
+    seen: set[str] = set()
+    unique: list[str] = []
+    for p in collected:
+        if p in seen:
+            continue
+        seen.add(p)
+        unique.append(p)
+    return unique
 
 
 def _build_blob_name(folder: str, file_path: Path) -> str:
@@ -104,7 +132,7 @@ def main() -> int:
     load_dotenv()
 
     parser = argparse.ArgumentParser(
-        description="Upload local issue images to Firebase Storage and fill image_url"
+        description="Upload local issue images to Firebase Storage and fill image_url/image_urls"
     )
     parser.add_argument(
         "--issues-file",
@@ -116,7 +144,7 @@ def main() -> int:
         "--output-file",
         type=Path,
         default=Path("issues.with_image_urls.json"),
-        help="Output JSON with image_url fields filled",
+        help="Output JSON with image_url and image_urls fields filled",
     )
     parser.add_argument(
         "--images-root",
@@ -182,39 +210,54 @@ def main() -> int:
 
     for idx, row in enumerate(issues, start=1):
         item = dict(row)
-        raw_image_path = item.get("local_image_path") or item.get("image_path")
+        raw_image_paths = _collect_local_paths(item)
 
         # Remove helper fields from output payload.
         item.pop("local_image_path", None)
         item.pop("image_path", None)
+        item.pop("local_image_paths", None)
+        item.pop("image_paths", None)
 
-        if not raw_image_path:
-            if item.get("image_url"):
-                skipped += 1
-            else:
-                skipped += 1
+        if not raw_image_paths:
+            # Preserve existing URL values if already set.
+            existing_urls = item.get("image_urls") or []
+            existing_cover = item.get("image_url")
+            if existing_cover and existing_cover not in existing_urls:
+                item["image_urls"] = [existing_cover, *existing_urls]
+            elif existing_urls:
+                item["image_url"] = existing_cover or existing_urls[0]
+            skipped += 1
             out_rows.append(item)
             continue
 
-        image_path = _resolve_image_path(str(raw_image_path), args.images_root)
-        if not image_path.exists():
-            failed += 1
-            print(f"[WARN] Row {idx}: image not found: {image_path}")
-            out_rows.append(item)
-            continue
+        urls_for_row: list[str] = []
+        row_has_failure = False
+        for raw_path in raw_image_paths:
+            image_path = _resolve_image_path(raw_path, args.images_root)
+            if not image_path.exists():
+                row_has_failure = True
+                print(f"[WARN] Row {idx}: image not found: {image_path}")
+                continue
 
-        try:
-            url = _upload_file(
-                bucket=bucket,
-                file_path=image_path,
-                folder=args.folder,
-                make_public=args.make_public,
-            )
-            item["image_url"] = url
-            uploaded += 1
-        except Exception as e:  # noqa: BLE001
+            try:
+                url = _upload_file(
+                    bucket=bucket,
+                    file_path=image_path,
+                    folder=args.folder,
+                    make_public=args.make_public,
+                )
+                urls_for_row.append(url)
+                uploaded += 1
+            except Exception as e:  # noqa: BLE001
+                row_has_failure = True
+                print(f"[WARN] Row {idx}: upload failed for {image_path}: {e}")
+
+        if urls_for_row:
+            item["image_urls"] = urls_for_row
+            item["image_url"] = urls_for_row[0]
+
+        if row_has_failure:
             failed += 1
-            print(f"[WARN] Row {idx}: upload failed for {image_path}: {e}")
 
         out_rows.append(item)
 
