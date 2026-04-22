@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+**/node_modules/
+
+# Environment variables — NEVER commit these
+.env
+server/.env
+client/.env
+server/credibility_checker/.env
+*.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.adk/
+server/.adk/
+server/credibility_checker/.adk/
+server/credibility_checker/session.db

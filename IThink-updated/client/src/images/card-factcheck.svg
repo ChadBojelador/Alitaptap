@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0f"/>
+      <stop offset="100%" style="stop-color:#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#a855f7"/>
+    </linearGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="40"/></filter>
+  </defs>
+
+  <rect width="600" height="400" fill="url(#bg)"/>
+  <circle cx="500" cy="80" r="130" fill="#4f46e5" opacity="0.15" filter="url(#blur1)"/>
+  <circle cx="100" cy="320" r="100" fill="#a855f7" opacity="0.12" filter="url(#blur1)"/>
+
+  <!-- Main glass panel -->
+  <rect x="60" y="50" width="480" height="300" rx="20" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- Left claim card -->
+  <rect x="85" y="80" width="190" height="110" rx="14" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <text x="105" y="105" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.4)" font-weight="600" letter-spacing="1">CLAIM</text>
+  <rect x="105" y="115" width="150" height="7" rx="3" fill="rgba(255,255,255,0.3)"/>
+  <rect x="105" y="130" width="130" height="7" rx="3" fill="rgba(255,255,255,0.2)"/>
+  <rect x="105" y="145" width="140" height="7" rx="3" fill="rgba(255,255,255,0.2)"/>
+  <rect x="105" y="165" width="80" height="18" rx="9" fill="rgba(79,70,229,0.3)" stroke="rgba(79,70,229,0.6)" stroke-width="1"/>
+  <text x="120" y="178" font-family="Inter,sans-serif" font-size="9" fill="#a78bfa">Unverified</text>
+
+  <!-- Right verified card -->
+  <rect x="325" y="80" width="190" height="110" rx="14" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <text x="345" y="105" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.4)" font-weight="600" letter-spacing="1">VERIFIED</text>
+  <rect x="345" y="115" width="150" height="7" rx="3" fill="rgba(255,255,255,0.3)"/>
+  <rect x="345" y="130" width="130" height="7" rx="3" fill="rgba(255,255,255,0.2)"/>
+  <rect x="345" y="145" width="140" height="7" rx="3" fill="rgba(255,255,255,0.2)"/>
+  <rect x="345" y="165" width="80" height="18" rx="9" fill="rgba(16,185,129,0.2)" stroke="rgba(16,185,129,0.5)" stroke-width="1"/>
+  <text x="360" y="178" font-family="Inter,sans-serif" font-size="9" fill="#34d399">Confirmed</text>
+
+  <!-- Arrow between -->
+  <line x1="280" y1="135" x2="320" y2="135" stroke="url(#purple)" stroke-width="2" stroke-dasharray="4,3"/>
+  <polygon points="318,130 326,135 318,140" fill="#a855f7"/>
+
+  <!-- Bottom dataset bars -->
+  <text x="85" y="225" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.35)" letter-spacing="1">CROSS-REFERENCED DATASETS</text>
+  <rect x="85" y="235" width="430" height="1" fill="rgba(255,255,255,0.08)"/>
+
+  <rect x="85" y="248" width="340" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+  <rect x="85" y="248" width="300" height="8" rx="4" fill="url(#purple)" opacity="0.7"/>
+  <text x="435" y="257" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">88%</text>
+
+  <rect x="85" y="268" width="340" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+  <rect x="85" y="268" width="260" height="8" rx="4" fill="url(#purple)" opacity="0.5"/>
+  <text x="435" y="277" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">76%</text>
+
+  <rect x="85" y="288" width="340" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+  <rect x="85" y="288" width="310" height="8" rx="4" fill="url(#purple)" opacity="0.6"/>
+  <text x="435" y="297" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">91%</text>
+
+  <text x="85" y="325" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.25)">Academic Papers · Peer Reviews · Verified Databases</text>
+</svg>

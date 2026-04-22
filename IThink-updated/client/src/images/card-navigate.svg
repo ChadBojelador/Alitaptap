@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0f"/>
+      <stop offset="100%" style="stop-color:#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F766E"/>
+      <stop offset="100%" style="stop-color:#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#0ea5e9"/>
+    </linearGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="40"/></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+
+  <rect width="600" height="400" fill="url(#bg)"/>
+  <circle cx="300" cy="200" r="160" fill="#0F766E" opacity="0.08" filter="url(#blur1)"/>
+  <circle cx="500" cy="80" r="100" fill="#6366f1" opacity="0.1" filter="url(#blur1)"/>
+
+  <!-- Glass panel -->
+  <rect x="55" y="40" width="490" height="320" rx="18" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="80" y="72" font-family="Inter,sans-serif" font-size="11" fill="rgba(255,255,255,0.35)" letter-spacing="1">KNOWLEDGE CROSS-CHECK</text>
+  <line x1="70" y1="80" x2="530" y2="80" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+  <!-- Center node: the claim -->
+  <circle cx="300" cy="210" r="38" fill="rgba(99,102,241,0.15)" stroke="rgba(99,102,241,0.5)" stroke-width="1.5" filter="url(#glow)"/>
+  <text x="300" y="205" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)" text-anchor="middle" letter-spacing="1">CLAIM</text>
+  <text x="300" y="220" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0.6)" text-anchor="middle">Being</text>
+  <text x="300" y="233" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0.6)" text-anchor="middle">Checked</text>
+
+  <!-- Source nodes + connecting lines -->
+  <!-- Top: Academic -->
+  <line x1="300" y1="172" x2="300" y2="118" stroke="rgba(20,184,166,0.4)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="300" cy="105" r="26" fill="rgba(20,184,166,0.12)" stroke="rgba(20,184,166,0.4)" stroke-width="1"/>
+  <text x="300" y="101" font-family="Inter,sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="middle">Academic</text>
+  <text x="300" y="113" font-family="Inter,sans-serif" font-size="8" fill="#14B8A6" text-anchor="middle">✓ Match</text>
+
+  <!-- Top-right: News -->
+  <line x1="326" y1="185" x2="400" y2="138" stroke="rgba(20,184,166,0.35)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="415" cy="128" r="26" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.35)" stroke-width="1"/>
+  <text x="415" y="124" font-family="Inter,sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="middle">News</text>
+  <text x="415" y="136" font-family="Inter,sans-serif" font-size="8" fill="#14B8A6" text-anchor="middle">✓ Match</text>
+
+  <!-- Right: Gov Data -->
+  <line x1="338" y1="210" x2="460" y2="210" stroke="rgba(245,158,11,0.4)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="478" cy="210" r="26" fill="rgba(245,158,11,0.1)" stroke="rgba(245,158,11,0.35)" stroke-width="1"/>
+  <text x="478" y="206" font-family="Inter,sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="middle">Gov</text>
+  <text x="478" y="218" font-family="Inter,sans-serif" font-size="8" fill="#fbbf24" text-anchor="middle">⚠ Partial</text>
+
+  <!-- Bottom-right: Research -->
+  <line x1="326" y1="235" x2="400" y2="282" stroke="rgba(20,184,166,0.35)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="415" cy="292" r="26" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.35)" stroke-width="1"/>
+  <text x="415" y="288" font-family="Inter,sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="middle">Research</text>
+  <text x="415" y="300" font-family="Inter,sans-serif" font-size="8" fill="#14B8A6" text-anchor="middle">✓ Match</text>
+
+  <!-- Bottom: Fact DB -->
+  <line x1="300" y1="248" x2="300" y2="302" stroke="rgba(20,184,166,0.4)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="300" cy="315" r="26" fill="rgba(20,184,166,0.12)" stroke="rgba(20,184,166,0.4)" stroke-width="1"/>
+  <text x="300" y="311" font-family="Inter,sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="middle">Fact DB</text>
+  <text x="300" y="323" font-family="Inter,sans-serif" font-size="8" fill="#14B8A6" text-anchor="middle">✓ Match</text>
+
+  <!-- Bottom-left: Wiki -->
+  <line x1="274" y1="235" x2="200" y2="282" stroke="rgba(239,68,68,0.35)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="185" cy="292" r="26" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.3)" stroke-width="1"/>
+  <text x="185" y="288" font-family="Inter,sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="middle">Wiki</text>
+  <text x="185" y="300" font-family="Inter,sans-serif" font-size="8" fill="#f87171" text-anchor="middle">✕ Conflict</text>
+
+  <!-- Left: Social -->
+  <line x1="262" y1="210" x2="140" y2="210" stroke="rgba(239,68,68,0.35)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="122" cy="210" r="26" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.3)" stroke-width="1"/>
+  <text x="122" y="206" font-family="Inter,sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="middle">Social</text>
+  <text x="122" y="218" font-family="Inter,sans-serif" font-size="8" fill="#f87171" text-anchor="middle">✕ False</text>
+
+  <!-- Top-left: Journals -->
+  <line x1="274" y1="185" x2="200" y2="138" stroke="rgba(20,184,166,0.35)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="185" cy="128" r="26" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.35)" stroke-width="1"/>
+  <text x="185" y="124" font-family="Inter,sans-serif" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="middle">Journals</text>
+  <text x="185" y="136" font-family="Inter,sans-serif" font-size="8" fill="#14B8A6" text-anchor="middle">✓ Match</text>
+
+  <!-- Result pill -->
+  <rect x="200" y="352" width="200" height="28" rx="14" fill="rgba(20,184,166,0.15)" stroke="rgba(20,184,166,0.4)" stroke-width="1"/>
+  <text x="300" y="371" font-family="Inter,sans-serif" font-size="11" fill="#14B8A6" text-anchor="middle">5/7 sources confirmed</text>
+</svg>

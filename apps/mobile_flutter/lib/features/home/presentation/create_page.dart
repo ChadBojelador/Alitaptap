@@ -247,6 +247,67 @@ class _CreatePageState extends State<CreatePage> {
     }
   }
 
+  Future<void> _exportProjectToTXT(Map<String, String> project) async {
+    try {
+      final now = DateTime.now();
+      final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      
+      final content = '''ALITAPTAP Project Report
+Exported on $dateStr
+
+${'='*50}
+
+Project Title:
+${project['title']}
+
+${'='*50}
+
+Description:
+${project['description']}
+
+${'='*50}
+
+SDG Topics:
+${project['sdg']}
+
+${'='*50}
+
+Date Created:
+${project['date']}
+
+${'='*50}
+
+Methodology:
+${project['methodology'] ?? 'N/A'}
+
+${'='*50}
+
+Community Impact Level:
+${project['impact'] ?? 'N/A'}
+
+${'='*50}
+
+Feasibility Score:
+${project['feasibility'] ?? 'N/A'}
+''';
+
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = 'project_${project['title']!.replaceAll(' ', '_')}_$dateStr.txt';
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsString(content);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('✓ TXT exported: $fileName')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error exporting TXT: $e')),
+      );
+    }
+  }
+
   Future<void> _generateWithAI() async {
     final problem = _problemCtrl.text.trim();
     final idea = _ideaCtrl.text.trim();
@@ -557,6 +618,10 @@ class _CreatePageState extends State<CreatePage> {
                                   _loadProjectForEdit(index);
                                 } else if (value == 'delete') {
                                   _deleteProject(index);
+                                } else if (value == 'pdf') {
+                                  _exportProjectToPDF(project);
+                                } else if (value == 'txt') {
+                                  _exportProjectToTXT(project);
                                 }
                               },
                               itemBuilder: (context) => [
@@ -567,6 +632,26 @@ class _CreatePageState extends State<CreatePage> {
                                       Icon(Icons.edit, size: 18),
                                       SizedBox(width: 8),
                                       Text('Edit'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'pdf',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.picture_as_pdf, size: 18, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text('Export as PDF'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'txt',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.description, size: 18, color: Colors.blue),
+                                      SizedBox(width: 8),
+                                      Text('Export as TXT'),
                                     ],
                                   ),
                                 ),
@@ -904,7 +989,7 @@ class _CreatePageState extends State<CreatePage> {
         const SizedBox(height: 24),
 
         // Show input fields only if not editing
-        if (_editingProjectIndex == null) ...[
+        if (_editingProjectIndex == null && _generatedBackbone == null) ...[
         Text(
           'What is the community problem?',
           style: GoogleFonts.poppins(
@@ -948,8 +1033,6 @@ class _CreatePageState extends State<CreatePage> {
           ),
         ),
         const SizedBox(height: 24),
-
-        ] else if (_generatedBackbone != null) ...[
         Text(
           'What SDG or idea do you want to focus on?',
           style: GoogleFonts.poppins(
@@ -964,7 +1047,7 @@ class _CreatePageState extends State<CreatePage> {
           maxLines: 3,
           style: GoogleFonts.poppins(fontSize: 14, color: textColor),
           decoration: InputDecoration(
-            hintText: 'e.g. Early warning system using IoT sensors...',
+            hintText: 'e.g. SDG 6 (Clean Water), SDG 13 (Climate Action)...',
             hintStyle: GoogleFonts.poppins(
               fontSize: 13,
               color: subtleColor,
@@ -993,9 +1076,94 @@ class _CreatePageState extends State<CreatePage> {
           ),
         ),
         const SizedBox(height: 24),
+        Text(
+          'What is your approach or solution idea?',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _aiDescriptionCtrl,
+          maxLines: 3,
+          style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+          decoration: InputDecoration(
+            hintText: 'e.g. Develop an early warning system using IoT sensors...',
+            hintStyle: GoogleFonts.poppins(
+              fontSize: 13,
+              color: subtleColor,
+            ),
+            filled: true,
+            fillColor: cardBg,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: _amberBright.withValues(alpha: 0.2),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: _amberBright.withValues(alpha: 0.2),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                color: _amberBright,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        GestureDetector(
+          onTap: _aiGenerating ? null : _generateWithAI,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: _amberBright,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: _amberBright.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_aiGenerating)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(_dark),
+                      strokeWidth: 2,
+                    ),
+                  )
+                else
+                  const Icon(Icons.auto_awesome_rounded, color: _dark, size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  _aiGenerating ? 'Generating...' : 'Generate with AI',
+                  style: GoogleFonts.poppins(
+                    color: _dark,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
 
-        // Generated fields - show editable version when editing
-        if (_generatedBackbone != null) ...[
+        ] else if (_generatedBackbone != null) ...[
           Divider(color: _amber.withValues(alpha: 0.2)),
           const SizedBox(height: 24),
           Text(
@@ -1182,9 +1350,8 @@ class _CreatePageState extends State<CreatePage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    _titleCtrl.clear();
-                    _descriptionCtrl.clear();
-                    _sdgCtrl.clear();
+                    _problemCtrl.clear();
+                    _aiDescriptionCtrl.clear();
                     _titleEditCtrl.clear();
                     _methodologyEditCtrl.clear();
                     _impactEditCtrl.clear();
@@ -1216,10 +1383,15 @@ class _CreatePageState extends State<CreatePage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    _saveProject(_titleEditCtrl.text, _methodologyEditCtrl.text, _generatedBackbone!.sdgAlignment.join(', '), isAIGuided: true, backbone: _generatedBackbone);
-                    _titleCtrl.clear();
-                    _descriptionCtrl.clear();
-                    _sdgCtrl.clear();
+                    _saveProject(
+                      _titleEditCtrl.text,
+                      _methodologyEditCtrl.text,
+                      _generatedBackbone!.sdgAlignment.join(', '),
+                      isAIGuided: true,
+                      backbone: _generatedBackbone,
+                    );
+                    _problemCtrl.clear();
+                    _aiDescriptionCtrl.clear();
                     _titleEditCtrl.clear();
                     _methodologyEditCtrl.clear();
                     _impactEditCtrl.clear();
@@ -1229,7 +1401,13 @@ class _CreatePageState extends State<CreatePage> {
                       _showModeSelection = true;
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('✓ Project updated successfully')),
+                      SnackBar(
+                        content: Text(
+                          _editingProjectIndex == null
+                              ? '✓ Project saved successfully'
+                              : '✓ Project updated successfully',
+                        ),
+                      ),
                     );
                   },
                   child: Container(
@@ -1251,7 +1429,7 @@ class _CreatePageState extends State<CreatePage> {
                         const Icon(Icons.check_rounded, color: _dark, size: 20),
                         const SizedBox(width: 10),
                         Text(
-                          'Update Project',
+                          _editingProjectIndex != null ? 'Update Project' : 'Save Project',
                           style: GoogleFonts.poppins(
                             color: _dark,
                             fontWeight: FontWeight.w700,
@@ -1271,3 +1449,4 @@ class _CreatePageState extends State<CreatePage> {
     );
   }
 }
+

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0f"/>
+      <stop offset="100%" style="stop-color:#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#0ea5e9"/>
+    </linearGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="40"/></filter>
+  </defs>
+  <rect width="600" height="400" fill="url(#bg)"/>
+  <circle cx="480" cy="100" r="130" fill="#7c3aed" opacity="0.13" filter="url(#blur1)"/>
+  <circle cx="100" cy="320" r="100" fill="#0ea5e9" opacity="0.1" filter="url(#blur1)"/>
+
+  <!-- Main glass card -->
+  <rect x="80" y="60" width="440" height="280" rx="20" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- Draft document -->
+  <rect x="110" y="90" width="160" height="200" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <rect x="128" y="115" width="90" height="8" rx="4" fill="url(#purple)" opacity="0.8"/>
+  <rect x="128" y="133" width="124" height="6" rx="3" fill="rgba(255,255,255,0.25)"/>
+  <rect x="128" y="148" width="110" height="6" rx="3" fill="rgba(255,255,255,0.18)"/>
+  <rect x="128" y="163" width="118" height="6" rx="3" fill="rgba(255,255,255,0.18)"/>
+  <rect x="128" y="178" width="100" height="6" rx="3" fill="rgba(255,255,255,0.14)"/>
+  <rect x="128" y="198" width="124" height="6" rx="3" fill="rgba(255,255,255,0.18)"/>
+  <rect x="128" y="213" width="90" height="6" rx="3" fill="rgba(255,255,255,0.14)"/>
+  <rect x="128" y="228" width="110" height="6" rx="3" fill="rgba(255,255,255,0.14)"/>
+
+  <!-- Export options -->
+  <rect x="310" y="90" width="180" height="52" rx="14" fill="rgba(124,58,237,0.15)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+  <text x="330" y="112" font-family="Inter,sans-serif" font-size="11" fill="rgba(255,255,255,0.5)" letter-spacing="1">EXPORT AS</text>
+  <rect x="330" y="120" width="44" height="14" rx="7" fill="rgba(124,58,237,0.5)"/>
+  <text x="352" y="131" font-family="Inter,sans-serif" font-size="9" fill="white" text-anchor="middle">PDF</text>
+  <rect x="382" y="120" width="44" height="14" rx="7" fill="rgba(14,165,233,0.4)"/>
+  <text x="404" y="131" font-family="Inter,sans-serif" font-size="9" fill="white" text-anchor="middle">DOCX</text>
+  <rect x="434" y="120" width="44" height="14" rx="7" fill="rgba(255,255,255,0.1)"/>
+  <text x="456" y="131" font-family="Inter,sans-serif" font-size="9" fill="white" text-anchor="middle">TXT</text>
+
+  <!-- Save button -->
+  <rect x="310" y="158" width="180" height="44" rx="12" fill="url(#purple)" opacity="0.9"/>
+  <text x="400" y="185" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">↓  Save Draft</text>
+
+  <!-- Share row -->
+  <rect x="310" y="218" width="180" height="44" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <text x="400" y="245" font-family="Inter,sans-serif" font-size="13" fill="rgba(255,255,255,0.7)" text-anchor="middle">⤴  Share Report</text>
+
+  <!-- Arrow from doc to buttons -->
+  <line x1="275" y1="190" x2="305" y2="190" stroke="rgba(124,58,237,0.6)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <polygon points="303,186 310,190 303,194" fill="#7c3aed"/>
+
+  <text x="300" y="360" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.2)" text-anchor="middle">Save · Export · Share your analysis</text>
+</svg>

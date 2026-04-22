@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0f"/>
+      <stop offset="100%" style="stop-color:#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F766E"/>
+      <stop offset="100%" style="stop-color:#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="tealH" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0F766E"/>
+      <stop offset="100%" style="stop-color:#14B8A6"/>
+    </linearGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="40"/></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+
+  <rect width="600" height="400" fill="url(#bg)"/>
+  <circle cx="120" cy="100" r="130" fill="#0F766E" opacity="0.15" filter="url(#blur1)"/>
+  <circle cx="500" cy="320" r="110" fill="#14B8A6" opacity="0.1" filter="url(#blur1)"/>
+
+  <!-- Main glass panel -->
+  <rect x="55" y="45" width="490" height="310" rx="18" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="80" y="80" font-family="Inter,sans-serif" font-size="11" fill="rgba(255,255,255,0.35)" letter-spacing="1">ARGUMENT CLARITY ANALYSIS</text>
+  <line x1="70" y1="88" x2="530" y2="88" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+  <!-- Left: logic flow diagram -->
+  <!-- Node 1: Claim -->
+  <rect x="70" y="105" width="110" height="40" rx="10" fill="rgba(20,184,166,0.15)" stroke="rgba(20,184,166,0.4)" stroke-width="1"/>
+  <text x="125" y="121" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)" text-anchor="middle" letter-spacing="1">CLAIM</text>
+  <rect x="82" y="128" width="86" height="7" rx="3" fill="rgba(255,255,255,0.2)"/>
+
+  <!-- Arrow down -->
+  <line x1="125" y1="145" x2="125" y2="168" stroke="url(#teal)" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <polygon points="120,166 125,174 130,166" fill="#14B8A6"/>
+
+  <!-- Node 2: Evidence -->
+  <rect x="70" y="174" width="110" height="40" rx="10" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.3)" stroke-width="1"/>
+  <text x="125" y="190" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)" text-anchor="middle" letter-spacing="1">EVIDENCE</text>
+  <rect x="82" y="197" width="86" height="7" rx="3" fill="rgba(255,255,255,0.18)"/>
+
+  <!-- Arrow down -->
+  <line x1="125" y1="214" x2="125" y2="237" stroke="url(#teal)" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <polygon points="120,235 125,243 130,235" fill="#14B8A6"/>
+
+  <!-- Node 3: Conclusion -->
+  <rect x="70" y="243" width="110" height="40" rx="10" fill="rgba(20,184,166,0.15)" stroke="rgba(20,184,166,0.4)" stroke-width="1"/>
+  <text x="125" y="259" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)" text-anchor="middle" letter-spacing="1">CONCLUSION</text>
+  <rect x="82" y="266" width="86" height="7" rx="3" fill="rgba(255,255,255,0.2)"/>
+
+  <!-- Center: clarity metrics -->
+  <text x="230" y="115" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.3)" letter-spacing="1">CLARITY METRICS</text>
+
+  <!-- Metric bars -->
+  <text x="230" y="138" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">Logic Flow</text>
+  <rect x="230" y="143" width="180" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+  <rect x="230" y="143" width="162" height="8" rx="4" fill="url(#tealH)" opacity="0.85"/>
+  <text x="418" y="152" font-family="Inter,sans-serif" font-size="9" fill="#14B8A6">90%</text>
+
+  <text x="230" y="172" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">Argument Structure</text>
+  <rect x="230" y="177" width="180" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+  <rect x="230" y="177" width="144" height="8" rx="4" fill="url(#tealH)" opacity="0.7"/>
+  <text x="418" y="186" font-family="Inter,sans-serif" font-size="9" fill="#14B8A6">80%</text>
+
+  <text x="230" y="206" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">Evidence Support</text>
+  <rect x="230" y="211" width="180" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+  <rect x="230" y="211" width="153" height="8" rx="4" fill="url(#tealH)" opacity="0.75"/>
+  <text x="418" y="220" font-family="Inter,sans-serif" font-size="9" fill="#14B8A6">85%</text>
+
+  <text x="230" y="240" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.5)">Bias Detection</text>
+  <rect x="230" y="245" width="180" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+  <rect x="230" y="245" width="126" height="8" rx="4" fill="url(#tealH)" opacity="0.6"/>
+  <text x="418" y="254" font-family="Inter,sans-serif" font-size="9" fill="#14B8A6">70%</text>
+
+  <!-- Right: score badge -->
+  <rect x="460" y="100" width="100" height="100" rx="16" fill="rgba(20,184,166,0.12)" stroke="rgba(20,184,166,0.35)" stroke-width="1"/>
+  <text x="510" y="148" font-family="Inter,sans-serif" font-size="42" font-weight="800" fill="#14B8A6" text-anchor="middle" filter="url(#glow)">A+</text>
+  <text x="510" y="168" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0.3)" text-anchor="middle">CLARITY</text>
+  <text x="510" y="182" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0.3)" text-anchor="middle">SCORE</text>
+
+  <!-- Bottom verdict -->
+  <rect x="230" y="278" width="330" height="50" rx="12" fill="rgba(20,184,166,0.08)" stroke="rgba(20,184,166,0.2)" stroke-width="1"/>
+  <text x="245" y="298" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0.35)" letter-spacing="1">VERDICT</text>
+  <text x="245" y="316" font-family="Inter,sans-serif" font-size="11" fill="#14B8A6">✓ Well-structured, logically sound argument</text>
+</svg>

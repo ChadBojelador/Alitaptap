@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500" width="600" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0f"/><stop offset="100%" style="stop-color:#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/><stop offset="100%" style="stop-color:#0ea5e9"/>
+    </linearGradient>
+    <linearGradient id="purpleH" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/><stop offset="100%" style="stop-color:#0ea5e9"/>
+    </linearGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="50"/></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="600" height="500" fill="url(#bg)"/>
+  <circle cx="300" cy="240" r="200" fill="#6366f1" opacity="0.07" filter="url(#blur1)"/>
+  <circle cx="500" cy="100" r="120" fill="#0ea5e9" opacity="0.07" filter="url(#blur1)"/>
+
+  <!-- Globe circle -->
+  <circle cx="300" cy="240" r="140" fill="rgba(255,255,255,0.03)" stroke="rgba(99,102,241,0.4)" stroke-width="1.5" filter="url(#glow)"/>
+
+  <!-- Latitude lines -->
+  <ellipse cx="300" cy="240" rx="140" ry="40" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+  <ellipse cx="300" cy="200" rx="120" ry="30" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <ellipse cx="300" cy="280" rx="120" ry="30" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <!-- Longitude lines -->
+  <line x1="300" y1="100" x2="300" y2="380" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+  <line x1="175" y1="130" x2="425" y2="350" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <line x1="425" y1="130" x2="175" y2="350" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+  <!-- Light rays from center -->
+  <line x1="300" y1="240" x2="300" y2="60" stroke="url(#purple)" stroke-width="1.5" opacity="0.5" stroke-dasharray="4,4"/>
+  <line x1="300" y1="240" x2="460" y2="130" stroke="url(#purple)" stroke-width="1.5" opacity="0.4" stroke-dasharray="4,4"/>
+  <line x1="300" y1="240" x2="140" y2="130" stroke="url(#purple)" stroke-width="1.5" opacity="0.4" stroke-dasharray="4,4"/>
+  <line x1="300" y1="240" x2="490" y2="260" stroke="url(#purple)" stroke-width="1" opacity="0.3" stroke-dasharray="4,4"/>
+  <line x1="300" y1="240" x2="110" y2="260" stroke="url(#purple)" stroke-width="1" opacity="0.3" stroke-dasharray="4,4"/>
+
+  <!-- Center glow dot -->
+  <circle cx="300" cy="240" r="18" fill="url(#purple)" opacity="0.9" filter="url(#glow)"/>
+  <circle cx="300" cy="240" r="8" fill="white" opacity="0.9"/>
+
+  <!-- Node dots on globe -->
+  <circle cx="370" cy="180" r="6" fill="rgba(99,102,241,0.8)" filter="url(#glow)"/>
+  <circle cx="230" cy="200" r="5" fill="rgba(14,165,233,0.8)" filter="url(#glow)"/>
+  <circle cx="400" cy="280" r="5" fill="rgba(99,102,241,0.7)" filter="url(#glow)"/>
+  <circle cx="200" cy="290" r="6" fill="rgba(14,165,233,0.7)" filter="url(#glow)"/>
+  <circle cx="320" cy="320" r="4" fill="rgba(99,102,241,0.6)"/>
+  <circle cx="260" cy="160" r="4" fill="rgba(14,165,233,0.6)"/>
+
+  <!-- Connection lines between nodes -->
+  <line x1="300" y1="240" x2="370" y2="180" stroke="rgba(99,102,241,0.5)" stroke-width="1"/>
+  <line x1="300" y1="240" x2="230" y2="200" stroke="rgba(14,165,233,0.5)" stroke-width="1"/>
+  <line x1="300" y1="240" x2="400" y2="280" stroke="rgba(99,102,241,0.4)" stroke-width="1"/>
+  <line x1="300" y1="240" x2="200" y2="290" stroke="rgba(14,165,233,0.4)" stroke-width="1"/>
+
+  <!-- Label pills -->
+  <rect x="150" y="420" width="130" height="28" rx="14" fill="rgba(99,102,241,0.15)" stroke="rgba(99,102,241,0.4)" stroke-width="1"/>
+  <text x="215" y="439" font-family="Inter,sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle">Universal Access</text>
+  <rect x="320" y="420" width="130" height="28" rx="14" fill="rgba(14,165,233,0.15)" stroke="rgba(14,165,233,0.4)" stroke-width="1"/>
+  <text x="385" y="439" font-family="Inter,sans-serif" font-size="10" fill="#38bdf8" text-anchor="middle">Verified Truth</text>
+</svg>

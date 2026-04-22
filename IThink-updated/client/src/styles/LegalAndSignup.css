@@ -1,0 +1,174 @@
+.legal-page-container {
+  font-family: 'Inter', sans-serif;
+  padding-top: 65px;
+  background: #000000;
+  color: #ffffff;
+}
+
+/* Legal Content Area */
+.legal-content {
+  padding: 80px 15%;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+.legal-block {
+  margin-bottom: 80px;
+}
+
+.legal-block h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.legal-block h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 32px 0 10px;
+}
+
+.legal-block p {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.8;
+}
+
+/* Signup Section */
+.signup-cta-section {
+  min-height: 100vh;
+  text-align: center;
+  padding: 0 15%;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-icon-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo-symbol {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #4F46E5 0%, #0EA5E9 100%);
+  border-radius: 12px;
+  color: white;
+  font-size: 40px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ithink-logo-img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 16px;
+}
+
+.signup-header h1 { font-size: 3rem; font-weight: 800; margin-bottom: 15px; color: #ffffff; }
+.signup-header p { color: rgba(255,255,255,0.7); font-size: 1.2rem; margin-bottom: 40px; }
+
+/* Buttons */
+.button-group-horizontal {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.btn-primary-blue {
+  background: linear-gradient(90deg, #6366f1, #0ea5e9);
+  color: white;
+  padding: 15px 35px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-google-outline {
+  background: white;
+  border: 1px solid #e4e4e7;
+  padding: 15px 30px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.legal-disclaimer { font-size: 0.9rem; color: rgba(255,255,255,0.6); }
+.legal-disclaimer a { color: #ffffff; font-weight: 700; text-decoration: none; }
+
+/* Tagline Strip - overridden below */
+
+@media (max-width: 1024px) {
+  .legal-content { padding: 60px 8%; }
+  .signup-cta-section { padding: 60px 8%; }
+}
+
+@media (max-width: 768px) {
+  .legal-content { padding: 48px 20px; }
+  .legal-block h2 { font-size: 1.8rem; }
+  .legal-block h3 { font-size: 1rem; }
+  .legal-block p { font-size: 0.95rem; }
+  .signup-cta-section { padding: 48px 20px; min-height: auto; }
+  .signup-header h1 { font-size: 1.8rem; }
+  .signup-header p { font-size: 1rem; }
+  .button-group-horizontal { flex-direction: column; align-items: stretch; width: 100%; max-width: 320px; }
+  .btn-primary-blue, .btn-google-outline { width: 100%; justify-content: center; }
+  .branding-center .cta-tagline { font-size: 2.5rem; }
+  .ithink-logo-img { width: 80px; height: 80px; }
+}
+
+@media (max-width: 480px) {
+  .legal-block h2 { font-size: 1.5rem; }
+  .signup-header h1 { font-size: 1.4rem; }
+  .branding-center .cta-tagline { font-size: 2rem; }
+}
+
+.tagline-strip-purple {
+  background: transparent;
+  padding: 60px 0;
+  text-align: center;
+}
+
+.branding-center .cta-this-is {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 4px;
+}
+
+.branding-center .cta-tagline {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 12px;
+}
+
+.branding-center .blue-it {
+  color: #4F46E5;
+}
+
+.branding-center p {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+}

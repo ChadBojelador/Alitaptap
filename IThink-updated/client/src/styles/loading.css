@@ -1,0 +1,187 @@
+/* ===================== LOADING SCREEN ===================== */
+.ls-root {
+  position: fixed;
+  inset: 0;
+  background: #0f0f0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Subtle radial gradient bg */
+.ls-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(92,225,230,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(106,17,203,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ---- Floating orbs ---- */
+.ls-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.18;
+  animation: ls-float 8s ease-in-out infinite;
+}
+.ls-orb--1 {
+  width: 340px; height: 340px;
+  background: #5ce1e6;
+  top: -80px; left: -80px;
+  animation-delay: 0s;
+}
+.ls-orb--2 {
+  width: 260px; height: 260px;
+  background: #6a11cb;
+  bottom: -60px; right: -60px;
+  animation-delay: -3s;
+}
+.ls-orb--3 {
+  width: 180px; height: 180px;
+  background: #5ce1e6;
+  bottom: 20%; left: 10%;
+  animation-delay: -5s;
+  opacity: 0.1;
+}
+
+@keyframes ls-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-28px) scale(1.06); }
+}
+
+/* ---- Center content ---- */
+.ls-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 1;
+}
+
+/* ---- Logo rings ---- */
+.ls-logo-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ls-logo-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #5ce1e6;
+  border-right-color: rgba(92,225,230,0.3);
+  animation: ls-spin 1.2s linear infinite;
+}
+
+.ls-logo-ring--2 {
+  inset: 10px;
+  border-top-color: transparent;
+  border-bottom-color: #6a11cb;
+  border-left-color: rgba(106,17,203,0.3);
+  animation: ls-spin 1.8s linear infinite reverse;
+}
+
+@keyframes ls-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ls-logo-core {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #5ce1e6 0%, #6a11cb 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 32px rgba(92,225,230,0.4), 0 0 64px rgba(92,225,230,0.15);
+  animation: ls-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ls-pulse {
+  0%, 100% { box-shadow: 0 0 32px rgba(92,225,230,0.4), 0 0 64px rgba(92,225,230,0.15); }
+  50%       { box-shadow: 0 0 48px rgba(92,225,230,0.65), 0 0 80px rgba(92,225,230,0.25); }
+}
+
+/* ---- Brand name ---- */
+.ls-brand {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  background: linear-gradient(90deg, #5ce1e6 0%, #a78bfa 50%, #5ce1e6 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: ls-shimmer 2.4s linear infinite;
+}
+
+@keyframes ls-shimmer {
+  to { background-position: 200% center; }
+}
+
+/* ---- Progress bar ---- */
+.ls-bar-track {
+  width: 200px;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.ls-bar-fill {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #5ce1e6, #6a11cb, #5ce1e6);
+  background-size: 200% auto;
+  border-radius: 99px;
+  animation: ls-bar 1.6s ease-in-out infinite;
+}
+
+@keyframes ls-bar {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ---- Bouncing dots ---- */
+.ls-dots {
+  display: flex;
+  gap: 8px;
+}
+.ls-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5ce1e6;
+  animation: ls-bounce 1.2s ease-in-out infinite;
+}
+.ls-dots span:nth-child(2) { animation-delay: 0.2s; background: #a78bfa; }
+.ls-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ls-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%            { transform: translateY(-8px); opacity: 1; }
+}
+
+/* ---- Cycling phrase ---- */
+.ls-phrase {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.5px;
+  animation: ls-fadein 0.5s ease both;
+}
+
+@keyframes ls-fadein {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
