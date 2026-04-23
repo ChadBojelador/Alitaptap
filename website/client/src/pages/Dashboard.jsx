@@ -106,6 +106,9 @@ export default function Dashboard({ user }) {
           <span>ALITAPTAP</span>
         </div>
         <nav className="plat-sidebar-nav">
+          <div className="plat-nav-item" onClick={() => window.location.href = '/home'}>
+            <span>🏠</span> Home
+          </div>
           <div className="plat-nav-item plat-nav-item--active">
             <span>🗺️</span> Ideas
           </div>

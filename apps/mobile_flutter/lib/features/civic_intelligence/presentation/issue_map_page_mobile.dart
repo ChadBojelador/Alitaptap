@@ -69,8 +69,8 @@ class _IssueMapPageState extends State<IssueMapPage>
   // ── Constants ──────────────────────────────────────────────────────────
   static const _mapStyleUrl =
       'https://tiles.openfreemap.org/styles/liberty';
-  static const _defaultCenter = LatLng(13.7887, 121.0685);
-  static const _defaultZoom   = 13.0;
+  static const _defaultCenter = LatLng(13.7565, 121.0583); // Batangas City
+  static const _defaultZoom   = 13.5;
 
   // ── Dependencies ───────────────────────────────────────────────────────
   final _issueRepository = ApiIssueRepository();
@@ -119,6 +119,14 @@ class _IssueMapPageState extends State<IssueMapPage>
     duration: const Duration(milliseconds: 1800),
   )..repeat();
 
+  // Shared pin animation controller to save resources
+  late final AnimationController _pinPulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1500),
+  )..repeat();
+
+  Timer? _projectionTimer;
+
   // ── Lifecycle ──────────────────────────────────────────────────────────
 
   @override
@@ -149,9 +157,11 @@ class _IssueMapPageState extends State<IssueMapPage>
   @override
   void dispose() {
     _mapController?.removeListener(_onCameraMove);
+    _projectionTimer?.cancel();
     _ideaController.dispose();
     _sidebarAnim.dispose();
     _userLocPulse.dispose();
+    _pinPulse.dispose();
     super.dispose();
   }
 
@@ -314,17 +324,48 @@ class _IssueMapPageState extends State<IssueMapPage>
       for (final layer in hideLayers) {
         try { await controller.setLayerVisibility(layer, false); } catch (_) {}
       }
+
+      // Add Batangas City Boundary Highlight (Simplified Polygon)
+      try {
+        await controller.addFill(
+          {
+            "type": "FeatureCollection",
+            "features": [{
+              "type": "Feature",
+              "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                  [121.0300, 13.7300], [121.0800, 13.7300],
+                  [121.1000, 13.7800], [121.0500, 13.8200],
+                  [121.0000, 13.8000], [121.0300, 13.7300]
+                ]]
+              }
+            }]
+          },
+          FillLayerProperties(
+            fillColor: "#FFC700",
+            fillOpacity: 0.08,
+            fillOutlineColor: "#FFC700"
+          ),
+        );
+      } catch (_) {}
     }
 
     await _renderIssuePins();
     // Gate: project only if issues are already loaded
-    await _tryProjectPins();
-    await _updateUserScreenPosition();
+    unawaited(_tryProjectPins());
+    unawaited(_updateUserScreenPosition());
   }
 
   void _onCameraMove() {
-    unawaited(_updateScreenPositions());
-    unawaited(_updateUserScreenPosition());
+    _projectionTimer?.cancel();
+    _projectionTimer = Timer(const Duration(milliseconds: 16), () {
+      if (mounted) {
+        _updateScreenPositions();
+        _updateUserScreenPosition();
+      }
+    });
+
     final pos = _mapController?.cameraPosition;
     if (mounted) {
       setState(() {
@@ -349,25 +390,30 @@ class _IssueMapPageState extends State<IssueMapPage>
       return;
     }
 
-    final positions = <String, Offset>{};
-    for (final issue in _issues) {
-      try {
-        final screenPoint = await controller
-            .toScreenLocation(LatLng(issue.lat, issue.lng));
-        final offset = Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
-        // Filter out (0,0) — means the point is off-screen or not yet projected
-        if (offset.dx > 1 || offset.dy > 1) {
-          positions[issue.issueId] = offset;
+    try {
+      final futures = _issues.map((issue) => 
+        controller.toScreenLocation(LatLng(issue.lat, issue.lng))
+          .then((point) => MapEntry(issue.issueId, Offset(point.x.toDouble(), point.y.toDouble())))
+      );
+      
+      final results = await Future.wait(futures);
+      final positions = <String, Offset>{};
+      for (final res in results) {
+        if (res.value.dx > 1 || res.value.dy > 1) {
+          positions[res.key] = res.value;
         }
-      } catch (_) {}
-    }
+      }
 
-    if (!mounted) return;
-    setState(() {
-      _issueScreenPositions
-        ..clear()
-        ..addAll(positions);
-    });
+      if (mounted) {
+        setState(() {
+          _issueScreenPositions
+            ..clear()
+            ..addAll(positions);
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) print('Error in _updateScreenPositions: $e');
+    }
   }
 
   void _onMapTap(Point<double> point, LatLng latLng) {
@@ -451,6 +497,7 @@ class _IssueMapPageState extends State<IssueMapPage>
               onMapCreated:          _onMapCreated,
               onStyleLoadedCallback: _onStyleLoaded,
               onMapClick:            _onMapTap,
+              onCameraMove:          _onCameraMove, // Added this back if missing
               compassEnabled:        false,
               myLocationEnabled:     false,
               attributionButtonMargins: const Point(-100, -100),
@@ -471,16 +518,40 @@ class _IssueMapPageState extends State<IssueMapPage>
             if (_issueScreenPositions[issue.issueId] != null)
               Builder(builder: (context) {
                 final scale = ((_zoom - 13.0) * 0.18 + 1.0).clamp(0.5, 2.5);
-                final half  = 16.0 * scale;
+                final half  = 18.0 * scale;
                 return Positioned(
                   left: _issueScreenPositions[issue.issueId]!.dx - half,
                   top:  _issueScreenPositions[issue.issueId]!.dy - half,
                   child: GestureDetector(
                     onTap: () => _onPinTapped(issue),
-                    child: _RadarBlip(zoom: _zoom),
+                    child: _RadarBlip(zoom: _zoom, sdg: issue.aiSdgTag, animation: _pinPulse),
                   ),
                 );
               }),
+
+          // ── Regional Intelligence Panel ───────────────────────────────
+          if (!_loading && _issues.isNotEmpty && _zoom > 12)
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: widget.showIdeaDock ? 150 : 30,
+              child: _RegionalIntelligencePanel(issues: _issues),
+            ),
+
+          // ── Center on Batangas Button (Diagnostic) ──────────────────
+          Positioned(
+            right: 12,
+            bottom: widget.showIdeaDock ? 240 : 120,
+            child: FloatingActionButton.small(
+              backgroundColor: _darkPanel,
+              onPressed: () {
+                _mapController?.animateCamera(
+                  CameraUpdate.newLatLngZoom(_defaultCenter, _defaultZoom),
+                );
+              },
+              child: const Icon(Icons.home_work, color: _cyberGreen, size: 18),
+            ),
+          ),
 
           // ── Top terminal bar ──────────────────────────────────────────
           Positioned(
@@ -797,77 +868,244 @@ class _TBtn extends StatelessWidget {
 }
 
 /// Radar blip for issue pins — scales with map zoom for consistent visual size.
-class _RadarBlip extends StatefulWidget {
-  const _RadarBlip({required this.zoom});
+class _RadarBlip extends StatelessWidget {
+  const _RadarBlip({required this.zoom, this.sdg, required this.animation});
   final double zoom;
-
-  @override
-  State<_RadarBlip> createState() => _RadarBlipState();
-}
-
-class _RadarBlipState extends State<_RadarBlip>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..repeat();
-
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
-  }
+  final String? sdg;
+  final Animation<double> animation;
 
   @override
   Widget build(BuildContext context) {
-    // At zoom 13 (default) → scale 1.0. Each zoom level doubles/halves by ~0.18.
-    // Clamp so pins never disappear at low zoom or become huge at high zoom.
-    final scale = ((widget.zoom - 13.0) * 0.18 + 1.0).clamp(0.5, 2.5);
-    final outerSize = 32.0 * scale;
-    final coreSize  = 10.0 * scale;
+    final scale = ((zoom - 13.0) * 0.18 + 1.0).clamp(0.6, 2.8);
+    final outerSize = 36.0 * scale;
+    final coreSize  = 12.0 * scale;
+
+    final coreColor = const Color(0xFFFFC700);
 
     return AnimatedBuilder(
-      animation: _anim,
+      animation: animation,
       builder: (_, __) {
-        final t = _anim.value;
+        final t = animation.value;
         return SizedBox(
           width:  outerSize,
           height: outerSize,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Pulse ring
               Container(
                 width:  outerSize * t,
                 height: outerSize * t,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: _cyberRed.withValues(alpha: 0.55 * (1 - t)),
-                    width: 1,
+                    color: coreColor.withValues(alpha: 0.4 * (1 - t)),
+                    width: 1.5,
                   ),
                 ),
               ),
-              // Core
+              Container(
+                width: coreSize * 1.8,
+                height: coreSize * 1.8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: coreColor.withValues(alpha: 0.15),
+                ),
+              ),
               Container(
                 width:  coreSize,
                 height: coreSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _cyberRed,
+                  color: coreColor,
+                  border: Border.all(color: Colors.white, width: 1.5 * scale),
                   boxShadow: [
                     BoxShadow(
-                      color:       _cyberRed.withValues(alpha: 0.6),
-                      blurRadius:  8 * scale,
+                      color: coreColor.withValues(alpha: 0.8),
+                      blurRadius: 10 * scale,
                       spreadRadius: 1,
                     ),
                   ],
+                ),
+                child: Center(
+                  child: Text(
+                    sdg?.replaceAll('SDG ', '') ?? '!',
+                    style: GoogleFonts.robotoMono(
+                      color: Colors.black,
+                      fontSize: 6 * scale,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+/// Floating Regional Intelligence Dashboard.
+class _RegionalIntelligencePanel extends StatelessWidget {
+  const _RegionalIntelligencePanel({required this.issues});
+  final List<Issue> issues;
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Calculate Stats ──────────────────────────────────────────────────
+    final Map<String, int> sdgCounts = {};
+    final Map<String, int> brgyCounts = {};
+    
+    for (var issue in issues) {
+      final tag = issue.aiSdgTag ?? 'UNKNOWN';
+      sdgCounts[tag] = (sdgCounts[tag] ?? 0) + 1;
+      
+      final brgy = issue.locationName ?? 'Other';
+      brgyCounts[brgy] = (brgyCounts[brgy] ?? 0) + 1;
+    }
+
+    final topSdgs = sdgCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    final topBrgys = brgyCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final total = issues.length;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _barBg.withValues(alpha: 0.75),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _barBorder.withValues(alpha: 0.5), width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'BATANGAS CITY INTELLIGENCE',
+                        style: GoogleFonts.robotoMono(
+                          color: _barTitle,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Text(
+                        'LIVE SDG IMPACT MAPPING',
+                        style: GoogleFonts.robotoMono(
+                          color: _barSubtitle,
+                          fontSize: 8,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Icon(Icons.hub_rounded, color: _barIcon, size: 20),
+                ],
+              ),
+              const Divider(color: Colors.white10, height: 20),
+              
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // SDG Percentages
+                  Expanded(
+                    flex: 6,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TOP IMPACT AREAS',
+                          style: GoogleFonts.robotoMono(color: Colors.white54, fontSize: 8, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        ...topSdgs.take(2).map((e) {
+                          final percent = (e.value / total);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      e.key,
+                                      style: GoogleFonts.robotoMono(color: _barTitle, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      '${(percent * 100).toInt()}%',
+                                      style: GoogleFonts.robotoMono(color: _barTitle, fontSize: 10),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                LinearProgressIndicator(
+                                  value: percent,
+                                  backgroundColor: Colors.white10,
+                                  color: _barBorder,
+                                  minHeight: 3,
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  // Barangay Leaderboard
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TOP BARANGAYS',
+                          style: GoogleFonts.robotoMono(color: Colors.white54, fontSize: 8, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        ...topBrgys.take(3).map((e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  e.key.toUpperCase(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 9),
+                                ),
+                              ),
+                              Text(
+                                e.value.toString(),
+                                style: GoogleFonts.robotoMono(color: _barBorder, fontSize: 9, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        )),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

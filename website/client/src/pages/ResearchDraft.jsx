@@ -155,7 +155,7 @@ export default function ResearchDraft({ user }) {
       {/* Top bar */}
       <header className="rd-header">
         <div className="rd-header-left">
-          <button className="rd-back" onClick={() => navigate('/dashboard')}>
+          <button className="rd-back" onClick={() => navigate('/home')}>
             ← Back
           </button>
           <input

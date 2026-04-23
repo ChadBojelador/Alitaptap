@@ -1,0 +1,220 @@
+/* ── ALITAPTAP MOBILE-SYNC HOME SYSTEM ─────────────────────────────────── */
+
+.home-cyber-root {
+  --c-amber: #FFC700;
+  --c-dark: #1A1A1A;
+  --c-bg-dark: #141414;
+  --c-white: #FFFFFF;
+  --c-muted: #9E9E9E;
+  
+  min-height: 100vh;
+  background-color: var(--c-bg-dark);
+  color: var(--c-white);
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+  display: flex;
+}
+
+/* Cyber Background Grid (matching mobile app background texture) */
+.home-cyber-root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hc-main {
+  flex: 1;
+  position: relative;
+  z-index: 10;
+  padding: 40px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ── Greeting Header ── */
+.hc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.hc-greeting-sub {
+  font-size: 14px;
+  color: var(--c-muted);
+  font-weight: 500;
+  margin: 0;
+}
+
+.hc-greeting-main {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--c-white);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.hc-avatar {
+  width: 46px;
+  height: 46px;
+  background-color: var(--c-amber);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--c-dark);
+  box-shadow: 0 4px 12px rgba(255, 199, 0, 0.4);
+  cursor: pointer;
+}
+
+/* ── Tab Chips ── */
+.hc-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.hc-tab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #757575;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hc-tab--active {
+  background-color: var(--c-amber);
+  color: var(--c-dark);
+  font-weight: 700;
+}
+
+/* ── Horizontal Scroll ── */
+.hc-carousel {
+  display: flex;
+  overflow-x: auto;
+  gap: 14px;
+  padding-bottom: 10px;
+  margin-bottom: 32px;
+}
+
+.hc-carousel::-webkit-scrollbar { display: none; }
+
+.hc-card {
+  min-width: 160px;
+  height: 200px;
+  background: linear-gradient(135deg, #34495e, #2c3e50);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.hc-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 50%, rgba(0,0,0,0.8));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 12px;
+}
+
+.hc-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--c-white);
+  line-height: 1.3;
+}
+
+.hc-card-status {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--c-white);
+  background-color: #66bb6a;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.hc-card-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  font-size: 36px;
+  color: var(--c-amber);
+  opacity: 0.8;
+}
+
+/* ── Quick Actions ── */
+.hc-section-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.hc-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hc-action-tile {
+  background-color: #242424;
+  border: 1px solid rgba(255, 199, 0, 0.2);
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.hc-action-tile:hover {
+  transform: scale(1.02);
+}
+
+.hc-action-tile--primary {
+  background-color: var(--c-amber);
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(255, 199, 0, 0.3);
+}
+
+.hc-tile-icon {
+  width: 48px;
+  height: 48px;
+  background-color: rgba(255, 199, 0, 0.12);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--c-amber);
+}
+
+.hc-action-tile--primary .hc-tile-icon {
+  background-color: rgba(0,0,0,0.1);
+  color: var(--c-dark);
+}
+
+.hc-tile-content { flex: 1; }
+.hc-tile-title { font-size: 14px; font-weight: 700; color: var(--c-white); margin: 0; }
+.hc-tile-sub { font-size: 11px; color: var(--c-muted); margin: 2px 0 0; }
+.hc-action-tile--primary .hc-tile-title { color: var(--c-dark); }
+.hc-action-tile--primary .hc-tile-sub { color: #5a3a00; }
+
+.hc-tile-arrow { font-size: 10px; color: var(--c-muted); }

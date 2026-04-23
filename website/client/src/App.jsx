@@ -9,6 +9,7 @@ import Draft from './pages/Draft';
 import Account from './pages/Account';
 import Persona from './pages/Persona';
 import LandingPage from './pages/LandingPage';
+import Home from './pages/Home';
 import Chat from './pages/Chat';
 import Trash from './pages/Trash';
 import ResearchDraft from './pages/ResearchDraft';
@@ -85,10 +86,24 @@ function OAuthCallback({ setUser }) {
 }
 
 function App() {
+  // --- AUTH BYPASS FOR DEVELOPMENT ---
+  // Set to true to skip the login screen and use a mock user
+  const BYPASS_AUTH = true; 
+  
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!BYPASS_AUTH);
 
   useEffect(() => {
+    if (BYPASS_AUTH) {
+      setUser({
+        name: 'dev_alitaptap',
+        email: 'dev@alitaptap.io',
+        role: 'student',
+        agreedToTerms: true
+      });
+      return;
+    }
+    
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -111,25 +126,26 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* 1. Root Route: Send to dashboard if logged in, else login */}
+        {/* 1. Root Route: Send to home if logged in, else landing */}
         <Route path="/auth/callback" element={<OAuthCallback setUser={setUser} />} />
         <Route path="/" element={
-          user ? <Navigate to="/dashboard" replace /> : <LandingPage />
+          user ? <Navigate to="/home" replace /> : <LandingPage />
         } />
 
         {/* 2. Login Route: If already logged in, skip this page */}
         <Route path="/login" element={
-          user ? <Navigate to="/dashboard" replace /> : <LoginRegister setUser={setUser} />
+          user ? <Navigate to="/home" replace /> : <LoginRegister setUser={setUser} />
         } />
 
         {/* Terms agreement for Google OAuth first-time users */}
         <Route path="/agree" element={
           !user ? <Navigate to="/login" replace /> :
-          user.agreedToTerms ? <Navigate to="/dashboard" replace /> :
+          user.agreedToTerms ? <Navigate to="/home" replace /> :
           <TermsRequired user={user} setUser={setUser} />
         } />
 
-        {/* 3. Protected Dashboard Route */}
+        {/* 3. Protected Home Dashboard */}
+        <Route path="/home" element={<Home user={user} />} />
         <Route path="/dashboard" element={<Dashboard user={user} />} />
         <Route path="/draft" element={<Draft user={user} />} />
         <Route path="/draft/:id" element={<Draft user={user} />} />

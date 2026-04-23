@@ -118,6 +118,7 @@ export default function Expo({ user }) {
       <aside className="expo-sidebar">
         <div className="expo-sidebar-logo">● ALITAPTAP</div>
         <nav className="expo-sidebar-nav">
+          <a href="/home" className="expo-nav-item">🏠 Home</a>
           <a href="/dashboard" className="expo-nav-item">🗺️ Ideas</a>
           <a href="/research" className="expo-nav-item">✍️ Research</a>
           <a href="/expo" className="expo-nav-item expo-nav-item--active">🚀 Expo</a>

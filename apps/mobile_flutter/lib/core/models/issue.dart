@@ -13,6 +13,7 @@ class Issue {
     this.tags = const [],
     this.aiSummary,
     this.aiSdgTag,
+    this.locationName,
     required this.createdAt,
     this.updatedAt,
   });
@@ -29,6 +30,7 @@ class Issue {
   final List<String> tags;
   final String? aiSummary;
   final String? aiSdgTag;
+  final String? locationName;
   final String createdAt;
   final String? updatedAt;
 
@@ -49,6 +51,7 @@ class Issue {
           [],
       aiSummary: json['ai_summary'] as String?,
       aiSdgTag: json['ai_sdg_tag'] as String?,
+      locationName: json['location_name'] as String?,
       createdAt: json['created_at'] as String? ?? '',
       updatedAt: json['updated_at'] as String?,
     );
@@ -68,6 +71,7 @@ class Issue {
       'tags': tags,
       'ai_summary': aiSummary,
       'ai_sdg_tag': aiSdgTag,
+      'location_name': locationName,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };

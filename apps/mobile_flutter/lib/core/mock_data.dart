@@ -84,50 +84,47 @@ class MockData {
   ];
 
   static final List<Issue> issues = [
-    // SDG 11: Sustainable Cities (HOT - 8 items)
-    _mI('001', 'Damaged Drainage System', 'SDG 11', 14.5995, 120.9842),
-    _mI('002', 'Unsafe Bridge Structure', 'SDG 11', 14.6010, 120.9850),
-    _mI('003', 'Insufficient Street Lighting', 'SDG 11', 14.6020, 120.9860),
-    _mI('004', 'Illegal Parking Congestion', 'SDG 11', 14.6030, 120.9870),
-    _mI('005', 'Lack of PWD Ramps', 'SDG 11', 14.6040, 120.9880),
-    _mI('006', 'Urban Garden Space Needed', 'SDG 11', 14.6050, 120.9890),
-    _mI('007', 'Noise Pollution from Factory', 'SDG 11', 14.6060, 120.9900),
-    _mI('008', 'Crumbling Pedestrian Walkway', 'SDG 11', 14.6070, 120.9910),
+    // --- BATANGAS CITY CORE (Poblacion) ---
+    _mI('b001', 'Poblacion Drainage Clog', 'SDG 11', 13.7545, 121.0545, 'Poblacion'),
+    _mI('b002', 'Heritage Site Preservation', 'SDG 11', 13.7555, 121.0555, 'Poblacion'),
+    _mI('b003', 'Public Market Waste Mgmt', 'SDG 12', 13.7565, 121.0565, 'Poblacion'),
+    _mI('b004', 'Traffic Flow Optimization', 'SDG 9', 13.7540, 121.0530, 'Poblacion'),
 
-    // SDG 13: Climate Action (HIGH - 5 items)
-    _mI('009', 'Frequent Coastal Flooding', 'SDG 13', 14.5420, 120.9780),
-    _mI('010', 'Eroding River Banks', 'SDG 13', 14.5430, 120.9790),
-    _mI('011', 'Extreme Heat in Market Area', 'SDG 13', 14.5440, 120.9800),
-    _mI('012', 'Loss of Local Mangroves', 'SDG 13', 14.5450, 120.9810),
-    _mI('013', 'Unpredictable Storm Surges', 'SDG 13', 14.5460, 120.9820),
+    // --- ALANGILAN AREA ---
+    _mI('b005', 'Student Housing Congestion', 'SDG 11', 13.7750, 121.0710, 'Alangilan'),
+    _mI('b006', 'Tech-Voc Center Access', 'SDG 4', 13.7760, 121.0720, 'Alangilan'),
+    _mI('b007', 'Inconsistent Power Loop', 'SDG 7', 13.7745, 121.0700, 'Alangilan'),
+    _mI('b008', 'Internet Dead Zones', 'SDG 9', 13.7730, 121.0690, 'Alangilan'),
 
-    // SDG 6: Clean Water (MODERATE - 3 items)
-    _mI('014', 'Discolored Tap Water', 'SDG 6', 14.5500, 121.0200),
-    _mI('015', 'Regular Water Service Outages', 'SDG 6', 14.5510, 121.0210),
-    _mI('016', 'Stagnant Water in Canals', 'SDG 6', 14.5520, 121.0220),
+    // --- KUMINTANG IBABA ---
+    _mI('b009', 'Capitol Site Congestion', 'SDG 11', 13.7650, 121.0620, 'Kumintang Ibaba'),
+    _mI('b010', 'Community Health Hub Needed', 'SDG 3', 13.7660, 121.0630, 'Kumintang Ibaba'),
+    _mI('b011', 'Elderly Care Access', 'SDG 3', 13.7640, 121.0610, 'Kumintang Ibaba'),
 
-    // SDG 12: Responsible Consumption (MODERATE - 2 items)
-    _mI('017', 'Unsegregated Public Trash', 'SDG 12', 14.5547, 121.0244),
-    _mI('018', 'Excessive Plastic Packaging', 'SDG 12', 14.5550, 121.0250),
+    // --- CALICANTO ---
+    _mI('b012', 'Road Repair - Highway Junction', 'SDG 9', 13.7600, 121.0480, 'Calicanto'),
+    _mI('b013', 'Night Security Lighting', 'SDG 11', 13.7610, 121.0490, 'Calicanto'),
+    _mI('b014', 'Business District Littering', 'SDG 12', 13.7590, 121.0470, 'Calicanto'),
 
-    // SDG 3: Good Health (MODERATE - 2 items)
-    _mI('019', 'Lack of Community Clinic Outpost', 'SDG 3', 14.5580, 121.0100),
-    _mI('020', 'High Mosquito Density in Area', 'SDG 3', 14.5590, 121.0110),
+    // --- BOLBOK ---
+    _mI('b015', 'Port Area Pollution', 'SDG 14', 13.7450, 121.0400, 'Bolbok'),
+    _mI('b016', 'Coastal Erosion Risk', 'SDG 13', 13.7460, 121.0410, 'Bolbok'),
+    _mI('b017', 'Illegal Dumping Near Shore', 'SDG 14', 13.7440, 121.0390, 'Bolbok'),
 
-    // --- OTHER SDGs (Singles to fill the heatmap grid) ---
-    _mI('021', 'Micro-Lending Access Issue', 'SDG 1', 14.5600, 121.0120),
-    _mI('022', 'Food Security in Urban Slums', 'SDG 2', 14.5610, 121.0130),
-    _mI('023', 'Classroom Overcrowding', 'SDG 4', 14.5620, 121.0140),
-    _mI('024', 'Limited Vocational Training', 'SDG 5', 14.5630, 121.0150),
-    _mI('025', 'Frequent Power Grid Fluctuations', 'SDG 7', 14.5640, 121.0160),
-    _mI('026', 'Low Technical Jobs Availability', 'SDG 8', 14.5650, 121.0170),
-    _mI('027', 'Slow Digital Infrastructure', 'SDG 9', 14.5660, 121.0180),
-    _mI('028', 'River-to-Ocean Plastic Flow', 'SDG 14', 14.5670, 121.0190),
-    _mI('029', 'Loss of Local Tree Canopy', 'SDG 15', 14.5680, 121.0200),
-    _mI('030', 'Lack of Community Lead Org', 'SDG 17', 14.5690, 121.0210),
+    // --- MALITAM (High Vulnerability) ---
+    _mI('b018', 'Frequent Storm Surges', 'SDG 13', 13.7380, 121.0350, 'Malitam'),
+    _mI('b019', 'Lack of Clean Water Supply', 'SDG 6', 13.7390, 121.0360, 'Malitam'),
+    _mI('b020', 'Informal Settler Flooding', 'SDG 1', 13.7370, 121.0340, 'Malitam'),
+    _mI('b021', 'Mobile Health Caravan Needs', 'SDG 3', 13.7360, 121.0330, 'Malitam'),
+
+    // --- OTHER AREAS ---
+    _mI('b022', 'Cuta River Siltation', 'SDG 15', 13.7480, 121.0580, 'Cuta'),
+    _mI('b023', 'Sustainable Farming Support', 'SDG 2', 13.8000, 121.1000, 'Balagtas'),
+    _mI('b024', 'Bridge Integrity Check', 'SDG 9', 13.7800, 121.0800, 'Tingga Itaas'),
+    _mI('b025', 'Gender-Neutral Restrooms', 'SDG 5', 13.7500, 121.0500, 'Batangas City'),
   ];
 
-  static Issue _mI(String id, String title, String sdg, double lat, double lng) {
+  static Issue _mI(String id, String title, String sdg, double lat, double lng, [String? location]) {
     return Issue(
       issueId: 'mock_issue_$id',
       reporterId: 'user_mock',
@@ -138,6 +135,7 @@ class MockData {
       status: 'validated',
       createdAt: DateTime.now().toIsoformatString(),
       aiSdgTag: sdg,
+      locationName: location,
     );
   }
 
