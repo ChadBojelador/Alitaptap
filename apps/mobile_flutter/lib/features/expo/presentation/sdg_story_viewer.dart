@@ -177,7 +177,7 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                       return Center(
                         child: CircularProgressIndicator(
                           value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.accumulatedMaterializedBytes /
+                              ? loadingProgress.cumulativeBytesLoaded /
                                   loadingProgress.expectedTotalBytes!
                               : null,
                           color: widget.accentColor.withValues(alpha: 0.5),
@@ -290,6 +290,26 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
             ),
           ),
 
+          // Tap Detectors
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: _prevStory,
+                  behavior: HitTestBehavior.translucent,
+                  child: const SizedBox.expand(),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: _nextStory,
+                  behavior: HitTestBehavior.translucent,
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ],
+          ),
+
           // Content
           Positioned(
             left: 20,
@@ -373,26 +393,6 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                 ),
               ],
             ),
-          ),
-
-          // Tap Detectors
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: _prevStory,
-                  behavior: HitTestBehavior.translucent,
-                  child: const SizedBox.expand(),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: _nextStory,
-                  behavior: HitTestBehavior.translucent,
-                  child: const SizedBox.expand(),
-                ),
-              ),
-            ],
           ),
         ],
       ),

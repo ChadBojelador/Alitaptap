@@ -147,13 +147,6 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    // ── Stories row ────────────────────────────────────
-                    _StoriesRow(
-                      isDark: isDark,
-                      currentUid: uid,
-                      currentEmail: email,
-                    ),
-
                     // ── Create post bar ────────────────────────────────
                     _CreatePostBar(
                       isDark: isDark,
@@ -164,6 +157,13 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                                 authorId: uid, authorEmail: email),
                           ))
                           .then((_) => _load()),
+                    ),
+
+                    // ── Stories row ────────────────────────────────────
+                    _StoriesRow(
+                      isDark: isDark,
+                      currentUid: uid,
+                      currentEmail: email,
                     ),
 
                     const SizedBox(height: 14),
@@ -484,57 +484,109 @@ class _StoryBubble extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 84,
-        margin: const EdgeInsets.only(right: 10),
+        margin: const EdgeInsets.only(right: 12),
         child: Column(
           children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: isAdd
-                    ? null
-                    : LinearGradient(
-                        colors: [color, color.withValues(alpha: 0.6)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                color: isAdd
-                    ? (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0))
-                    : null,
-                border: Border.all(
-                  color: isAdd ? const Color(0xFFFFD60A) : color,
-                  width: 2.5,
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // ── Exterior Gradient Ring ──────────────────────────────
+                Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: isAdd
+                        ? null
+                        : SweepGradient(
+                            colors: [
+                              color,
+                              color.withValues(alpha: 0.3),
+                              color.withValues(alpha: 0.8),
+                              color,
+                            ],
+                            stops: const [0.0, 0.3, 0.7, 1.0],
+                          ),
+                    color: isAdd ? const Color(0xFFFFD60A).withValues(alpha: 0.15) : null,
+                  ),
                 ),
-              ),
-              child: Icon(icon,
-                  color: isAdd ? const Color(0xFFFFD60A) : Colors.white,
-                  size: 28),
+                // ── Inner White Gap (The classic 'Story' ring look) ────
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                    border: isAdd ? Border.all(color: const Color(0xFFFFD60A), width: 1.5) : null,
+                  ),
+                ),
+                // ── Main Bubble ─────────────────────────────────────────
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.25),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    gradient: LinearGradient(
+                      colors: [
+                        color,
+                        color.withValues(alpha: 0.7),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                // ── Add Icon Badge ─────────────────────────────────────
+                if (isAdd)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFD60A),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add, color: Color(0xFF1A1A1A), size: 14),
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? const Color(0xFFBDBDBD)
-                      : const Color(0xFF424242),
-                )),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: isDark ? const Color(0xFFE0E0E0) : const Color(0xFF1A1A1A),
+                letterSpacing: 0.2,
+              ),
+            ),
             if (!isAdd) ...[
-              const SizedBox(height: 2),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
-                  fontSize: 9,
+                  fontSize: 8.5,
                   fontWeight: FontWeight.w500,
-                  color:
-                      isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666),
+                  color: isDark ? const Color(0xFF757575) : const Color(0xFF9E9E9E),
                 ),
               ),
             ],
