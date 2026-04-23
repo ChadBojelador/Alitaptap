@@ -16,7 +16,7 @@ class AuthService {
 
   Future<void> setRole(String role) async {
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null || uid.isEmpty) return;
     await _firestore.collection('users').doc(uid).set(
       {'role': role, 'created_at': DateTime.now().toIso8601String()},
       SetOptions(merge: true),
@@ -25,7 +25,7 @@ class AuthService {
 
   Future<AppRole> getCurrentUserRole() async {
     final user = _auth.currentUser;
-    if (user == null) return AppRole.student;
+    if (user == null || user.uid.isEmpty) return AppRole.student;
     final doc = await _firestore.collection('users').doc(user.uid).get();
     return AppRoleX.fromString(doc.data()?['role'] as String?);
   }

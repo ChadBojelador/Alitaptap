@@ -41,6 +41,7 @@ class _PeoplePageState extends State<PeoplePage>
   }
 
   Future<void> _sendRequest(String targetUid) async {
+    if (widget.currentUid.isEmpty || targetUid.isEmpty) return;
     final batch = FirebaseFirestore.instance.batch();
     batch.update(
       FirebaseFirestore.instance.collection('users').doc(targetUid),
@@ -58,6 +59,7 @@ class _PeoplePageState extends State<PeoplePage>
   }
 
   Future<void> _acceptRequest(String fromUid) async {
+    if (widget.currentUid.isEmpty || fromUid.isEmpty) return;
     final batch = FirebaseFirestore.instance.batch();
     final myRef = FirebaseFirestore.instance
         .collection('users')
@@ -76,6 +78,7 @@ class _PeoplePageState extends State<PeoplePage>
   }
 
   Future<void> _declineRequest(String fromUid) async {
+    if (widget.currentUid.isEmpty || fromUid.isEmpty) return;
     await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.currentUid)
@@ -85,6 +88,7 @@ class _PeoplePageState extends State<PeoplePage>
   }
 
   Future<void> _unfriend(String otherUid) async {
+    if (widget.currentUid.isEmpty || otherUid.isEmpty) return;
     final batch = FirebaseFirestore.instance.batch();
     batch.update(
       FirebaseFirestore.instance.collection('users').doc(widget.currentUid),
@@ -190,14 +194,17 @@ class _PeoplePageState extends State<PeoplePage>
           ),
         ),
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.currentUid)
-            .snapshots(),
-        builder: (context, mySnap) {
-          final myData =
-              mySnap.data?.data() as Map<String, dynamic>? ?? {};
+      body: widget.currentUid.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(color: _yellow, strokeWidth: 2))
+          : StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(widget.currentUid)
+                  .snapshots(),
+              builder: (context, mySnap) {
+                final myData =
+                    mySnap.data?.data() as Map<String, dynamic>? ?? {};
           final friends =
               List<String>.from(myData['friends'] as List? ?? []);
           final requests =
