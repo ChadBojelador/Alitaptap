@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="alitaptap-logo.png" alt="ALITAPTAP Logo" width="200"/>
+  <img src="ALITAPTAP LOGO2.png" alt="ALITAPTAP Logo" width="200"/>
   
   # ALITAPTAP
   
