@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:alitaptap_mobile/core/mock_data.dart';
 import '../../../core/models/research_post.dart';
 import '../../../services/api_service.dart';
 import 'chat_inbox_page.dart';

@@ -156,8 +156,9 @@ class MockData {
       {'sender_uid': 'me', 'text': 'How can I help you?', 'created_at': DateTime.now().subtract(const Duration(days: 1, hours: 5))},
       {'sender_uid': 'mock_user_maria', 'text': 'Thank you for documenting the flood risk in our area.', 'created_at': DateTime.now().subtract(const Duration(days: 1))},
     ],
+  };
+
   // --- USER MOCKS ---
-  
   static final Map<String, Map<String, String>> mockUsers = {
     'student_001': {
       'name': 'River Rivera',

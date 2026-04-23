@@ -1,11 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:alitaptap_mobile/core/mock_data.dart';
 
 import 'chat_thread_page.dart';
-
-/// Firestore schema used here:
-/// users/{uid}  → { email, role, friends: [uid], friend_requests: [uid] }
 
 class PeoplePage extends StatefulWidget {
   const PeoplePage({
@@ -44,14 +42,12 @@ class _PeoplePageState extends State<PeoplePage>
 
   Future<void> _sendRequest(String targetUid) async {
     final batch = FirebaseFirestore.instance.batch();
-    // Add to target's incoming requests
     batch.update(
       FirebaseFirestore.instance.collection('users').doc(targetUid),
       {
         'friend_requests': FieldValue.arrayUnion([widget.currentUid])
       },
     );
-    // Track sent requests on current user
     batch.update(
       FirebaseFirestore.instance.collection('users').doc(widget.currentUid),
       {
@@ -68,7 +64,6 @@ class _PeoplePageState extends State<PeoplePage>
         .doc(widget.currentUid);
     final theirRef =
         FirebaseFirestore.instance.collection('users').doc(fromUid);
-    // Add each other as friends
     batch.update(myRef, {
       'friends': FieldValue.arrayUnion([fromUid]),
       'friend_requests': FieldValue.arrayRemove([fromUid]),
@@ -137,7 +132,6 @@ class _PeoplePageState extends State<PeoplePage>
           preferredSize: const Size.fromHeight(88),
           child: Column(
             children: [
-              // Search bar
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -163,7 +157,6 @@ class _PeoplePageState extends State<PeoplePage>
                   ),
                 ),
               ),
-              // Tabs
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
@@ -215,7 +208,6 @@ class _PeoplePageState extends State<PeoplePage>
           return TabBarView(
             controller: _tabCtrl,
             children: [
-              // ── Discover ──────────────────────────────────────────────
               _UserList(
                 currentUid: widget.currentUid,
                 currentEmail: widget.currentEmail,
@@ -231,7 +223,6 @@ class _PeoplePageState extends State<PeoplePage>
                 onDecline: _declineRequest,
                 onUnfriend: _unfriend,
               ),
-              // ── Friends ───────────────────────────────────────────────
               _UserList(
                 currentUid: widget.currentUid,
                 currentEmail: widget.currentEmail,
@@ -247,7 +238,6 @@ class _PeoplePageState extends State<PeoplePage>
                 onDecline: _declineRequest,
                 onUnfriend: _unfriend,
               ),
-              // ── Requests ──────────────────────────────────────────────
               _UserList(
                 currentUid: widget.currentUid,
                 currentEmail: widget.currentEmail,
@@ -327,14 +317,12 @@ class _UserList extends StatelessWidget {
 
         var docs = snap.data?.docs ?? [];
 
-        // Filter by include/exclude lists
         if (include != null) {
           docs = docs.where((d) => include!.contains(d.id)).toList();
         } else {
           docs = docs.where((d) => !exclude.contains(d.id)).toList();
         }
 
-        // Search filter
         if (query.isNotEmpty) {
           docs = docs.where((d) {
             final data = d.data() as Map<String, dynamic>;
@@ -472,6 +460,7 @@ class _UserCardState extends State<_UserCard> {
     final subtle = widget.isDark
         ? const Color(0xFF9E9E9E)
         : const Color(0xFF757575);
+    final name = MockData.mockUsers[widget.uid]?['name'] ?? widget.email.split('@').first;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -483,15 +472,13 @@ class _UserCardState extends State<_UserCard> {
       ),
       child: Row(
         children: [
-          // Avatar
-          _Avatar(email: widget.email, size: 48),
+          _Avatar(uid: widget.uid, email: widget.email, size: 48),
           const SizedBox(width: 12),
-          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.email.split('@').first,
+                Text(name,
                     style: GoogleFonts.poppins(
                       color: textColor,
                       fontSize: 14,
@@ -530,7 +517,6 @@ class _UserCardState extends State<_UserCard> {
               ],
             ),
           ),
-          // Actions
           if (_loading)
             const SizedBox(
               width: 20,
@@ -542,7 +528,6 @@ class _UserCardState extends State<_UserCard> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Message button (always visible)
                 GestureDetector(
                   onTap: widget.onMessage,
                   child: Container(
@@ -556,7 +541,6 @@ class _UserCardState extends State<_UserCard> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Friend action button
                 if (widget.mode == _ListMode.requests) ...[
                   GestureDetector(
                     onTap: () => _run(widget.onDecline),
@@ -659,7 +643,8 @@ class _UserCardState extends State<_UserCard> {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.email, required this.size});
+  const _Avatar({this.uid, this.email = '', required this.size});
+  final String? uid;
   final String email;
   final double size;
 
@@ -667,7 +652,39 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = email.isNotEmpty ? email[0].toUpperCase() : '?';
+    Map<String, String>? userData;
+    if (uid != null && MockData.mockUsers.containsKey(uid)) {
+      userData = MockData.mockUsers[uid];
+    } else {
+      try {
+        final entry = MockData.mockUsers.entries.firstWhere(
+            (e) => e.value['email'] == email,
+            orElse: () => MapEntry('', {}));
+        if (entry.key.isNotEmpty) userData = entry.value;
+      } catch (_) {}
+    }
+
+    final imageUrl = userData?['avatar'];
+
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: NetworkImage(imageUrl),
+            fit: BoxFit.cover,
+          ),
+          border: Border.all(color: _yellow.withValues(alpha: 0.4), width: 1.5),
+        ),
+      );
+    }
+
+    final initials = email.isNotEmpty
+        ? email[0].toUpperCase()
+        : (userData?['name'] != null ? userData!['name']![0].toUpperCase() : '?');
+
     return Container(
       width: size,
       height: size,
