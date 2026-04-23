@@ -632,79 +632,137 @@ class _ExpoPostDetailPageState extends State<ExpoPostDetailPage> {
   }
 }
 
-class _DetailImageGallery extends StatefulWidget {
+class _DetailImageGallery extends StatelessWidget {
   const _DetailImageGallery({required this.images});
   final List<String> images;
-
-  @override
-  State<_DetailImageGallery> createState() => _DetailImageGalleryState();
-}
-
-class _DetailImageGalleryState extends State<_DetailImageGallery> {
-  int _current = 0;
 
   Widget _buildImage(String src) {
     if (src.startsWith('assets/')) {
       return Image.asset(src,
-          width: double.infinity, height: 260, fit: BoxFit.cover,
+          width: double.infinity, height: double.infinity, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => const SizedBox.shrink());
     }
     return Image.network(src,
-        width: double.infinity, height: 260, fit: BoxFit.cover,
+        width: double.infinity, height: double.infinity, fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => const SizedBox.shrink());
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.images.length == 1) return _buildImage(widget.images.first);
-    return SizedBox(
-      height: 260,
-      child: Stack(
-        children: [
-          PageView.builder(
-            itemCount: widget.images.length,
-            onPageChanged: (i) => setState(() => _current = i),
-            itemBuilder: (_, i) => _buildImage(widget.images[i]),
-          ),
-          Positioned(
-            bottom: 10,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(widget.images.length, (i) =>
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: _current == i ? 20 : 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: _current == i
-                        ? const Color(0xFFFFD60A)
-                        : Colors.white.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
+    if (images.isEmpty) return const SizedBox.shrink();
+
+    if (images.length == 1) {
+      return SizedBox(
+        height: 260,
+        child: _buildImage(images[0]),
+      );
+    }
+
+    if (images.length == 2) {
+      return SizedBox(
+        height: 260,
+        child: Row(
+          children: [
+            Expanded(child: _buildImage(images[0])),
+            const SizedBox(width: 2),
+            Expanded(child: _buildImage(images[1])),
+          ],
+        ),
+      );
+    }
+
+    if (images.length == 3) {
+      return SizedBox(
+        height: 260,
+        child: Row(
+          children: [
+            Expanded(child: _buildImage(images[0])),
+            const SizedBox(width: 2),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(child: _buildImage(images[1])),
+                  const SizedBox(height: 2),
+                  Expanded(child: _buildImage(images[2])),
+                ],
               ),
             ),
+          ],
+        ),
+      );
+    }
+
+    if (images.length == 4) {
+      return SizedBox(
+        height: 260,
+        child: Column(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(child: _buildImage(images[0])),
+                  const SizedBox(width: 2),
+                  Expanded(child: _buildImage(images[1])),
+                ],
+              ),
+            ),
+            const SizedBox(height: 2),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(child: _buildImage(images[2])),
+                  const SizedBox(width: 2),
+                  Expanded(child: _buildImage(images[3])),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 5 or more images
+    return SizedBox(
+      height: 260,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _buildImage(images[0])),
+                const SizedBox(width: 2),
+                Expanded(child: _buildImage(images[1])),
+              ],
+            ),
           ),
-          Positioned(
-            top: 10,
-            right: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${_current + 1} / ${widget.images.length}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+          const SizedBox(height: 2),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _buildImage(images[2])),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildImage(images[3]),
+                      Container(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        child: Center(
+                          child: Text(
+                            '+${images.length - 4}',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
