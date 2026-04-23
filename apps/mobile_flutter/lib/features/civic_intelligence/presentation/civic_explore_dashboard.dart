@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:alitaptap_mobile/core/mock_data.dart';
 import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/features/civic_intelligence/presentation/issue_map_page.dart';
@@ -89,12 +90,15 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
                       children: [
-                        // Map Representation (Image or pattern)
-                        Image.network(
-                          'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop',
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
+                        // Map Representation: Live Snapshot
+                        AbsorbPointer(
+                          child: MapLibreMap(
+                            styleString: '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}',
+                            initialCameraPosition: const CameraPosition(
+                              target: LatLng(12.8797, 121.7740),
+                              zoom: 4.5,
+                            ),
+                          ),
                         ),
                         // Dark Overlay
                         Container(
