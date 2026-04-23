@@ -24,7 +24,6 @@ class ChatInboxPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If opened from "Message" button on a post, go straight to thread
     if (openWithUid != null && openWithUid != currentUid) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -104,13 +103,11 @@ class ChatInboxPage extends StatelessWidget {
           final docs = snap.data?.docs ?? [];
           final displayedChats = <Map<String, dynamic>>[];
 
-          // Add real data from Firestore
           for (var doc in docs) {
             final data = doc.data() as Map<String, dynamic>;
             displayedChats.add(data);
           }
 
-          // Add mock data if not already present in real data
           for (var mock in MockData.mockChats) {
             final otherUid = mock['other_uid'] as String;
             final isExisting = displayedChats.any((c) {
@@ -166,6 +163,7 @@ class ChatInboxPage extends StatelessWidget {
               final emails =
                   Map<String, String>.from(data['emails'] as Map? ?? {});
               final otherEmail = emails[otherUid] ?? otherUid;
+              final otherName = MockData.mockUsers[otherUid]?['name'] ?? otherEmail.split('@').first;
               final lastMsg = data['last_message'] as String? ?? '';
               final lastAt = data['last_message_at'] as Timestamp?;
               final unread = (data['unread_$currentUid'] as int?) ?? 0;
@@ -188,13 +186,13 @@ class ChatInboxPage extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      _Avatar(email: otherEmail, size: 48),
+                      _Avatar(uid: otherUid, email: otherEmail, size: 48),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(otherEmail.split('@').first,
+                            Text(otherName,
                                 style: GoogleFonts.poppins(
                                   color: textColor,
                                   fontSize: 14,
@@ -267,7 +265,8 @@ class ChatInboxPage extends StatelessWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.email, required this.size});
+  const _Avatar({this.uid, this.email = '', required this.size});
+  final String? uid;
   final String email;
   final double size;
 
@@ -275,7 +274,39 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = email.isNotEmpty ? email[0].toUpperCase() : '?';
+    Map<String, String>? userData;
+    if (uid != null && MockData.mockUsers.containsKey(uid)) {
+      userData = MockData.mockUsers[uid];
+    } else {
+      try {
+        final entry = MockData.mockUsers.entries.firstWhere(
+            (e) => e.value['email'] == email,
+            orElse: () => MapEntry('', {}));
+        if (entry.key.isNotEmpty) userData = entry.value;
+      } catch (_) {}
+    }
+
+    final imageUrl = userData?['avatar'];
+
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: NetworkImage(imageUrl),
+            fit: BoxFit.cover,
+          ),
+          border: Border.all(color: _yellow.withValues(alpha: 0.4), width: 1.5),
+        ),
+      );
+    }
+
+    final initials = email.isNotEmpty
+        ? email[0].toUpperCase()
+        : (userData?['name'] != null ? userData!['name']![0].toUpperCase() : '?');
+
     return Container(
       width: size,
       height: size,

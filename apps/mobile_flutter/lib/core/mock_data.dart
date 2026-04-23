@@ -156,6 +156,51 @@ class MockData {
       {'sender_uid': 'me', 'text': 'How can I help you?', 'created_at': DateTime.now().subtract(const Duration(days: 1, hours: 5))},
       {'sender_uid': 'mock_user_maria', 'text': 'Thank you for documenting the flood risk in our area.', 'created_at': DateTime.now().subtract(const Duration(days: 1))},
     ],
+  // --- USER MOCKS ---
+  
+  static final Map<String, Map<String, String>> mockUsers = {
+    'student_001': {
+      'name': 'River Rivera',
+      'email': 'river.guard@up.edu.ph',
+      'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
+      'bio': 'Civil Engineering Student @ UP Diliman. Passionate about sustainable waterways.',
+    },
+    'student_002': {
+      'name': 'Marco Polo',
+      'email': 'metro.safety@dlsu.edu.ph',
+      'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop',
+      'bio': 'IoT Researcher @ DLSU. Building resilient cities through smart sensors.',
+    },
+    'student_003': {
+      'name': 'Maria Montessori',
+      'email': 'maria.edu@ust.edu.ph',
+      'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
+      'bio': 'Education Major @ UST. Dedicated to bridging the rural literacy gap.',
+    },
+    'student_004': {
+      'name': 'Green Minded',
+      'email': 'green.mind@dlsu.edu.ph',
+      'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
+      'bio': 'Marine Biology Student. Reforesting our coasts one seed at a time.',
+    },
+    'community_001': {
+      'name': 'Barangay Captain',
+      'email': 'brgy.poblacion@community.local',
+      'avatar': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop',
+      'bio': 'Active leader in Barangay Poblacion. Driving community-led urban repair.',
+    },
+    'mock_user_aris': {
+      'name': 'Dr. Aris',
+      'avatar': 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=150&auto=format&fit=crop',
+    },
+    'mock_user_maria': {
+      'name': 'Maria Santos',
+      'avatar': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop',
+    },
+    'me': {
+      'name': 'Me (Student)',
+      'avatar': 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=150&auto=format&fit=crop',
+    }
   };
 }
 

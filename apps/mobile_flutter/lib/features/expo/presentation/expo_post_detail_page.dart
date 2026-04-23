@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:alitaptap_mobile/core/mock_data.dart';
 import '../../../core/models/research_post.dart';
 import '../../../services/api_service.dart';
 
@@ -129,7 +129,7 @@ class _ExpoPostDetailPageState extends State<ExpoPostDetailPage> {
                 filled: true,
                 fillColor: isDark
                     ? const Color(0xFF2A2A2A)
-                    : const Color(0xFFF5F5F5),
+                    : const Color(0xFFF0F0F0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -244,21 +244,12 @@ class _ExpoPostDetailPageState extends State<ExpoPostDetailPage> {
                 // ── Author ───────────────────────────────────────────────
                 Row(
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: _yellow.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.person_rounded,
-                          color: _yellow, size: 22),
-                    ),
+                    _Avatar(uid: _post.authorId, email: _post.authorEmail, size: 44),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_post.authorEmail.split('@').first,
+                        Text(MockData.mockUsers[_post.authorId]?['name'] ?? _post.authorEmail.split('@').first,
                             style: GoogleFonts.poppins(
                               color: textColor,
                               fontSize: 14,
@@ -423,7 +414,7 @@ class _ExpoPostDetailPageState extends State<ExpoPostDetailPage> {
                             horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
                           color: liked
-                              ? const Color(0xFFEF5350).withValues(alpha: 0.12)
+                               ? const Color(0xFFEF5350).withValues(alpha: 0.12)
                               : isDark
                                   ? const Color(0xFF2A2A2A)
                                   : const Color(0xFFF0F0F0),
@@ -628,6 +619,69 @@ class _ExpoPostDetailPageState extends State<ExpoPostDetailPage> {
   }
 }
 
+class _Avatar extends StatelessWidget {
+  const _Avatar({this.uid, this.email = '', required this.size});
+  final String? uid;
+  final String email;
+  final double size;
+
+  static const _yellow = Color(0xFFFFD60A);
+
+  @override
+  Widget build(BuildContext context) {
+    Map<String, String>? userData;
+    if (uid != null && MockData.mockUsers.containsKey(uid)) {
+      userData = MockData.mockUsers[uid];
+    } else {
+      try {
+        final entry = MockData.mockUsers.entries.firstWhere(
+            (e) => e.value['email'] == email,
+            orElse: () => MapEntry('', {}));
+        if (entry.key.isNotEmpty) userData = entry.value;
+      } catch (_) {}
+    }
+
+    final imageUrl = userData?['avatar'];
+
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: NetworkImage(imageUrl),
+            fit: BoxFit.cover,
+          ),
+          border: Border.all(color: _yellow.withValues(alpha: 0.4), width: 1.5),
+        ),
+      );
+    }
+
+    final initials = email.isNotEmpty
+        ? email[0].toUpperCase()
+        : (userData?['name'] != null ? userData!['name']![0].toUpperCase() : '?');
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: _yellow.withValues(alpha: 0.2),
+        shape: BoxShape.circle,
+        border: Border.all(color: _yellow.withValues(alpha: 0.4), width: 1.5),
+      ),
+      child: Center(
+        child: Text(initials,
+            style: GoogleFonts.poppins(
+              color: _yellow,
+              fontSize: size * 0.38,
+              fontWeight: FontWeight.w700,
+            )),
+      ),
+    );
+  }
+}
+
 class _Section extends StatelessWidget {
   const _Section({
     required this.label,
@@ -686,7 +740,9 @@ class _CommentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authorId = comment['author_id'] as String? ?? '';
     final email = (comment['author_email'] as String? ?? '').split('@').first;
+    final name = MockData.mockUsers[authorId]?['name'] ?? email;
     final text = comment['text'] as String? ?? '';
     final date = (comment['created_at'] as String? ?? '').split('T').first;
 
@@ -702,16 +758,7 @@ class _CommentTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFD60A).withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.person_rounded,
-                color: Color(0xFFFFD60A), size: 16),
-          ),
+          _Avatar(uid: authorId, email: comment['author_email'] ?? '', size: 32),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -719,7 +766,7 @@ class _CommentTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(email,
+                    Text(name,
                         style: GoogleFonts.poppins(
                           color: textColor,
                           fontSize: 12,

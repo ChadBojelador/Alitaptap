@@ -150,6 +150,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                     // ── Create post bar ────────────────────────────────
                     _CreatePostBar(
                       isDark: isDark,
+                      uid: uid,
                       email: email,
                       onTap: () => Navigator.of(context)
                           .push(MaterialPageRoute(
@@ -599,11 +600,14 @@ class _StoryBubble extends StatelessWidget {
 
 // ── Create post bar ────────────────────────────────────────────────────────────
 class _CreatePostBar extends StatelessWidget {
-  const _CreatePostBar(
-      {required this.isDark,
-      required this.email,
-      required this.onTap});
+  const _CreatePostBar({
+    required this.isDark,
+    required this.uid,
+    required this.email,
+    required this.onTap,
+  });
   final bool isDark;
+  final String uid;
   final String email;
   final VoidCallback onTap;
 
@@ -621,7 +625,7 @@ class _CreatePostBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              _Avatar(email: email, size: 40),
+              _Avatar(uid: uid, email: email, size: 40),
               const SizedBox(width: 10),
               Expanded(
                 child: GestureDetector(
@@ -770,7 +774,7 @@ class _PostCardState extends State<_PostCard> {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Row(
               children: [
-                _Avatar(email: widget.post.authorEmail, size: 44),
+                _Avatar(uid: widget.post.authorId, email: widget.post.authorEmail, size: 44),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -1088,9 +1092,9 @@ class _ActionBtn extends StatelessWidget {
   }
 }
 
-// ── Avatar ─────────────────────────────────────────────────────────────────────
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.email, required this.size});
+  const _Avatar({this.uid, this.email = '', required this.size});
+  final String? uid;
   final String email;
   final double size;
 
@@ -1098,7 +1102,41 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = email.isNotEmpty ? email[0].toUpperCase() : '?';
+    // Try to find mock user data
+    Map<String, String>? userData;
+    if (uid != null && MockData.mockUsers.containsKey(uid)) {
+      userData = MockData.mockUsers[uid];
+    } else {
+      // Try finding by email
+      try {
+        final entry = MockData.mockUsers.entries.firstWhere(
+            (e) => e.value['email'] == email,
+            orElse: () => MapEntry('', {}));
+        if (entry.key.isNotEmpty) userData = entry.value;
+      } catch (_) {}
+    }
+
+    final imageUrl = userData?['avatar'];
+
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: NetworkImage(imageUrl),
+            fit: BoxFit.cover,
+          ),
+          border: Border.all(color: _yellow.withValues(alpha: 0.4), width: 1.5),
+        ),
+      );
+    }
+
+    final initials = email.isNotEmpty
+        ? email[0].toUpperCase()
+        : (userData?['name'] != null ? userData!['name']![0].toUpperCase() : '?');
+
     return Container(
       width: size,
       height: size,
