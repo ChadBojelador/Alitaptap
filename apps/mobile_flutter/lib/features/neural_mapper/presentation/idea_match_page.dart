@@ -524,7 +524,7 @@ class _MatchCard extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${issue?.lat?.toStringAsFixed(2) ?? '0.00'}°',
+                                    '${issue?.lat.toStringAsFixed(2) ?? '0.00'}°',
                                     style: GoogleFonts.robotoMono(
                                       fontSize: 9,
                                       color: isDark
@@ -533,7 +533,7 @@ class _MatchCard extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    '${issue?.lng?.toStringAsFixed(2) ?? '0.00'}°',
+                                    '${issue?.lng.toStringAsFixed(2) ?? '0.00'}°',
                                     style: GoogleFonts.robotoMono(
                                       fontSize: 9,
                                       color: isDark

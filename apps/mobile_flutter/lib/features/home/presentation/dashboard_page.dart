@@ -14,7 +14,7 @@ import '../../../services/session_service.dart';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const _amber = Color(0xFFFFC700);
-const _amberLight = Color(0xFFFFF9C4);
+
 const _dark = Color(0xFF1A1A1A);
 const _white = Color(0xFFFFFFFF);
 

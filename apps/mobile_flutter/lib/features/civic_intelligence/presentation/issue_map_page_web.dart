@@ -76,7 +76,6 @@ class _IssueMapPageState extends State<IssueMapPage>
   bool _matchingIdea       = false;
   bool _sidebarOpen        = false;
 
-  String? _errorMessage;
 
   MapLibreMapController? _mapController;
   final Map<String, Offset> _issueScreenPositions = {};
@@ -138,7 +137,6 @@ class _IssueMapPageState extends State<IssueMapPage>
       if (mounted) {
         setState(() {
           _issues       = issues;
-          _errorMessage = null;
           _loading      = false;
         });
         await _renderIssuePins();
@@ -148,7 +146,6 @@ class _IssueMapPageState extends State<IssueMapPage>
       if (mounted) {
         setState(() {
           _loading      = false;
-          _errorMessage = e.toString();
         });
       }
     }
@@ -364,7 +361,6 @@ class _IssueMapPageState extends State<IssueMapPage>
                   onLocate: null,
                   onRefresh: () => setState(() {
                     _loading      = true;
-                    _errorMessage = null;
                     _loadIssues();
                   }),
                   // Pin generation not available on web

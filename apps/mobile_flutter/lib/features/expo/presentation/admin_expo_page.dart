@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../../services/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -89,6 +89,7 @@ class _AdminExpoPageState extends State<AdminExpoPage>
     if (confirm != true) return;
     // Optimistic remove
     setState(() => _posts.removeWhere((p) => p.postId == postId));
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Post removed from Expo.')),
     );
@@ -103,8 +104,8 @@ class _AdminExpoPageState extends State<AdminExpoPage>
         isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666);
     final bg = isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF0F0F0);
 
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+    final uid = SessionService.uid;
+    final email = SessionService.email;
 
     // Stats
     final totalFunding =

@@ -32,8 +32,14 @@ class _FakeIssueRepository implements IssueRepository {
   }
 
   @override
+  Future<List<Issue>> getExpoIssues() {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Map<String, dynamic>> submitIssue({
     required String reporterId,
+    String? reporterName,
     required String title,
     required String description,
     required double lat,

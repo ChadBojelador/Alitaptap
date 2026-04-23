@@ -1,17 +1,16 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../../../core/models/issue.dart';
 import '../application/usecases/get_validated_issues_use_case.dart';
-import '../application/usecases/submit_issue_use_case.dart';
+
 import '../data/repositories/api_issue_repository.dart';
 import '../../neural_mapper/presentation/idea_match_page.dart';
 import '../../../app/app.dart' show AppTheme;
@@ -78,8 +77,6 @@ class _IssueMapPageState extends State<IssueMapPage>
 
   late final GetValidatedIssuesUseCase _getValidatedIssues =
       GetValidatedIssuesUseCase(_issueRepository);
-  late final SubmitIssueUseCase _submitIssueUseCase =
-      SubmitIssueUseCase(_issueRepository);
 
   // ── State ──────────────────────────────────────────────────────────────
   List<Issue> _issues      = [];
@@ -87,11 +84,9 @@ class _IssueMapPageState extends State<IssueMapPage>
   bool _styleLoaded        = false;
   bool _matchingIdea       = false;
   bool _sidebarOpen        = false;
-  String? _errorMessage;
 
   MapLibreMapController? _mapController;
   final Map<String, Offset> _issueScreenPositions = {};
-  double _bearing = 0.0;
   double _zoom = _defaultZoom;
 
   bool _isDarkMode = true;
@@ -173,7 +168,6 @@ class _IssueMapPageState extends State<IssueMapPage>
       if (mounted) {
         setState(() {
           _issues       = issues;
-          _errorMessage = null;
           _loading      = false;
         });
         // Only project if style is already loaded; otherwise _onStyleLoaded will do it
@@ -185,7 +179,6 @@ class _IssueMapPageState extends State<IssueMapPage>
       if (mounted) {
         setState(() {
           _loading      = false;
-          _errorMessage = e.toString();
         });
       }
     }
@@ -328,24 +321,17 @@ class _IssueMapPageState extends State<IssueMapPage>
       // Add Batangas City Boundary Highlight (Simplified Polygon)
       try {
         await controller.addFill(
-          {
-            "type": "FeatureCollection",
-            "features": [{
-              "type": "Feature",
-              "geometry": {
-                "type": "Polygon",
-                "coordinates": [[
-                  [121.0300, 13.7300], [121.0800, 13.7300],
-                  [121.1000, 13.7800], [121.0500, 13.8200],
-                  [121.0000, 13.8000], [121.0300, 13.7300]
-                ]]
-              }
-            }]
-          },
-          FillLayerProperties(
-            fillColor: "#FFC700",
+          FillOptions(
+            geometry: [
+              [
+                LatLng(13.7300, 121.0300), LatLng(13.7300, 121.0800),
+                LatLng(13.7800, 121.1000), LatLng(13.8200, 121.0500),
+                LatLng(13.8000, 121.0000), LatLng(13.7300, 121.0300),
+              ],
+            ],
+            fillColor: '#FFC700',
             fillOpacity: 0.08,
-            fillOutlineColor: "#FFC700"
+            fillOutlineColor: '#FFC700',
           ),
         );
       } catch (_) {}
@@ -369,7 +355,6 @@ class _IssueMapPageState extends State<IssueMapPage>
     final pos = _mapController?.cameraPosition;
     if (mounted) {
       setState(() {
-        _bearing = pos?.bearing ?? 0.0;
         _zoom    = pos?.zoom    ?? _zoom;
       });
     }
@@ -497,7 +482,7 @@ class _IssueMapPageState extends State<IssueMapPage>
               onMapCreated:          _onMapCreated,
               onStyleLoadedCallback: _onStyleLoaded,
               onMapClick:            _onMapTap,
-              onCameraMove:          _onCameraMove, // Added this back if missing
+              onCameraMove:          (pos) => _onCameraMove(),
               compassEnabled:        false,
               myLocationEnabled:     false,
               attributionButtonMargins: const Point(-100, -100),
@@ -569,7 +554,6 @@ class _IssueMapPageState extends State<IssueMapPage>
                   onLocate:         _locatingUser ? null : _resolveUserLocation,
                   onRefresh: () => setState(() {
                     _loading      = true;
-                    _errorMessage = null;
                     _loadIssues();
                   }),
                   onBack: Navigator.of(context).canPop()
@@ -1110,95 +1094,7 @@ class _RegionalIntelligencePanel extends StatelessWidget {
   }
 }
 
-/// Compass rose that rotates with map bearing, snaps north on tap.
-class _MapCompass extends StatelessWidget {
-  const _MapCompass({required this.bearing, required this.onTap});
-  final double       bearing;
-  final VoidCallback onTap;
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width:  48,
-        height: 48,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _darkPanel,
-          border: Border.all(
-            color: _cyberGreen.withValues(alpha: 0.4),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color:       _cyberGreen.withValues(alpha: 0.20),
-              blurRadius:  12,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        child: Transform.rotate(
-          angle: -bearing * (pi / 180),
-          child: CustomPaint(painter: _CompassPainter()),
-        ),
-      ),
-    );
-  }
-}
-
-class _CompassPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width  / 2;
-    final cy = size.height / 2;
-    final r  = size.width  * 0.30;
-
-    // North — cyber green
-    canvas.drawPath(
-      Path()
-        ..moveTo(cx, cy - r * 1.5)
-        ..lineTo(cx - r * 0.5, cy + r * 0.25)
-        ..lineTo(cx + r * 0.5, cy + r * 0.25)
-        ..close(),
-      Paint()..color = _cyberGreen,
-    );
-
-    // South — muted
-    canvas.drawPath(
-      Path()
-        ..moveTo(cx, cy + r * 1.5)
-        ..lineTo(cx - r * 0.5, cy - r * 0.25)
-        ..lineTo(cx + r * 0.5, cy - r * 0.25)
-        ..close(),
-      Paint()..color = _textMuted,
-    );
-
-    // Center
-    canvas.drawCircle(
-      Offset(cx, cy),
-      r * 0.28,
-      Paint()..color = _darkPanel,
-    );
-
-    // N label
-    final tp = TextPainter(
-      text: TextSpan(
-        text:  'N',
-        style: GoogleFonts.robotoMono(
-          color:      _darkBg,
-          fontSize:   8,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, Offset(cx - tp.width / 2, cy - r * 1.5 + 2));
-  }
-
-  @override
-  bool shouldRepaint(_CompassPainter old) => false;
-}
 
 /// Left collapsible sidebar listing all validated issues.
 class _IssueSidebar extends StatelessWidget {

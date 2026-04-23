@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../../services/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -75,9 +75,8 @@ class _StudentHomePageState extends State<StudentHomePage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF141414) : const Color(0xFFF7F8FA);
-    final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.email?.split('@')[0] ?? 'there';
-    final uid = user?.uid ?? 'anon';
+    final displayName = SessionService.email.isNotEmpty ? SessionService.email.split('@')[0] : 'there';
+    final uid = SessionService.uid.isNotEmpty ? SessionService.uid : 'anon';
 
     return Scaffold(
       backgroundColor: bg,
@@ -122,7 +121,7 @@ class _StudentHomePageState extends State<StudentHomePage>
                       ),
                       GestureDetector(
                         onTap: () async {
-                          await FirebaseAuth.instance.signOut();
+                          await SessionService.clear();
                         },
                         child: Container(
                           width: 46,

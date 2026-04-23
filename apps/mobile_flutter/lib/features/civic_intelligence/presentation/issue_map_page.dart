@@ -28,12 +28,12 @@ const _textMuted = Color(0xFF6B7280);
 const _gridLine = Color(0xFF1A2332);
 
 // Map overlay tokens — dark, readable over light map
-const _barBg        = Color(0xFF1A1A2E);
-const _barBorder    = Color(0xFFFFC700);
-const _barIcon      = Color(0xFFFFC700);
+const _barBg = Color(0xFF1A1A2E);
+const _barBorder = Color(0xFFFFC700);
+const _barIcon = Color(0xFFFFC700);
 const _barIconMuted = Color(0xFFFFE066);
-const _barTitle     = Color(0xFFFFC700);
-const _barSubtitle  = Color(0xFFFFE066);
+const _barTitle = Color(0xFFFFC700);
+const _barSubtitle = Color(0xFFFFE066);
 
 /// Full-screen cutesy map page for Alitaptap.
 /// Warm pastel palette, rounded cards, friendly Nunito font.
@@ -63,7 +63,8 @@ class IssueMapPage extends StatefulWidget {
 
 class _IssueMapPageState extends State<IssueMapPage>
     with TickerProviderStateMixin {
-  static const _mapStyleUrl = '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}';
+  static const _mapStyleUrl =
+      '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}';
   static const _defaultCenter = LatLng(12.8797, 121.7740);
   static const _defaultZoom = 6.0;
   static const _userZoom = 15.0;
@@ -92,19 +93,13 @@ class _IssueMapPageState extends State<IssueMapPage>
   bool _generatingDemoIssue = false;
   bool _sidebarOpen = false;
 
-
-  // ✅🔥 THIS IS THE FIX (missing variable)
-  String? _errorMessage;
-
   MapLibreMapController? _mapController;
   Circle? _userLocationCircle;
   Offset? _userScreenPosition;
   final Map<String, Offset> _issueScreenPositions = {};
-  double _bearing = 0.0;
 
   bool _isDarkMode = true;
   bool get _isDark => _isDarkMode;
-  ThemeMode? _lastThemeMode;
   Offset? _ideaDockAnchor;
   String? _connectedIssueId;
 
@@ -142,7 +137,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     super.didChangeDependencies();
     final currentMode = AppTheme.of(context).themeMode;
     _isDarkMode = currentMode == ThemeMode.dark;
-    _lastThemeMode = currentMode;
+    _isDarkMode = currentMode == ThemeMode.dark;
   }
 
   @override
@@ -162,7 +157,7 @@ class _IssueMapPageState extends State<IssueMapPage>
       if (mounted) {
         setState(() {
           _issues = issues;
-          _errorMessage = null;
+          _issues = issues;
           _loading = false;
         });
         // Wait for map to be ready before projecting coordinates
@@ -176,7 +171,7 @@ class _IssueMapPageState extends State<IssueMapPage>
       if (mounted) {
         setState(() {
           _loading = false;
-          _errorMessage = e.toString();
+          _loading = false;
         });
       }
     }
@@ -217,9 +212,8 @@ class _IssueMapPageState extends State<IssueMapPage>
   void _onCameraMove() {
     unawaited(_updateUserScreenPosition());
     unawaited(_updateIssueScreenPositions());
-    final bearing = _mapController?.cameraPosition?.bearing ?? 0.0;
     if (mounted) {
-      setState(() => _bearing = bearing);
+      setState(() {});
     }
   }
 
@@ -292,7 +286,8 @@ class _IssueMapPageState extends State<IssueMapPage>
       try {
         final screenPoint =
             await controller.toScreenLocation(LatLng(issue.lat, issue.lng));
-        final offset = Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
+        final offset =
+            Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
         // Only keep positions that are actually on-screen (non-zero)
         if (offset.dx != 0 || offset.dy != 0) {
           positions[issue.issueId] = offset;
@@ -308,56 +303,7 @@ class _IssueMapPageState extends State<IssueMapPage>
     });
   }
 
-  Future<void> _generateProblemAtUserLocation() async {
-    if (_generatingDemoIssue) return;
 
-    Position? position = _userPosition;
-    if (position == null) {
-      await _resolveCurrentLocation();
-      position = _userPosition;
-    }
-
-    if (position == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Location not available. Allow location access.')),
-      );
-      return;
-    }
-
-    final index = _issues.length + 1;
-    final now = DateTime.now();
-
-    setState(() => _generatingDemoIssue = true);
-    try {
-      await _submitIssueUseCase(
-        SubmitIssueInput(
-          reporterId: 'demo-seed-user',
-          title: 'Generated Problem #$index',
-          description: 'Auto-generated pin at '
-              '${now.hour.toString().padLeft(2, '0')}:'
-              '${now.minute.toString().padLeft(2, '0')}.',
-          lat: position.latitude,
-          lng: position.longitude,
-        ),
-      );
-
-      if (!mounted) return;
-      await _loadIssues();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Problem pinned on map.')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _generatingDemoIssue = false);
-    }
-  }
 
   Future<void> _seedTwoIdeaTestProblems() async {
     if (_generatingDemoIssue) return;
@@ -381,7 +327,8 @@ class _IssueMapPageState extends State<IssueMapPage>
     const floodTitle = 'Demo: Flooded drainage near school gate';
     const wasteTitle = 'Demo: Uncollected garbage at public market';
 
-    final existingTitles = _issues.map((issue) => issue.title.toLowerCase()).toSet();
+    final existingTitles =
+        _issues.map((issue) => issue.title.toLowerCase()).toSet();
 
     final seeds = <SubmitIssueInput>[
       SubmitIssueInput(
@@ -613,12 +560,14 @@ class _IssueMapPageState extends State<IssueMapPage>
                   builder: (context, _) {
                     final t = _connectionAnim.value;
                     final drawProgress = Curves.easeOutQuart
-                      .transform((t / 0.46).clamp(0.0, 1.0));
+                        .transform((t / 0.46).clamp(0.0, 1.0));
                     final headProgress = Curves.easeOutQuart
-                      .transform((t / 0.60).clamp(0.0, 1.0));
+                        .transform((t / 0.60).clamp(0.0, 1.0));
                     final fade = t < 0.50
                         ? 1.0
-                      : 1 - Curves.easeIn.transform(((t - 0.50) / 0.50).clamp(0.0, 1.0));
+                        : 1 -
+                            Curves.easeIn
+                                .transform(((t - 0.50) / 0.50).clamp(0.0, 1.0));
                     return CustomPaint(
                       painter: _ConnectionLinePainter(
                         source: _ideaDockAnchor!,
@@ -654,12 +603,10 @@ class _IssueMapPageState extends State<IssueMapPage>
                   },
                   onRefresh: () => setState(() {
                     _loading = true;
-                    _errorMessage = null;
                     _loadIssues();
                   }),
-                  onAddPin: _generatingDemoIssue
-                      ? null
-                      : _seedTwoIdeaTestProblems,
+                  onAddPin:
+                      _generatingDemoIssue ? null : _seedTwoIdeaTestProblems,
                   onBack: Navigator.of(context).canPop()
                       ? () => Navigator.of(context).pop()
                       : null,
@@ -1037,96 +984,6 @@ class _RadarBlipState extends State<_RadarBlip>
       },
     );
   }
-}
-
-/// Compass rose that rotates with map bearing, snaps north on tap.
-class _MapCompass extends StatelessWidget {
-  const _MapCompass({required this.bearing, required this.onTap});
-  final double bearing;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _darkPanel,
-          border: Border.all(
-            color: _cyberGreen.withValues(alpha: 0.4),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _cyberGreen.withValues(alpha: 0.20),
-              blurRadius: 12,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        child: Transform.rotate(
-          angle: -bearing * (pi / 180),
-          child: CustomPaint(painter: _CompassPainter()),
-        ),
-      ),
-    );
-  }
-}
-
-class _CompassPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width * 0.30;
-
-    // North — cyber green
-    canvas.drawPath(
-      Path()
-        ..moveTo(cx, cy - r * 1.5)
-        ..lineTo(cx - r * 0.5, cy + r * 0.25)
-        ..lineTo(cx + r * 0.5, cy + r * 0.25)
-        ..close(),
-      Paint()..color = _cyberGreen,
-    );
-
-    // South — muted
-    canvas.drawPath(
-      Path()
-        ..moveTo(cx, cy + r * 1.5)
-        ..lineTo(cx - r * 0.5, cy - r * 0.25)
-        ..lineTo(cx + r * 0.5, cy - r * 0.25)
-        ..close(),
-      Paint()..color = _textMuted,
-    );
-
-    // Center
-    canvas.drawCircle(
-      Offset(cx, cy),
-      r * 0.28,
-      Paint()..color = _darkPanel,
-    );
-
-    // N label
-    final tp = TextPainter(
-      text: TextSpan(
-        text: 'N',
-        style: GoogleFonts.robotoMono(
-          color: _darkBg,
-          fontSize: 8,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, Offset(cx - tp.width / 2, cy - r * 1.5 + 2));
-  }
-
-  @override
-  bool shouldRepaint(_CompassPainter old) => false;
 }
 
 class _ConnectionLinePainter extends CustomPainter {
@@ -1601,8 +1458,6 @@ class _IdeaDockState extends State<_IdeaDock>
     value: 0,
   );
 
-  bool get _collapsed => _sheetController.value <= 0.02;
-
   void _toggleCollapsed() {
     if (_sheetController.value > 0.5) {
       _sheetController.fling(velocity: -2.0);
@@ -1614,7 +1469,8 @@ class _IdeaDockState extends State<_IdeaDock>
   void _onDragUpdate(DragUpdateDetails details) {
     final dy = details.primaryDelta ?? 0;
     final range = _expandedHeight - _collapsedHeight;
-    _sheetController.value = (_sheetController.value - (dy / range)).clamp(0, 1);
+    _sheetController.value =
+        (_sheetController.value - (dy / range)).clamp(0, 1);
   }
 
   void _onDragEnd(DragEndDetails details) {
@@ -1646,7 +1502,6 @@ class _IdeaDockState extends State<_IdeaDock>
       child: AnimatedBuilder(
         animation: _sheetController,
         builder: (context, _) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
           final sheetBg = _barBg;
           final borderColor = _barBorder;
           final iconColor = const Color(0xFFFFC700);
@@ -1656,16 +1511,19 @@ class _IdeaDockState extends State<_IdeaDock>
           final inputText = const Color(0xFFFFC700);
           final inputHint = const Color(0xFFFFE066);
           final searchIcon = const Color(0xFFFFC700);
-          final progress = Curves.easeOutCubic.transform(_sheetController.value);
-          final height =
-              _collapsedHeight + ((_expandedHeight - _collapsedHeight) * progress);
+          final progress =
+              Curves.easeOutCubic.transform(_sheetController.value);
+          final height = _collapsedHeight +
+              ((_expandedHeight - _collapsedHeight) * progress);
 
           return Container(
             height: height,
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+            padding:
+                EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
               color: sheetBg.withValues(alpha: 0.55),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border.all(
                 color: borderColor,
                 width: 1,
@@ -1771,7 +1629,7 @@ class _IdeaDockState extends State<_IdeaDock>
                                       width: 20,
                                       height: 20,
                                       child: CircularProgressIndicator(
-                                        color: const Color(0xFFFFC700),
+                                        color: Color(0xFFFFC700),
                                         strokeWidth: 2,
                                       ),
                                     )

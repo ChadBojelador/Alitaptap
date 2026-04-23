@@ -26,7 +26,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   bool _elaborating = false;
   String? _elaboratedText;
   String? _suggestedSDG;
-  List<Map<String, String>> _savedReports = [];
+  final List<Map<String, String>> _savedReports = [];
   int? _editingIndex;
   bool _isEditingMode = false;
 

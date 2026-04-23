@@ -3,9 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:alitaptap_mobile/core/models/research_post.dart';
 import 'package:alitaptap_mobile/core/mock_data.dart';
-import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/features/civic_intelligence/presentation/issue_map_page.dart';
-import 'package:alitaptap_mobile/features/civic_intelligence/presentation/issue_detail_page.dart';
 import 'package:alitaptap_mobile/features/expo/presentation/expo_post_detail_page.dart';
 
 class CivicExploreDashboard extends StatefulWidget {

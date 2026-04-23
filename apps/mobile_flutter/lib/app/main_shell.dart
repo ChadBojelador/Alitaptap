@@ -4,13 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app.dart';
 import '../services/session_service.dart';
 import '../features/civic_intelligence/presentation/civic_explore_dashboard.dart';
-import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
-import '../features/home/presentation/dashboard_page.dart';
 import '../features/home/presentation/create_page.dart';
 import '../features/civic_intelligence/presentation/issue_submit_page.dart';
 import '../features/expo/presentation/chat_inbox_page.dart';
-import '../core/models/app_role.dart';
 
 const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
@@ -111,7 +108,6 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final uid = SessionService.uid;
-    final email = SessionService.email;
 
     final pages = [
       const ExpoFeedPage(),

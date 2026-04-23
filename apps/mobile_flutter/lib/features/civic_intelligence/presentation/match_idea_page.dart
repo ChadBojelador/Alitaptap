@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/models/issue.dart';
+
 import '../../../services/api_service.dart';
 import 'issue_map_page.dart';
 
@@ -22,7 +22,7 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
   bool _useLocationSearch = false;
   List<Map<String, dynamic>> _nearestMatches = [];
   String? _selectedIssueId;
-  final Map<String, Issue> _issueById = {};
+
 
   @override
   void dispose() {

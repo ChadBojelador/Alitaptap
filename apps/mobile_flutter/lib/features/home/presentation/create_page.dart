@@ -44,7 +44,7 @@ class _CreatePageState extends State<CreatePage> {
   late List<TextEditingController> _sdgEditCtrls;
   
   // Saved projects list
-  List<Map<String, String>> _savedProjects = [];
+  final List<Map<String, String>> _savedProjects = [];
   int? _editingProjectIndex;
 
   @override
