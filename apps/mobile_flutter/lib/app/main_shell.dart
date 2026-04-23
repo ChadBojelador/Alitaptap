@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app.dart';
+import '../features/civic_intelligence/presentation/civic_explore_dashboard.dart';
 import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
 import '../features/home/presentation/dashboard_page.dart';
@@ -114,10 +115,7 @@ class _MainShellState extends State<MainShell> {
 
     final pages = [
       const ExpoFeedPage(),
-      IssueMapPage(
-        studentId: uid,
-        showIdeaDock: false,
-      ),
+      CivicExploreDashboard(uid: uid),
       ChatInboxPage(
         currentUid: uid,
         currentEmail: email,
