@@ -8,7 +8,7 @@ class MockData {
     ResearchPost(
       postId: 'research_001',
       authorId: 'student_smartbin',
-            authorEmail: 'SmartBin Team',
+      authorEmail: 'SmartBin Team',
       title:
           'SmartBin Connect: Barangay Waste Monitoring and Collection Optimization System',
       abstract:
@@ -23,8 +23,8 @@ class MockData {
           .subtract(const Duration(minutes: 1))
           .toIsoformatString(),
       imageUrls: const [
-                'assets/mock_pictures/research_post_picture/smart-bin-01.png',
-                'assets/mock_pictures/research_post_picture/smart-bin-02.png',
+        'assets/mock_pictures/research_post_picture/smart-bin-01.png',
+        'assets/mock_pictures/research_post_picture/smart-bin-02.png',
       ],
       shares: 8,
       reactions: const {'like': 16, 'love': 5, 'wow': 3},
@@ -32,7 +32,7 @@ class MockData {
     ResearchPost(
       postId: 'research_002',
       authorId: 'student_aquaalert',
-            authorEmail: 'AquaAlert Team',
+      authorEmail: 'AquaAlert Team',
       title:
           'AquaAlert: Smart Water Interruption Notification and Storage Monitoring System',
       abstract:
@@ -46,16 +46,16 @@ class MockData {
       createdAt: DateTime.now()
           .subtract(const Duration(minutes: 2))
           .toIsoformatString(),
-            imageUrls: const [
-                'assets/mock_pictures/research_post_picture/AquaAlert.jpg',
-            ],
+      imageUrls: const [
+        'assets/mock_pictures/research_post_picture/AquaAlert.jpg',
+      ],
       shares: 5,
       reactions: const {'like': 11, 'love': 3, 'wow': 3},
     ),
     ResearchPost(
       postId: 'research_003',
       authorId: 'student_brightpath',
-            authorEmail: 'BrightPath Team',
+      authorEmail: 'BrightPath Team',
       title: 'BrightPath: Solar-Powered Smart Streetlight Monitoring System',
       abstract:
           'BrightPath is a smart streetlight solution that uses solar energy and sensor-based monitoring to detect broken or non-functioning streetlights. Reports are automatically sent to barangay officials for faster repairs, improving road safety and visibility at night.',
@@ -67,16 +67,16 @@ class MockData {
       createdAt: DateTime.now()
           .subtract(const Duration(minutes: 3))
           .toIsoformatString(),
-            imageUrls: const [
-                'assets/mock_pictures/research_post_picture/BrightPath.jpg',
-            ],
+      imageUrls: const [
+        'assets/mock_pictures/research_post_picture/BrightPath.jpg',
+      ],
       shares: 4,
       reactions: const {'like': 10, 'love': 2, 'wow': 3},
     ),
     ResearchPost(
       postId: 'research_004',
       authorId: 'student_commuteease',
-            authorEmail: 'CommuteEase Team',
+      authorEmail: 'CommuteEase Team',
       title: 'CommuteEase: Smart Queueing and Transport Availability App',
       abstract:
           'CommuteEase is a mobile platform that helps commuters view transport availability, waiting times, and optimized pickup areas in real time. It supports smoother commuting experiences, reduces traffic congestion, and improves daily productivity for workers and students.',
@@ -89,16 +89,16 @@ class MockData {
       createdAt: DateTime.now()
           .subtract(const Duration(minutes: 4))
           .toIsoformatString(),
-            imageUrls: const [
-                'assets/mock_pictures/research_post_picture/CommuteEase.jpg',
-            ],
+      imageUrls: const [
+        'assets/mock_pictures/research_post_picture/CommuteEase.jpg',
+      ],
       shares: 3,
       reactions: const {'like': 9, 'love': 1, 'wow': 3},
     ),
     ResearchPost(
       postId: 'research_005',
       authorId: 'student_floodguard',
-            authorEmail: 'FloodGuard Team',
+      authorEmail: 'FloodGuard Team',
       title: 'FloodGuard: Community Flood Detection and Drainage Alert System',
       abstract:
           'FloodGuard uses water-level sensors and weather monitoring to provide early flood warnings in flood-prone barangays. It also tracks clogged drainage areas through community reports, helping local officials respond faster and reduce flood damage.',
@@ -111,9 +111,9 @@ class MockData {
       createdAt: DateTime.now()
           .subtract(const Duration(minutes: 6))
           .toIsoformatString(),
-            imageUrls: const [
-                'assets/mock_pictures/research_post_picture/FloodGuard.jpg',
-            ],
+      imageUrls: const [
+        'assets/mock_pictures/research_post_picture/FloodGuard.jpg',
+      ],
       shares: 6,
       reactions: const {'like': 14, 'love': 3, 'wow': 3},
     ),
@@ -197,7 +197,7 @@ class MockData {
       likedBy: const [],
       shares: 0,
       imageUrls: const [
-                'assets/mock_pictures/problem_post_picture/Punong Basurahan sa Barangay.jpg',
+        'assets/mock_pictures/problem_post_picture/Punong Basurahan sa Barangay.jpg',
       ],
     ),
     CommunityProblemPost(
@@ -213,7 +213,7 @@ class MockData {
       likedBy: const [],
       shares: 0,
       imageUrls: const [
-                'assets/mock_pictures/problem_post_picture/Tubig na Laging Pinuputol.jpg',
+        'assets/mock_pictures/problem_post_picture/Tubig na Laging Pinuputol.jpg',
       ],
     ),
     CommunityProblemPost(
@@ -229,7 +229,7 @@ class MockData {
       likedBy: const [],
       shares: 0,
       imageUrls: const [
-                'assets/mock_pictures/problem_post_picture/Dilim sa Kalsada Tuwing Gabi.jpg',
+        'assets/mock_pictures/problem_post_picture/Dilim sa Kalsada Tuwing Gabi.jpg',
       ],
     ),
     CommunityProblemPost(
@@ -245,7 +245,7 @@ class MockData {
       likedBy: const [],
       shares: 0,
       imageUrls: const [
-                'assets/mock_pictures/problem_post_picture/Traffic at Walang Maayos na Sakayan.jpg',
+        'assets/mock_pictures/problem_post_picture/Traffic at Walang Maayos na Sakayan.jpg',
       ],
     ),
     CommunityProblemPost(
@@ -261,57 +261,214 @@ class MockData {
       likedBy: const [],
       shares: 0,
       imageUrls: const [
-                'assets/mock_pictures/problem_post_picture/Baha Kada Malakas na Ulan.jpg',
+        'assets/mock_pictures/problem_post_picture/Baha Kada Malakas na Ulan.jpg',
       ],
     ),
   ];
 
-    static final List<StoryPost> storyPosts = [
-        const StoryPost(
-            storyId: 'story_001',
-            bubbleLabel: 'Soap',
-            title: 'Soap Project Story',
-            description:
-                    'A hygiene-focused student project that explores low-cost soap solutions for households and community sanitation.',
-            sdgLabel: 'SDG 3',
-            sdgName: 'Good Health and Well-being',
-            imagePath: 'assets/mock_pictures/story_post/soap project story.jpg',
-        ),
-        const StoryPost(
-            storyId: 'story_002',
-            bubbleLabel: 'Shredder',
-            title: 'Paper Shredder Story',
-            description:
-                    'A paper recycling and shredding initiative that helps reduce paper waste and encourages responsible material reuse.',
-            sdgLabel: 'SDG 12',
-            sdgName: 'Responsible Consumption and Production',
-            imagePath: 'assets/mock_pictures/story_post/paper shredder story.jpg',
-        ),
-        const StoryPost(
-            storyId: 'story_003',
-            bubbleLabel: 'Monitoring',
-            title: 'Monitoring System Story',
-            description:
-                    'A community monitoring setup designed to improve local issue tracking and support faster barangay response workflows.',
-            sdgLabel: 'SDG 11',
-            sdgName: 'Sustainable Cities and Communities',
-            imagePath: 'assets/mock_pictures/story_post/monitoring system story.jpg',
-        ),
-        const StoryPost(
-            storyId: 'story_004',
-            bubbleLabel: 'Earthquake',
-            title: 'Earthquake System Story',
-            description:
-                    'An early-warning concept for earthquake preparedness that supports safer schools and community evacuation readiness.',
-            sdgLabel: 'SDG 11',
-            sdgName: 'Sustainable Cities and Communities',
-            imagePath: 'assets/mock_pictures/story_post/earfth quake system story.jpg',
-        ),
-    ];
+  static final List<StoryPost> storyPosts = [
+    const StoryPost(
+      storyId: 'story_001',
+      bubbleLabel: 'Soap',
+      title: 'Soap Project Story',
+      description:
+          'A hygiene-focused student project that explores low-cost soap solutions for households and community sanitation.',
+      sdgLabel: 'SDG 3',
+      sdgName: 'Good Health and Well-being',
+      imagePath: 'assets/mock_pictures/story_post/soap project story.jpg',
+    ),
+    const StoryPost(
+      storyId: 'story_002',
+      bubbleLabel: 'Shredder',
+      title: 'Paper Shredder Story',
+      description:
+          'A paper recycling and shredding initiative that helps reduce paper waste and encourages responsible material reuse.',
+      sdgLabel: 'SDG 12',
+      sdgName: 'Responsible Consumption and Production',
+      imagePath: 'assets/mock_pictures/story_post/paper shredder story.jpg',
+    ),
+    const StoryPost(
+      storyId: 'story_003',
+      bubbleLabel: 'Monitoring',
+      title: 'Monitoring System Story',
+      description:
+          'A community monitoring setup designed to improve local issue tracking and support faster barangay response workflows.',
+      sdgLabel: 'SDG 11',
+      sdgName: 'Sustainable Cities and Communities',
+      imagePath: 'assets/mock_pictures/story_post/monitoring system story.jpg',
+    ),
+    const StoryPost(
+      storyId: 'story_004',
+      bubbleLabel: 'Earthquake',
+      title: 'Earthquake System Story',
+      description:
+          'An early-warning concept for earthquake preparedness that supports safer schools and community evacuation readiness.',
+      sdgLabel: 'SDG 11',
+      sdgName: 'Sustainable Cities and Communities',
+      imagePath:
+          'assets/mock_pictures/story_post/earfth quake system story.jpg',
+    ),
+  ];
 
-  static final List<Map<String, dynamic>> mockChats = [];
-  static final Map<String, List<Map<String, dynamic>>> mockMessages = {};
-  static final Map<String, Map<String, String>> mockUsers = {};
+  static final List<Map<String, dynamic>> mockChats = [
+    {
+      'chat_id': 'chat_001',
+      'other_uid': 'community_juan',
+      'last_message':
+          'Salamat! Kailan pwede i-pilot test ang SmartBin sa amin?',
+      'last_message_at': DateTime.now()
+          .subtract(const Duration(minutes: 2))
+          .toIsoformatString(),
+      'unread_count': 2,
+      'is_online': true,
+    },
+    {
+      'chat_id': 'chat_002',
+      'other_uid': 'community_maria',
+      'last_message': 'Mukhang helpful ang AquaAlert para sa barangay namin.',
+      'last_message_at': DateTime.now()
+          .subtract(const Duration(minutes: 8))
+          .toIsoformatString(),
+      'unread_count': 0,
+      'is_online': false,
+    },
+    {
+      'chat_id': 'chat_003',
+      'other_uid': 'community_carlo',
+      'last_message': 'Pwede bang ma-link sa report system ng streetlights?',
+      'last_message_at': DateTime.now()
+          .subtract(const Duration(minutes: 26))
+          .toIsoformatString(),
+      'unread_count': 1,
+      'is_online': true,
+    },
+    {
+      'chat_id': 'chat_004',
+      'other_uid': 'community_ana',
+      'last_message': 'May demo ba ang CommuteEase para sa students?',
+      'last_message_at': DateTime.now()
+          .subtract(const Duration(hours: 1, minutes: 12))
+          .toIsoformatString(),
+      'unread_count': 0,
+      'is_online': false,
+    },
+    {
+      'chat_id': 'chat_005',
+      'other_uid': 'community_mark',
+      'last_message':
+          'Nakatulong yung FloodGuard idea sa hazard planning meeting.',
+      'last_message_at': DateTime.now()
+          .subtract(const Duration(hours: 3, minutes: 4))
+          .toIsoformatString(),
+      'unread_count': 0,
+      'is_online': false,
+    },
+  ];
+
+  static final Map<String, List<Map<String, dynamic>>> mockMessages = {
+    'chat_001': [
+      {
+        'sender_uid': 'community_juan',
+        'text': 'Salamat! Kailan pwede i-pilot test ang SmartBin sa amin?',
+        'created_at': DateTime.now()
+            .subtract(const Duration(minutes: 2))
+            .toIsoformatString(),
+      },
+    ],
+    'chat_002': [
+      {
+        'sender_uid': 'community_maria',
+        'text': 'Mukhang helpful ang AquaAlert para sa barangay namin.',
+        'created_at': DateTime.now()
+            .subtract(const Duration(minutes: 8))
+            .toIsoformatString(),
+      },
+    ],
+    'chat_003': [
+      {
+        'sender_uid': 'community_carlo',
+        'text': 'Pwede bang ma-link sa report system ng streetlights?',
+        'created_at': DateTime.now()
+            .subtract(const Duration(minutes: 26))
+            .toIsoformatString(),
+      },
+    ],
+    'chat_004': [
+      {
+        'sender_uid': 'community_ana',
+        'text': 'May demo ba ang CommuteEase para sa students?',
+        'created_at': DateTime.now()
+            .subtract(const Duration(hours: 1, minutes: 12))
+            .toIsoformatString(),
+      },
+    ],
+    'chat_005': [
+      {
+        'sender_uid': 'community_mark',
+        'text': 'Nakatulong yung FloodGuard idea sa hazard planning meeting.',
+        'created_at': DateTime.now()
+            .subtract(const Duration(hours: 3, minutes: 4))
+            .toIsoformatString(),
+      },
+    ],
+  };
+  static final Map<String, Map<String, String>> mockUsers = {
+    'student_smartbin': {
+      'name': 'SmartBin Team',
+      'email': 'SmartBin Team',
+      'avatar': 'assets/mock_pictures/research_post_picture/smart-bin-01.png',
+    },
+    'student_aquaalert': {
+      'name': 'AquaAlert Team',
+      'email': 'AquaAlert Team',
+      'avatar': 'assets/mock_pictures/research_post_picture/AquaAlert.jpg',
+    },
+    'student_brightpath': {
+      'name': 'BrightPath Team',
+      'email': 'BrightPath Team',
+      'avatar': 'assets/mock_pictures/research_post_picture/BrightPath.jpg',
+    },
+    'student_commuteease': {
+      'name': 'CommuteEase Team',
+      'email': 'CommuteEase Team',
+      'avatar': 'assets/mock_pictures/research_post_picture/CommuteEase.jpg',
+    },
+    'student_floodguard': {
+      'name': 'FloodGuard Team',
+      'email': 'FloodGuard Team',
+      'avatar': 'assets/mock_pictures/research_post_picture/FloodGuard.jpg',
+    },
+    'community_juan': {
+      'name': 'Juan Dela Cruz',
+      'email': 'Juan Dela Cruz',
+      'avatar':
+          'assets/mock_pictures/problem_post_picture/Punong Basurahan sa Barangay.jpg',
+    },
+    'community_maria': {
+      'name': 'Maria Santos',
+      'email': 'Maria Santos',
+      'avatar':
+          'assets/mock_pictures/problem_post_picture/Tubig na Laging Pinuputol.jpg',
+    },
+    'community_carlo': {
+      'name': 'Carlo Reyes',
+      'email': 'Carlo Reyes',
+      'avatar':
+          'assets/mock_pictures/problem_post_picture/Dilim sa Kalsada Tuwing Gabi.jpg',
+    },
+    'community_ana': {
+      'name': 'Ana Villanueva',
+      'email': 'Ana Villanueva',
+      'avatar':
+          'assets/mock_pictures/problem_post_picture/Traffic at Walang Maayos na Sakayan.jpg',
+    },
+    'community_mark': {
+      'name': 'Mark Lopez',
+      'email': 'Mark Lopez',
+      'avatar':
+          'assets/mock_pictures/problem_post_picture/Baha Kada Malakas na Ulan.jpg',
+    },
+  };
 }
 
 extension DateTimeIso on DateTime {

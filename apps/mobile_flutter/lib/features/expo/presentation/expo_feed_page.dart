@@ -112,12 +112,6 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.arrow_back_ios_rounded,
-                        color: _yellow, size: 20),
-                  ),
-                  const SizedBox(width: 10),
                   Expanded(
                     child: Text('ALITAPTAP',
                         style: GoogleFonts.poppins(
@@ -1178,10 +1172,6 @@ class _CommunityProblemCard extends StatelessWidget {
         isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A);
     final subtle = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
     final divider = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEEEEEE);
-
-    final trimmedName = problem.reporterName.trim();
-    final avatarText =
-        trimmedName.isNotEmpty ? trimmedName[0].toUpperCase() : '?';
     final images = problem.imageUrls.isNotEmpty
         ? problem.imageUrls
         : (problem.imageUrl != null && problem.imageUrl!.isNotEmpty)
@@ -1198,25 +1188,10 @@ class _CommunityProblemCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: _yellow.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: _yellow.withValues(alpha: 0.4), width: 1.5),
-                  ),
-                  child: Center(
-                    child: Text(
-                      avatarText,
-                      style: GoogleFonts.poppins(
-                        color: _yellow,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                _Avatar(
+                  email: problem.reporterName,
+                  name: problem.reporterName,
+                  size: 44,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1790,9 +1765,15 @@ class _ActionBtn extends StatelessWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({this.uid, this.email = '', required this.size});
+  const _Avatar({
+    this.uid,
+    this.email = '',
+    this.name,
+    required this.size,
+  });
   final String? uid;
   final String email;
+  final String? name;
   final double size;
 
   static const _yellow = Color(0xFFFFD60A);
@@ -1804,11 +1785,21 @@ class _Avatar extends StatelessWidget {
     if (uid != null && MockData.mockUsers.containsKey(uid)) {
       userData = MockData.mockUsers[uid];
     } else {
-      // Try finding by email
+      // Try finding by email or name
+      final lookupEmail = email.trim().toLowerCase();
+      final lookupName = (name ?? '').trim().toLowerCase();
       try {
         final entry = MockData.mockUsers.entries.firstWhere(
-            (e) => e.value['email'] == email,
-            orElse: () => MapEntry('', {}));
+          (e) {
+            final mockEmail = (e.value['email'] ?? '').trim().toLowerCase();
+            final mockName = (e.value['name'] ?? '').trim().toLowerCase();
+            final emailMatch = lookupEmail.isNotEmpty &&
+                (mockEmail == lookupEmail || mockName == lookupEmail);
+            final nameMatch = lookupName.isNotEmpty && mockName == lookupName;
+            return emailMatch || nameMatch;
+          },
+          orElse: () => MapEntry('', <String, String>{}),
+        );
         if (entry.key.isNotEmpty) userData = entry.value;
       } catch (_) {}
     }
@@ -1816,13 +1807,17 @@ class _Avatar extends StatelessWidget {
     final imageUrl = userData?['avatar'];
 
     if (imageUrl != null && imageUrl.isNotEmpty) {
+      final ImageProvider avatarProvider = imageUrl.startsWith('assets/')
+          ? AssetImage(imageUrl)
+          : NetworkImage(imageUrl);
+
       return Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           image: DecorationImage(
-            image: NetworkImage(imageUrl),
+            image: avatarProvider,
             fit: BoxFit.cover,
           ),
           border: Border.all(color: _yellow.withValues(alpha: 0.4), width: 1.5),
@@ -1830,11 +1825,10 @@ class _Avatar extends StatelessWidget {
       );
     }
 
-    final initials = email.isNotEmpty
-        ? email[0].toUpperCase()
-        : (userData?['name'] != null
-            ? userData!['name']![0].toUpperCase()
-            : '?');
+    final label = name?.trim().isNotEmpty == true
+        ? name!.trim()
+        : (email.trim().isNotEmpty ? email.trim() : (userData?['name'] ?? ''));
+    final initials = label.isNotEmpty ? label[0].toUpperCase() : '?';
 
     return Container(
       width: size,

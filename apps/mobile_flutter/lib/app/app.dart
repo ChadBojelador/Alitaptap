@@ -36,7 +36,7 @@ class AlitaptapApp extends StatefulWidget {
 
 class _AlitaptapAppState extends State<AlitaptapApp> {
   static const _themeModePrefKey = 'theme_mode';
-  ThemeMode _themeMode = ThemeMode.light;
+  ThemeMode _themeMode = ThemeMode.dark;
   final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -48,7 +48,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   Future<void> _loadThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
     final storedMode = prefs.getString(_themeModePrefKey);
-    final mode = storedMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    final mode = storedMode == 'light' ? ThemeMode.light : ThemeMode.dark;
     if (!mounted) return;
     setState(() => _themeMode = mode);
   }
@@ -69,7 +69,7 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
   }
 
   // Brand colors matching the clean travel-app UI reference
-  static const _amber = Color(0xFFFFC700);   // logo yellow — primary accent
+  static const _amber = Color(0xFFFFC700); // logo yellow — primary accent
   static const _dark = Color(0xFF1A1A1A);
   static const _white = Color(0xFFFFFFFF);
   static const _bgLight = Color(0xFFF7F8FA);
@@ -188,7 +188,7 @@ class _RootRouterState extends State<_RootRouter> {
       future: SharedPreferences.getInstance(),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const Scaffold(backgroundColor: Color(0xFFF7F8FA));
+          return const Scaffold(backgroundColor: Color(0xFF141414));
         }
         final prefs = snap.data!;
         final seenWelcome = prefs.getBool('seen_welcome') ?? false;
