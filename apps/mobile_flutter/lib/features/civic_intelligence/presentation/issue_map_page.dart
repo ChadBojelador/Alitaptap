@@ -11,7 +11,7 @@ import '../../../core/models/issue.dart';
 import '../application/usecases/get_validated_issues_use_case.dart';
 import '../application/usecases/submit_issue_use_case.dart';
 import '../data/repositories/api_issue_repository.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../../services/session_service.dart';
 
 import '../../neural_mapper/presentation/idea_match_page.dart';
 import '../../../app/app.dart' show AppTheme;
@@ -460,8 +460,7 @@ class _IssueMapPageState extends State<IssueMapPage>
       );
       return;
     }
-    final studentId =
-        widget.studentId ?? FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+    final studentId = widget.studentId ?? SessionService.uid;
     setState(() => _matchingIdea = true);
     final matchedIssueId = await Navigator.of(context).push<String>(
       MaterialPageRoute(
@@ -702,13 +701,13 @@ class _IssueMapPageState extends State<IssueMapPage>
               left: 16,
               child: _MapFabCluster(
                 onReport: () {
-                  final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+                  final uid = SessionService.uid;
                   Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => IssueSubmitPage(reporterId: uid),
                   ));
                 },
                 onResearch: () {
-                  final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+                  final uid = SessionService.uid;
                   Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => IdeaMatchPage(
                       studentId: uid,

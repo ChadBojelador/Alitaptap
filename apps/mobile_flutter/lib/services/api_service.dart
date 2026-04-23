@@ -58,7 +58,44 @@ class ApiService {
   // Auth
   // -----------------------------------------------------------------------
 
-  /// Save user role to Firestore via backend.
+  /// Sign in with email and password.
+  Future<Map<String, dynamic>> signIn({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to sign in: ${response.body}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Register a new user.
+  Future<Map<String, dynamic>> register({
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/auth/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password, 'role': role}),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to register: ${response.body}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Save user role to backend.
   Future<void> setUserRole({
     required String userId,
     required String role,
@@ -75,7 +112,7 @@ class ApiService {
     }
   }
 
-  /// Fetch user role from Firestore via backend.
+  /// Fetch user role from backend.
   Future<String?> getUserRole(String userId) async {
     final response = await _sendWithTimeout(
       http.get(Uri.parse('$_baseUrl/auth/role/$userId')),
@@ -180,6 +217,54 @@ class ApiService {
     return Issue.fromJson(
       jsonDecode(response.body) as Map<String, dynamic>,
     );
+  }
+
+  /// Update an issue.
+  Future<Issue> updateIssue({
+    required String issueId,
+    String? title,
+    String? description,
+    double? lat,
+    double? lng,
+    String? imageUrl,
+    List<String>? imageUrls,
+    String? caption,
+  }) async {
+    final body = <String, dynamic>{};
+    if (title != null) body['title'] = title;
+    if (description != null) body['description'] = description;
+    if (lat != null) body['lat'] = lat;
+    if (lng != null) body['lng'] = lng;
+    if (imageUrl != null) body['image_url'] = imageUrl;
+    if (imageUrls != null) body['image_urls'] = imageUrls;
+    if (caption != null) body['caption'] = caption;
+
+    final response = await _sendWithTimeout(
+      http.put(
+        Uri.parse('$_baseUrl/issues/$issueId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      ),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update issue: ${response.body}');
+    }
+
+    return Issue.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  /// Delete an issue.
+  Future<void> deleteIssue(String issueId) async {
+    final response = await _sendWithTimeout(
+      http.delete(Uri.parse('$_baseUrl/issues/$issueId')),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete issue: ${response.body}');
+    }
   }
 
   /// Admin: update issue status (validate or reject).
@@ -315,6 +400,64 @@ class ApiService {
     }
     return ResearchPost.fromJson(
         jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  /// Get a single research post by ID.
+  Future<ResearchPost> getPost(String postId) async {
+    final response = await _sendWithTimeout(
+      http.get(Uri.parse('$_baseUrl/posts/$postId')),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch post: ${response.body}');
+    }
+    return ResearchPost.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  /// Update a research post.
+  Future<ResearchPost> updatePost({
+    required String postId,
+    String? title,
+    String? abstract,
+    String? problemSolved,
+    String? imageUrl,
+    List<String>? imageUrls,
+    String? caption,
+    List<String>? sdgTags,
+    double? fundingGoal,
+  }) async {
+    final body = <String, dynamic>{};
+    if (title != null) body['title'] = title;
+    if (abstract != null) body['abstract'] = abstract;
+    if (problemSolved != null) body['problem_solved'] = problemSolved;
+    if (imageUrl != null) body['image_url'] = imageUrl;
+    if (imageUrls != null) body['image_urls'] = imageUrls;
+    if (caption != null) body['caption'] = caption;
+    if (sdgTags != null) body['sdg_tags'] = sdgTags;
+    if (fundingGoal != null) body['funding_goal'] = fundingGoal;
+
+    final response = await _sendWithTimeout(
+      http.put(
+        Uri.parse('$_baseUrl/posts/$postId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update post: ${response.body}');
+    }
+    return ResearchPost.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  /// Delete a research post.
+  Future<void> deletePost(String postId) async {
+    final response = await _sendWithTimeout(
+      http.delete(Uri.parse('$_baseUrl/posts/$postId')),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete post: ${response.body}');
+    }
   }
 
   Future<Map<String, dynamic>> addComment({

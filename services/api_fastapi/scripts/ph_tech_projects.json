@@ -1,0 +1,102 @@
+[
+  {
+    "author_id": "researcher_001",
+    "author_email": "dost.researcher@ph.gov",
+    "title": "AI-Powered Rice Disease Detection System",
+    "abstract": "A mobile application that uses artificial intelligence to detect rice diseases early, helping Filipino farmers increase crop yields and reduce losses. The system can identify 10 common rice diseases with 95% accuracy.",
+    "problem_solved": "Rice farming in the Philippines faces significant challenges from diseases like rice blast and bacterial blight. Early detection is crucial but requires expertise that many small-scale farmers lack. This AI system democratizes disease detection, allowing farmers to diagnose problems using just their smartphone camera.",
+    "caption": "Empowering Filipino farmers with AI technology to protect their rice crops and secure food supply for millions.",
+    "sdg_tags": ["SDG 2: Zero Hunger", "SDG 9: Industry Innovation"],
+    "funding_goal": 500000.0,
+    "lat": 14.5995,
+    "lng": 120.9842
+  },
+  {
+    "author_id": "researcher_002",
+    "author_email": "upd.engineering@up.edu.ph",
+    "title": "Solar-Powered Water Purification for Island Communities",
+    "abstract": "An innovative solar-powered water purification system designed specifically for remote island communities in the Philippines. Uses advanced filtration and UV sterilization to provide clean drinking water without electricity.",
+    "problem_solved": "Over 7,000 islands in the Philippines lack access to clean drinking water. Traditional purification systems require electricity, which many remote communities don't have. This solar-powered solution provides sustainable, clean water access to underserved island populations.",
+    "caption": "Bringing clean water to remote Philippine islands through sustainable solar technology - because access to safe drinking water is a basic human right.",
+    "sdg_tags": ["SDG 6: Clean Water", "SDG 7: Affordable Energy"],
+    "funding_goal": 750000.0,
+    "lat": 10.3157,
+    "lng": 123.8854
+  },
+  {
+    "author_id": "researcher_003",
+    "author_email": "ateneo.innovation@ateneo.edu",
+    "title": "Plastic Waste to Construction Materials Converter",
+    "abstract": "A breakthrough technology that converts plastic waste into durable construction materials like bricks and tiles. Addresses both plastic pollution and affordable housing needs in urban Philippines.",
+    "problem_solved": "Metro Manila generates over 3,000 tons of plastic waste daily, while millions of Filipinos lack affordable housing. This technology tackles both problems by converting plastic waste into eco-bricks that are 20% stronger than traditional materials and 30% cheaper.",
+    "caption": "Turning Manila's plastic pollution crisis into a solution for affordable housing - one eco-brick at a time.",
+    "sdg_tags": ["SDG 11: Sustainable Cities", "SDG 12: Responsible Consumption"],
+    "funding_goal": 1000000.0,
+    "lat": 14.6091,
+    "lng": 121.0223
+  },
+  {
+    "author_id": "researcher_004",
+    "author_email": "dlsu.research@dlsu.edu.ph",
+    "title": "Flood Early Warning System Using IoT Sensors",
+    "abstract": "A network of IoT sensors deployed across Metro Manila's flood-prone areas that provides real-time flood predictions and early warnings to residents via SMS and mobile app notifications.",
+    "problem_solved": "Flash floods in Metro Manila cause billions in damages and dozens of casualties annually. Current warning systems are slow and unreliable. This IoT network provides 2-4 hours advance warning, giving residents time to evacuate and secure their properties.",
+    "caption": "Saving lives and property through smart flood prediction - giving Filipino families the precious time they need to stay safe.",
+    "sdg_tags": ["SDG 11: Sustainable Cities", "SDG 13: Climate Action"],
+    "funding_goal": 850000.0,
+    "lat": 14.5995,
+    "lng": 120.9842
+  },
+  {
+    "author_id": "researcher_005",
+    "author_email": "ust.science@ust.edu.ph",
+    "title": "Coconut Waste to Biodegradable Packaging",
+    "abstract": "Converting coconut husks and shells - abundant agricultural waste in the Philippines - into biodegradable food packaging that decomposes in 90 days. A sustainable alternative to plastic packaging.",
+    "problem_solved": "The Philippines produces 15 million tons of coconut waste annually, most of which is burned or discarded. Meanwhile, plastic packaging pollution chokes our oceans. This innovation transforms waste into valuable, eco-friendly packaging materials.",
+    "caption": "From coconut farms to sustainable packaging - proving that one industry's waste can be another's treasure.",
+    "sdg_tags": ["SDG 12: Responsible Consumption", "SDG 14: Life Below Water"],
+    "funding_goal": 600000.0,
+    "lat": 14.6091,
+    "lng": 120.9897
+  },
+  {
+    "author_id": "researcher_006",
+    "author_email": "mapua.tech@mapua.edu.ph",
+    "title": "Jeepney Electrification Retrofit Kit",
+    "abstract": "An affordable retrofit kit that converts traditional diesel jeepneys to electric vehicles, preserving Filipino cultural heritage while reducing air pollution and operating costs for drivers.",
+    "problem_solved": "Jeepneys are iconic but contribute heavily to Manila's air pollution. New electric jeepneys cost ₱2.5M, unaffordable for most drivers. Our retrofit kit costs only ₱400K and can be installed in 3 days, making electrification accessible.",
+    "caption": "Keeping the King of the Road alive while cleaning our air - affordable electric jeepneys for every Filipino driver.",
+    "sdg_tags": ["SDG 11: Sustainable Cities", "SDG 13: Climate Action"],
+    "funding_goal": 1200000.0,
+    "lat": 14.5764,
+    "lng": 120.9936
+  },
+  {
+    "author_id": "researcher_007",
+    "author_email": "searca.research@searca.org",
+    "title": "Mangrove Restoration Drone Technology",
+    "abstract": "Specialized drones that can plant mangrove seeds in coastal areas 10x faster than manual planting. Equipped with AI to identify optimal planting locations and monitor growth.",
+    "problem_solved": "The Philippines has lost 70% of its mangrove forests, leaving coastal communities vulnerable to typhoons and storm surges. Manual replanting is slow and expensive. Our drones can plant 100,000 seeds per day, accelerating restoration efforts.",
+    "caption": "Rebuilding the Philippines' natural coastal defenses from the sky - protecting communities and marine ecosystems one mangrove at a time.",
+    "sdg_tags": ["SDG 13: Climate Action", "SDG 14: Life Below Water", "SDG 15: Life on Land"],
+    "funding_goal": 900000.0,
+    "lat": 14.1625,
+    "lng": 121.2417,
+    "local_image_paths": [
+      "images/Peel_Tab_1000x.webp",
+      "images/peel tab 2.png"
+    ]
+  },
+  {
+    "author_id": "researcher_008",
+    "author_email": "admu.innovation@ateneo.edu",
+    "title": "Offline Educational Platform for Remote Schools",
+    "abstract": "A solar-powered server that provides offline access to educational content for schools without internet. Contains curriculum-aligned videos, interactive lessons, and assessments for K-12 students.",
+    "problem_solved": "60% of Philippine public schools lack reliable internet access, limiting students' access to quality educational resources. This offline platform brings world-class content to the most remote schools, requiring no internet connection.",
+    "caption": "Bridging the digital divide in Philippine education - because every child deserves access to quality learning, internet or not.",
+    "sdg_tags": ["SDG 4: Quality Education", "SDG 10: Reduced Inequalities"],
+    "funding_goal": 450000.0,
+    "lat": 14.6387,
+    "lng": 121.0773
+  }
+]

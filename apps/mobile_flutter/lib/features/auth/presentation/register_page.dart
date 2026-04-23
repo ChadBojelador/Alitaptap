@@ -1,9 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../services/api_service.dart';
+import '../../../../services/auth_service.dart';
 
 const _amber = Color(0xFFFFC700);
 const _dark = Color(0xFF1A1A1A);
@@ -18,6 +16,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _authService = AuthService();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
@@ -54,19 +53,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _loading = true);
     try {
-      final cred = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: pass);
-      await cred.user?.updateDisplayName(_selectedRole);
-      await ApiService().setUserRole(userId: cred.user!.uid, role: _selectedRole!);
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(cred.user!.uid)
-          .set({'email': email}, SetOptions(merge: true));
+      await _authService.register(email: email, password: pass, role: _selectedRole!);
       widget.onRoleSelected(_selectedRole!);
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('[${e.code}] ${e.message ?? 'Registration failed'}')),
+        SnackBar(content: Text('Registration failed: $e')),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -84,15 +76,10 @@ class _RegisterPageState extends State<RegisterPage> {
       body: Stack(
         children: [
           Positioned(
-            top: -80,
-            right: -80,
+            top: -80, right: -80,
             child: Container(
-              width: 260,
-              height: 260,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _amber.withValues(alpha: 0.10),
-              ),
+              width: 260, height: 260,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: _amber.withValues(alpha: 0.10)),
             ),
           ),
           SafeArea(
@@ -105,37 +92,23 @@ class _RegisterPageState extends State<RegisterPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 24),
-
-                      // Back button
                       GestureDetector(
                         onTap: () => Navigator.of(context).pop(),
                         child: Container(
-                          width: 40,
-                          height: 40,
+                          width: 40, height: 40,
                           decoration: BoxDecoration(
                             color: _amber.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: _amber.withValues(alpha: 0.3)),
                           ),
-                          child: const Icon(Icons.arrow_back_ios_rounded,
-                              color: _amber, size: 16),
+                          child: const Icon(Icons.arrow_back_ios_rounded, color: _amber, size: 16),
                         ),
                       ),
-
                       const SizedBox(height: 28),
-
-                      Text('Create Account',
-                          style: GoogleFonts.poppins(
-                            color: textColor,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                          )),
+                      Text('Create Account', style: GoogleFonts.poppins(color: textColor, fontSize: 26, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 6),
-                      Text('Join ALITAPTAP and make an impact.',
-                          style: GoogleFonts.poppins(color: subtleColor, fontSize: 13)),
-
+                      Text('Join ALITAPTAP and make an impact.', style: GoogleFonts.poppins(color: subtleColor, fontSize: 13)),
                       const SizedBox(height: 32),
-
                       _label('Email', textColor),
                       const SizedBox(height: 8),
                       TextField(
@@ -148,9 +121,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           prefixIcon: const Icon(Icons.email_outlined, color: _amber, size: 20),
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       _label('Password', textColor),
                       const SizedBox(height: 8),
                       TextField(
@@ -163,16 +134,11 @@ class _RegisterPageState extends State<RegisterPage> {
                           prefixIcon: const Icon(Icons.lock_outline_rounded, color: _amber, size: 20),
                           suffixIcon: GestureDetector(
                             onTap: () => setState(() => _obscurePass = !_obscurePass),
-                            child: Icon(
-                              _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: subtleColor, size: 20,
-                            ),
+                            child: Icon(_obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: subtleColor, size: 20),
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       _label('Confirm Password', textColor),
                       const SizedBox(height: 8),
                       TextField(
@@ -185,90 +151,41 @@ class _RegisterPageState extends State<RegisterPage> {
                           prefixIcon: const Icon(Icons.lock_outline_rounded, color: _amber, size: 20),
                           suffixIcon: GestureDetector(
                             onTap: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                            child: Icon(
-                              _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: subtleColor, size: 20,
-                            ),
+                            child: Icon(_obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: subtleColor, size: 20),
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
-
                       _label('I am a...', textColor),
                       const SizedBox(height: 12),
-
-                      _RoleCard(
-                        icon: Icons.people_alt_rounded,
-                        title: 'Community Member',
-                        subtitle: 'I want to report local problems.',
-                        selected: _selectedRole == 'community',
-                        isDark: isDark,
-                        onTap: () => setState(() => _selectedRole = 'community'),
-                      ),
+                      _RoleCard(icon: Icons.people_alt_rounded, title: 'Community Member', subtitle: 'I want to report local problems.', selected: _selectedRole == 'community', isDark: isDark, onTap: () => setState(() => _selectedRole = 'community')),
                       const SizedBox(height: 12),
-                      _RoleCard(
-                        icon: Icons.school_rounded,
-                        title: 'Student / Researcher',
-                        subtitle: 'I want to find research opportunities.',
-                        selected: _selectedRole == 'student',
-                        isDark: isDark,
-                        onTap: () => setState(() => _selectedRole = 'student'),
-                      ),
-
+                      _RoleCard(icon: Icons.school_rounded, title: 'Student / Researcher', subtitle: 'I want to find research opportunities.', selected: _selectedRole == 'student', isDark: isDark, onTap: () => setState(() => _selectedRole = 'student')),
                       const SizedBox(height: 32),
-
                       GestureDetector(
                         onTap: _loading ? null : _register,
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
-                            color: _selectedRole == null
-                                ? _amber.withValues(alpha: 0.3)
-                                : _amber,
+                            color: _selectedRole == null ? _amber.withValues(alpha: 0.3) : _amber,
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: _selectedRole == null
-                                ? []
-                                : [
-                                    BoxShadow(
-                                      color: _amber.withValues(alpha: 0.4),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 6),
-                                    ),
-                                  ],
+                            boxShadow: _selectedRole == null ? [] : [BoxShadow(color: _amber.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 6))],
                           ),
                           child: Center(
                             child: _loading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: _dark))
-                                : Text('Create Account',
-                                    style: GoogleFonts.poppins(
-                                      color: _dark,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                    )),
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: _dark))
+                                : Text('Create Account', style: GoogleFonts.poppins(color: _dark, fontWeight: FontWeight.w700, fontSize: 15)),
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Already have an account? ',
-                              style: GoogleFonts.poppins(color: subtleColor, fontSize: 13)),
+                          Text('Already have an account? ', style: GoogleFonts.poppins(color: subtleColor, fontSize: 13)),
                           GestureDetector(
                             onTap: () => Navigator.of(context).pop(),
-                            child: Text('Sign In',
-                                style: GoogleFonts.poppins(
-                                  color: _amber,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                )),
+                            child: Text('Sign In', style: GoogleFonts.poppins(color: _amber, fontSize: 13, fontWeight: FontWeight.w700)),
                           ),
                         ],
                       ),
@@ -284,20 +201,11 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _label(String text, Color color) => Text(text,
-      style: GoogleFonts.poppins(color: color, fontSize: 13, fontWeight: FontWeight.w600));
+  Widget _label(String text, Color color) => Text(text, style: GoogleFonts.poppins(color: color, fontSize: 13, fontWeight: FontWeight.w600));
 }
 
 class _RoleCard extends StatelessWidget {
-  const _RoleCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.isDark,
-    required this.onTap,
-  });
-
+  const _RoleCard({required this.icon, required this.title, required this.subtitle, required this.selected, required this.isDark, required this.onTap});
   final IconData icon;
   final String title;
   final String subtitle;
@@ -313,26 +221,16 @@ class _RoleCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: selected
-              ? _amber.withValues(alpha: 0.12)
-              : isDark ? const Color(0xFF242424) : _white,
+          color: selected ? _amber.withValues(alpha: 0.12) : isDark ? const Color(0xFF242424) : _white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? _amber : _amber.withValues(alpha: 0.2),
-            width: selected ? 1.5 : 1,
-          ),
-          boxShadow: selected
-              ? [BoxShadow(color: _amber.withValues(alpha: 0.15), blurRadius: 12, offset: const Offset(0, 4))]
-              : [],
+          border: Border.all(color: selected ? _amber : _amber.withValues(alpha: 0.2), width: selected ? 1.5 : 1),
+          boxShadow: selected ? [BoxShadow(color: _amber.withValues(alpha: 0.15), blurRadius: 12, offset: const Offset(0, 4))] : [],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: selected ? _amber.withValues(alpha: 0.2) : _amber.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: BoxDecoration(color: selected ? _amber.withValues(alpha: 0.2) : _amber.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: _amber, size: 22),
             ),
             const SizedBox(width: 14),
@@ -340,27 +238,12 @@ class _RoleCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: GoogleFonts.poppins(
-                        color: selected
-                            ? _amber
-                            : isDark ? const Color(0xFFF0F0F0) : _dark,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      )),
-                  Text(subtitle,
-                      style: GoogleFonts.poppins(
-                        color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575),
-                        fontSize: 11,
-                      )),
+                  Text(title, style: GoogleFonts.poppins(color: selected ? _amber : isDark ? const Color(0xFFF0F0F0) : _dark, fontSize: 13, fontWeight: FontWeight.w700)),
+                  Text(subtitle, style: GoogleFonts.poppins(color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575), fontSize: 11)),
                 ],
               ),
             ),
-            Icon(
-              selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-              color: selected ? _amber : _amber.withValues(alpha: 0.3),
-              size: 20,
-            ),
+            Icon(selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, color: selected ? _amber : _amber.withValues(alpha: 0.3), size: 20),
           ],
         ),
       ),

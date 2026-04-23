@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,6 +10,7 @@ import '../../../features/civic_intelligence/presentation/issue_submit_page.dart
 import '../../../features/civic_intelligence/presentation/match_idea_page.dart';
 import '../../../features/home/presentation/news_feed_widget.dart';
 import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const _amber = Color(0xFFFFC700);
@@ -51,7 +51,7 @@ class _DashboardPageState extends State<DashboardPage>
     setState(() => _loading = true);
     try {
       final issues = await _api.getIssues();
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final uid = SessionService.uid;
       setState(() {
         if (widget.role == AppRole.community) {
           _issues = issues.where((i) => i.reporterId == uid).toList();
@@ -73,10 +73,9 @@ class _DashboardPageState extends State<DashboardPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF141414) : const Color(0xFFF7F8FA);
     final cardBg = isDark ? const Color(0xFF242424) : _white;
-    final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.email?.split('@')[0] ?? 'there';
+    final displayName = SessionService.email.split('@')[0];
     final isCommunity = widget.role == AppRole.community;
-    final uid = user?.uid ?? 'anon';
+    final uid = SessionService.uid;
 
     return Scaffold(
       backgroundColor: bg,
@@ -131,7 +130,7 @@ class _DashboardPageState extends State<DashboardPage>
                       // Avatar
                       GestureDetector(
                         onTap: () async {
-                          await FirebaseAuth.instance.signOut();
+                          await SessionService.clear();
                           if (context.mounted) {
                             Navigator.of(context).popUntil((r) => r.isFirst);
                           }

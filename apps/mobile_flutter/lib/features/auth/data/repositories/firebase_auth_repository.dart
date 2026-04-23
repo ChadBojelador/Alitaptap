@@ -1,27 +1,24 @@
-import 'package:firebase_auth/firebase_auth.dart';
-
 import '../../../../core/models/app_role.dart';
 import '../../../../services/auth_service.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 class FirebaseAuthRepository implements AuthRepository {
-  FirebaseAuthRepository({AuthService? authService})
-      : _authService = authService ?? AuthService();
-
-  final AuthService _authService;
+  final _authService = AuthService();
 
   @override
-  Future<UserCredential> signInAnonymously() {
-    return _authService.signInAnonymously();
-  }
+  Future<void> signIn({required String email, required String password}) =>
+      _authService.signIn(email: email, password: password);
 
   @override
-  Future<void> setRole(String role) {
-    return _authService.setRole(role);
-  }
+  Future<void> register({required String email, required String password, required String role}) =>
+      _authService.register(email: email, password: password, role: role);
 
   @override
-  Future<AppRole> getCurrentUserRole() {
-    return _authService.getCurrentUserRole();
-  }
+  Future<void> signOut() => _authService.signOut();
+
+  @override
+  Future<void> setRole(String role) => _authService.setRole(role);
+
+  @override
+  Future<AppRole> getCurrentUserRole() => _authService.getCurrentUserRole();
 }

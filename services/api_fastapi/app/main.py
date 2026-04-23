@@ -7,16 +7,16 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.firebase import init_firebase
+from app.core.mongodb import init_mongodb
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: initialize services on startup."""
     try:
-        init_firebase()
+        init_mongodb()
     except Exception as e:
-        print(f"Warning: Firebase initialization failed: {e}")
+        print(f"Warning: MongoDB initialization failed: {e}")
     yield
 
 

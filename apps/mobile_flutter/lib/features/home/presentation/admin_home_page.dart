@@ -84,6 +84,7 @@ class _AdminHomePageState extends State<AdminHomePage>
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
           'Admin Dashboard',
           style: theme.textTheme.titleLarge,

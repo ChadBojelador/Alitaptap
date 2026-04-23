@@ -13,6 +13,7 @@ class ResearchPost {
     required this.createdAt,
     this.likedBy = const [],
     this.imageUrl,
+    this.imageUrls = const [],
     this.shares = 0,
     this.reactions = const {},
   });
@@ -30,6 +31,7 @@ class ResearchPost {
   final String createdAt;
   final List<String> likedBy;
   final String? imageUrl;
+  final List<String> imageUrls;
   final int shares;
   final Map<String, int> reactions; // e.g. {'like':5,'love':2,'haha':1}
 
@@ -53,6 +55,10 @@ class ResearchPost {
                 .toList() ??
             [],
         imageUrl: json['image_url'] as String?,
+        imageUrls: (json['image_urls'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            [],
         shares: (json['shares'] as num?)?.toInt() ?? 0,
         reactions: (json['reactions'] as Map<String, dynamic>?)
                 ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??

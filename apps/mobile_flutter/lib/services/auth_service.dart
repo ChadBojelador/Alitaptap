@@ -1,32 +1,47 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
+import '../services/api_service.dart';
+import '../services/session_service.dart';
 import '../core/models/app_role.dart';
 
-/// Firebase Auth + Firestore service for user identity and role management.
 class AuthService {
-  AuthService({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  final _api = ApiService();
 
-  final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
+  Future<void> signIn({required String email, required String password}) async {
+    final result = await _api.signIn(email: email, password: password);
+    await SessionService.save(
+      uid: result['user_id'] as String,
+      email: result['email'] as String,
+      role: result['role'] as String,
+    );
+  }
 
-  Future<UserCredential> signInAnonymously() => _auth.signInAnonymously();
+  Future<void> register({
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final result = await _api.register(email: email, password: password, role: role);
+    await SessionService.save(
+      uid: result['user_id'] as String,
+      email: result['email'] as String,
+      role: result['role'] as String,
+    );
+  }
+
+  Future<void> signOut() async {
+    await SessionService.clear();
+  }
 
   Future<void> setRole(String role) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null || uid.isEmpty) return;
-    await _firestore.collection('users').doc(uid).set(
-      {'role': role, 'created_at': DateTime.now().toIso8601String()},
-      SetOptions(merge: true),
+    if (SessionService.uid.isEmpty) return;
+    await _api.setUserRole(userId: SessionService.uid, role: role);
+    await SessionService.save(
+      uid: SessionService.uid,
+      email: SessionService.email,
+      role: role,
     );
   }
 
   Future<AppRole> getCurrentUserRole() async {
-    final user = _auth.currentUser;
-    if (user == null || user.uid.isEmpty) return AppRole.student;
-    final doc = await _firestore.collection('users').doc(user.uid).get();
-    return AppRoleX.fromString(doc.data()?['role'] as String?);
+    return AppRoleX.fromString(SessionService.role);
   }
 }

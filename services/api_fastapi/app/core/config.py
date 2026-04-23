@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     firebase_project_id: str = ''
     firebase_service_account_path: str = ''
 
+    mongodb_uri: str = 'mongodb://localhost:27017'
+    mongodb_db_name: str = 'alitaptap'
+
     huggingface_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'
 
     # ---------------------------------------------------------------------------

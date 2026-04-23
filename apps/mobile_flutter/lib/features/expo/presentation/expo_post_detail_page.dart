@@ -276,6 +276,19 @@ class _ExpoPostDetailPageState extends State<ExpoPostDetailPage> {
 
                 const SizedBox(height: 16),
 
+                // ── Images ───────────────────────────────────────────────
+                if (_post.imageUrls.isNotEmpty || (_post.imageUrl != null && _post.imageUrl!.isNotEmpty)) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: _DetailImageGallery(
+                      images: _post.imageUrls.isNotEmpty
+                          ? _post.imageUrls
+                          : [_post.imageUrl!],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // ── Abstract ─────────────────────────────────────────────
                 _Section(
                   label: 'Abstract',
@@ -611,6 +624,87 @@ class _ExpoPostDetailPageState extends State<ExpoPostDetailPage> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailImageGallery extends StatefulWidget {
+  const _DetailImageGallery({required this.images});
+  final List<String> images;
+
+  @override
+  State<_DetailImageGallery> createState() => _DetailImageGalleryState();
+}
+
+class _DetailImageGalleryState extends State<_DetailImageGallery> {
+  int _current = 0;
+
+  Widget _buildImage(String src) {
+    if (src.startsWith('assets/')) {
+      return Image.asset(src,
+          width: double.infinity, height: 260, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink());
+    }
+    return Image.network(src,
+        width: double.infinity, height: 260, fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.images.length == 1) return _buildImage(widget.images.first);
+    return SizedBox(
+      height: 260,
+      child: Stack(
+        children: [
+          PageView.builder(
+            itemCount: widget.images.length,
+            onPageChanged: (i) => setState(() => _current = i),
+            itemBuilder: (_, i) => _buildImage(widget.images[i]),
+          ),
+          Positioned(
+            bottom: 10,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.images.length, (i) =>
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: _current == i ? 20 : 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: _current == i
+                        ? const Color(0xFFFFD60A)
+                        : Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 10,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_current + 1} / ${widget.images.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ],

@@ -1,10 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:alitaptap_mobile/core/mock_data.dart';
 import '../../../core/models/research_post.dart';
 import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
 import 'chat_inbox_page.dart';
 import 'create_post_page.dart';
 import 'expo_post_detail_page.dart';
@@ -41,7 +41,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   }
 
   Future<void> _toggleLike(ResearchPost post) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final uid = SessionService.uid;
     if (uid.isEmpty) return;
     try {
       final updated = await _api.toggleLike(postId: post.postId, userId: uid);
@@ -57,8 +57,8 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+    final uid = SessionService.uid;
+    final email = SessionService.email;
     final bg = isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF0F0F0);
 
     return Scaffold(
@@ -92,7 +92,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => PeoplePage(
-                            currentUid: uid, currentEmail: email))),
+                            currentUid: uid))),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -126,7 +126,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => ChatInboxPage(
-                            currentUid: uid, currentEmail: email))),
+                            currentUid: uid))),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -198,10 +198,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                             onMessage: () =>
                                 Navigator.of(context).push(MaterialPageRoute(
                                   builder: (_) => ChatInboxPage(
-                                      currentUid: uid,
-                                      currentEmail: email,
-                                      openWithUid: post.authorId,
-                                      openWithEmail: post.authorEmail),
+                                      currentUid: uid),
                                 )),
                           )),
                   ],
@@ -855,18 +852,15 @@ class _PostCardState extends State<_PostCard> {
             ),
           ),
 
-          // ── Post image ───────────────────────────────────────────────
-          if (widget.post.imageUrl != null &&
-              widget.post.imageUrl!.isNotEmpty) ...[
+          // ── Post image(s) ─────────────────────────────────────────
+          if (widget.post.imageUrls.isNotEmpty || (widget.post.imageUrl != null && widget.post.imageUrl!.isNotEmpty)) ...[
             const SizedBox(height: 10),
             GestureDetector(
               onTap: widget.onTap,
-              child: Image.network(
-                widget.post.imageUrl!,
-                width: double.infinity,
-                height: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              child: _ImagePeelGallery(
+                images: widget.post.imageUrls.isNotEmpty
+                    ? widget.post.imageUrls
+                    : [widget.post.imageUrl!],
               ),
             ),
           ],
@@ -1152,6 +1146,69 @@ class _Avatar extends StatelessWidget {
               fontSize: size * 0.38,
               fontWeight: FontWeight.w700,
             )),
+      ),
+    );
+  }
+}
+
+// ── Image Peel Gallery ────────────────────────────────────────────────────────
+class _ImagePeelGallery extends StatefulWidget {
+  const _ImagePeelGallery({required this.images});
+  final List<String> images;
+
+  @override
+  State<_ImagePeelGallery> createState() => _ImagePeelGalleryState();
+}
+
+class _ImagePeelGalleryState extends State<_ImagePeelGallery> {
+  int _current = 0;
+
+  Widget _buildImage(String src) {
+    if (src.startsWith('assets/')) {
+      return Image.asset(src,
+          width: double.infinity, height: 220, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink());
+    }
+    return Image.network(src,
+        width: double.infinity, height: 220, fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.images.length == 1) return _buildImage(widget.images.first);
+    return SizedBox(
+      height: 220,
+      child: Stack(
+        children: [
+          PageView.builder(
+            itemCount: widget.images.length,
+            onPageChanged: (i) => setState(() => _current = i),
+            itemBuilder: (_, i) => _buildImage(widget.images[i]),
+          ),
+          Positioned(
+            bottom: 8,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.images.length, (i) =>
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: _current == i ? 18 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: _current == i
+                        ? const Color(0xFFFFD60A)
+                        : Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

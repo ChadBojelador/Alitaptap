@@ -11,9 +11,6 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   google_fonts: ^8.0.2
-  firebase_core: ^4.7.0
-  firebase_auth: ^6.4.0
-  cloud_firestore: ^6.3.0
   image_picker: ^1.1.2
   maplibre_gl: ^0.25.0
   geolocator: ^14.0.2
@@ -22,6 +19,7 @@ dependencies:
   url_launcher: ^6.2.0
   pdf: ^3.10.0
   path_provider: ^2.1.0
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:
@@ -51,3 +49,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/logo_source.png
+    - assets/branding/mangrove_1.jpg
+    - assets/branding/mangrove_2.jpg
+    - assets/branding/peeltab_1.jpg
+    - assets/branding/peeltab_2.jpg
+    - assets/branding/peeltab_3.png
+    - assets/branding/peeltab_4.jpg

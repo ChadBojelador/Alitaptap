@@ -1,8 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app.dart';
+import '../services/session_service.dart';
 import '../features/civic_intelligence/presentation/civic_explore_dashboard.dart';
 import '../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../features/expo/presentation/expo_feed_page.dart';
@@ -110,15 +110,14 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+    final uid = SessionService.uid;
+    final email = SessionService.email;
 
     final pages = [
       const ExpoFeedPage(),
       CivicExploreDashboard(uid: uid),
       ChatInboxPage(
         currentUid: uid,
-        currentEmail: email,
       ),
       _ProfilePage(
           onToggleTheme: widget.onToggleTheme,
@@ -246,7 +245,7 @@ class _ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final themeMode = AppTheme.of(context).themeMode;
-    final user = FirebaseAuth.instance.currentUser;
+    final user = SessionService.email;
 
     return Scaffold(
       backgroundColor:
@@ -304,7 +303,7 @@ class _ProfilePage extends StatelessWidget {
               const SizedBox(height: 4),
               Center(
                 child: Text(
-                  user?.email ?? 'Anonymous',
+                  user.isEmpty ? 'Anonymous' : user,
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     color: isDark
@@ -325,7 +324,7 @@ class _ProfilePage extends StatelessWidget {
                 label: 'Sign Out',
                 isDark: isDark,
                 onTap: () async {
-                  await FirebaseAuth.instance.signOut();
+                  await SessionService.clear();
                   onSignOut?.call();
                 },
               ),

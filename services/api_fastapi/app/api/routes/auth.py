@@ -1,11 +1,13 @@
-"""Auth API — role management."""
+"""Auth API — authentication and role management."""
 
 from enum import Enum
+import hashlib
+import secrets
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, EmailStr
 
-from app.core.firebase import get_db
+from app.core.mongodb import get_db
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 
@@ -21,22 +23,112 @@ class RoleDecision(BaseModel):
     role: Role
 
 
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str
+    role: Role
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class AuthResponse(BaseModel):
+    user_id: str
+    email: str
+    role: str
+
+
+def hash_password(password: str, salt: str = None) -> tuple[str, str]:
+    """Hash password with salt."""
+    if salt is None:
+        salt = secrets.token_hex(16)
+    hashed = hashlib.sha256((password + salt).encode()).hexdigest()
+    return hashed, salt
+
+
+def verify_password(password: str, hashed: str, salt: str) -> bool:
+    """Verify password against hash."""
+    check_hash, _ = hash_password(password, salt)
+    return check_hash == hashed
+
+
+@router.post('/register', response_model=AuthResponse)
+def register(payload: RegisterRequest) -> AuthResponse:
+    """Register a new user."""
+    db = get_db()
+    
+    # Check if user already exists
+    existing = db['users'].find_one({'email': payload.email})
+    if existing:
+        raise HTTPException(status_code=400, detail='Email already registered')
+    
+    # Hash password
+    hashed_password, salt = hash_password(payload.password)
+    
+    # Generate user_id
+    user_id = secrets.token_urlsafe(16)
+    
+    # Create user
+    user_doc = {
+        'user_id': user_id,
+        'email': payload.email,
+        'password_hash': hashed_password,
+        'password_salt': salt,
+        'role': payload.role.value,
+    }
+    db['users'].insert_one(user_doc)
+    
+    return AuthResponse(
+        user_id=user_id,
+        email=payload.email,
+        role=payload.role.value,
+    )
+
+
+@router.post('/login', response_model=AuthResponse)
+def login(payload: LoginRequest) -> AuthResponse:
+    """Login user."""
+    db = get_db()
+    
+    # Find user
+    user = db['users'].find_one({'email': payload.email})
+    if not user:
+        raise HTTPException(status_code=401, detail='Invalid email or password')
+    
+    # Verify password
+    if not verify_password(
+        payload.password,
+        user['password_hash'],
+        user['password_salt'],
+    ):
+        raise HTTPException(status_code=401, detail='Invalid email or password')
+    
+    return AuthResponse(
+        user_id=user['user_id'],
+        email=user['email'],
+        role=user.get('role', 'student'),
+    )
+
+
 @router.post('/role', response_model=RoleDecision)
 def set_user_role(payload: RoleDecision) -> RoleDecision:
-    """Set or update a user's role in Firestore."""
+    """Set or update a user's role in MongoDB."""
     db = get_db()
-    db.collection('users').document(payload.user_id).set(
-        {'role': payload.role.value},
-        merge=True,
+    db['users'].update_one(
+        {'user_id': payload.user_id},
+        {'$set': {'user_id': payload.user_id, 'role': payload.role.value}},
+        upsert=True,
     )
     return payload
 
 
 @router.get('/role/{user_id}')
 def get_user_role(user_id: str) -> dict:
-    """Get a user's role from Firestore."""
+    """Get a user's role from MongoDB."""
     db = get_db()
-    doc = db.collection('users').document(user_id).get()
-    if not doc.exists:
+    doc = db['users'].find_one({'user_id': user_id})
+    if not doc:
         return {'user_id': user_id, 'role': 'student'}
-    return {'user_id': user_id, 'role': doc.to_dict().get('role', 'student')}
+    return {'user_id': user_id, 'role': doc.get('role', 'student')}
