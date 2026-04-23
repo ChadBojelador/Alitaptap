@@ -5,6 +5,7 @@ import 'package:alitaptap_mobile/core/mock_data.dart';
 import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/features/civic_intelligence/presentation/issue_map_page.dart';
 import 'package:alitaptap_mobile/features/civic_intelligence/presentation/issue_detail_page.dart';
+import 'package:alitaptap_mobile/features/expo/presentation/expo_post_detail_page.dart';
 
 class CivicExploreDashboard extends StatefulWidget {
   const CivicExploreDashboard({super.key, required this.uid});
@@ -198,7 +199,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
             ),
           ),
 
-          // ── Section Title: Recent Intelligence ─────────────────────
+          // ── Section Title: Top Research Projects ───────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
@@ -206,7 +207,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Recent Intelligence',
+                    'Top Research Projects',
                     style: GoogleFonts.poppins(
                       color: textColor,
                       fontSize: 16,
@@ -214,7 +215,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                     ),
                   ),
                   Text(
-                    'See All',
+                    'View Expo',
                     style: GoogleFonts.poppins(
                       color: _amber,
                       fontSize: 13,
@@ -226,22 +227,26 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
             ),
           ),
 
-          // ── Recent Reports List ─────────────────────────────────────
+          // ── Research Projects List ─────────────────────────────────────
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final issue = MockData.issues[index % MockData.issues.length];
-                return _ReportListItem(
-                  issue: issue,
+                final post = MockData.researchPosts[index % MockData.researchPosts.length];
+                return _ResearchListItem(
+                  post: post,
                   isDark: isDark,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => IssueDetailPage(issueId: issue.issueId),
+                      builder: (_) => ExpoPostDetailPage(
+                        post: post,
+                        currentUid: widget.uid,
+                        currentEmail: '', // Optional
+                      ),
                     ),
                   ),
                 );
               },
-              childCount: 5,
+              childCount: MockData.researchPosts.length,
             ),
           ),
 
@@ -311,14 +316,14 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _ReportListItem extends StatelessWidget {
-  const _ReportListItem({
-    required this.issue,
+class _ResearchListItem extends StatelessWidget {
+  const _ResearchListItem({
+    required this.post,
     required this.isDark,
     required this.onTap,
   });
 
-  final Issue issue;
+  final ResearchPost post;
   final bool isDark;
   final VoidCallback onTap;
 
@@ -326,56 +331,123 @@ class _ReportListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final amber = const Color(0xFFFFC700);
+    final progress = (post.fundingRaised / post.fundingGoal).clamp(0.0, 1.0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: amber.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: amber.withValues(alpha: 0.1)),
+            boxShadow: [
+              if (!isDark)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: amber.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.location_on_rounded, color: amber),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      issue.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon or Image
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: amber.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      image: post.imageUrl != null 
+                        ? DecorationImage(image: NetworkImage(post.imageUrl!), fit: BoxFit.cover)
+                        : null,
                     ),
-                    Text(
-                      issue.aiSdgTag ?? (issue.tags.isNotEmpty ? issue.tags.first : 'Community Concern'),
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: isDark ? Colors.white54 : Colors.black45,
-                      ),
+                    child: post.imageUrl == null 
+                      ? Icon(Icons.science_rounded, color: amber, size: 28)
+                      : null,
+                  ),
+                  const SizedBox(width: 16),
+                  // Title and Tags
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          children: post.sdgTags.take(3).map((sdg) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: amber.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              sdg,
+                              style: GoogleFonts.robotoMono(
+                                color: amber,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          )).toList(),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Funding Bar
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Funding Progress',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: isDark ? Colors.white54 : Colors.black45,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    '${(progress * 100).toInt()}%',
+                    style: GoogleFonts.robotoMono(
+                      fontSize: 11,
+                      color: amber,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: amber.withValues(alpha: 0.1),
+                  color: amber,
+                  minHeight: 6,
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: Color(0xFFAAAAAA)),
             ],
           ),
         ),
