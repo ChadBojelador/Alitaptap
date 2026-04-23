@@ -698,7 +698,7 @@ class _IssueMapPageState extends State<IssueMapPage>
           // ── FAB cluster ───────────────────────────────────────────────────
           if (!_loading)
             Positioned(
-              bottom: 90,
+              bottom: 104,
               left: 16,
               child: _MapFabCluster(
                 onReport: () {
@@ -757,7 +757,7 @@ class _IssueMapPageState extends State<IssueMapPage>
             Positioned(
               left: 0,
               right: 0,
-              bottom: 60, // Flush with navbar
+              bottom: 0, // Flush with navbar
               child: _IdeaDock(
                 controller: _ideaController,
                 isMatching: _matchingIdea,

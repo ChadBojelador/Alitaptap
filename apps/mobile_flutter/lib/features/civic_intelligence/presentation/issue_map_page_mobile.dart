@@ -572,7 +572,7 @@ class _IssueMapPageState extends State<IssueMapPage>
             Positioned(
               left:   16,
               right:  16,
-              bottom: 60, // Flush with navbar
+              bottom: 0, // Flush with navbar
               child: _IdeaDock(
                 controller:  _ideaController,
                 isMatching:  _matchingIdea,

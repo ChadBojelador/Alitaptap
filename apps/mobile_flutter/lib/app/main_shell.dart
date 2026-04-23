@@ -170,7 +170,7 @@ class _BottomNav extends StatelessWidget {
         : const Color(0xFFE0E0E0);
 
     return SizedBox(
-      height: 84,
+      height: 78,
       child: Stack(
         alignment: Alignment.topCenter,
         clipBehavior: Clip.none,
@@ -179,6 +179,7 @@ class _BottomNav extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
+            top: 0,
             child: Container(
               decoration: BoxDecoration(
                 color: bg,
@@ -186,23 +187,26 @@ class _BottomNav extends StatelessWidget {
               ),
               child: SafeArea(
                 top: false,
-                child: SizedBox(
-                  height: 64,
-                  child: Row(
-                    children: [
-                      Expanded(child: _NavItem(item: _items[0], selected: index == 0, isDark: isDark, onTap: () => onTap(0))),
-                      Expanded(child: _NavItem(item: _items[1], selected: index == 1, isDark: isDark, onTap: () => onTap(1))),
-                      const SizedBox(width: 64),
-                      Expanded(child: _NavItem(item: _items[2], selected: index == 2, isDark: isDark, onTap: () => onTap(2))),
-                      Expanded(child: _NavItem(item: _items[3], selected: index == 3, isDark: isDark, onTap: () => onTap(3))),
-                    ],
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: SizedBox(
+                    height: 64,
+                    child: Row(
+                      children: [
+                        Expanded(child: _NavItem(item: _items[0], selected: index == 0, isDark: isDark, onTap: () => onTap(0))),
+                        Expanded(child: _NavItem(item: _items[1], selected: index == 1, isDark: isDark, onTap: () => onTap(1))),
+                        const SizedBox(width: 64),
+                        Expanded(child: _NavItem(item: _items[2], selected: index == 2, isDark: isDark, onTap: () => onTap(2))),
+                        Expanded(child: _NavItem(item: _items[3], selected: index == 3, isDark: isDark, onTap: () => onTap(3))),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
           Positioned(
-            top: -16,
+            top: -24,
             child: GestureDetector(
               onTap: onActionTap,
               child: Container(
