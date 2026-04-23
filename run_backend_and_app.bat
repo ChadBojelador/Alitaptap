@@ -31,7 +31,7 @@ if errorlevel 1 (
 
 echo.
 echo [2/4] Starting FastAPI backend on port 8000...
-start "FastAPI Backend" cmd /k "uvicorn app.main:app --reload --port 8000"
+start "FastAPI Backend" cmd /k "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
 
 echo.
 echo [3/4] Waiting for backend to start...

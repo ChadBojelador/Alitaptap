@@ -14,4 +14,4 @@ echo Starting server on http://127.0.0.1:8000
 echo API Docs: http://127.0.0.1:8000/docs
 echo.
 
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

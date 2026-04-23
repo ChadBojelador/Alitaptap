@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:alitaptap_mobile/core/mock_data.dart';
 import '../../../core/models/research_post.dart';
+import '../../../core/models/community_problem_post.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import 'chat_inbox_page.dart';
@@ -21,6 +22,7 @@ class ExpoFeedPage extends StatefulWidget {
 class _ExpoFeedPageState extends State<ExpoFeedPage> {
   final _api = ApiService();
   List<ResearchPost> _posts = [];
+  List<_FeedItem> _feedItems = [];
   bool _loading = true;
 
   static const _yellow = Color(0xFFFFD60A);
@@ -33,11 +35,36 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
+    List<ResearchPost> posts = _posts;
     try {
-      final posts = await _api.getPosts();
-      if (mounted) setState(() => _posts = posts);
+      posts = await _api.getPosts();
     } catch (_) {}
-    if (mounted) setState(() => _loading = false);
+    if (!mounted) return;
+    setState(() {
+      _posts = posts;
+      _feedItems = _buildFeedItems(posts);
+      _loading = false;
+    });
+  }
+
+  List<_FeedItem> _buildFeedItems(List<ResearchPost> posts) {
+    final items = <_FeedItem>[
+      ...posts.map(_FeedItem.research),
+      ...MockData.communityProblems.map(_FeedItem.community),
+    ];
+    items.sort(
+      (a, b) =>
+          _parseCreatedAt(b.createdAt).compareTo(_parseCreatedAt(a.createdAt)),
+    );
+    return items;
+  }
+
+  DateTime _parseCreatedAt(String raw) {
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return DateTime.fromMillisecondsSinceEpoch(0);
+    }
   }
 
   Future<void> _toggleLike(ResearchPost post) async {
@@ -48,7 +75,10 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
       if (mounted) {
         setState(() {
           final idx = _posts.indexWhere((p) => p.postId == post.postId);
-          if (idx != -1) _posts[idx] = updated;
+          if (idx != -1) {
+            _posts[idx] = updated;
+            _feedItems = _buildFeedItems(_posts);
+          }
         });
       }
     } catch (_) {}
@@ -91,8 +121,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                   // People icon
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => PeoplePage(
-                            currentUid: uid))),
+                        builder: (_) => PeoplePage(currentUid: uid))),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -125,8 +154,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                   // Messenger icon
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => ChatInboxPage(
-                            currentUid: uid))),
+                        builder: (_) => ChatInboxPage(currentUid: uid))),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -177,10 +205,13 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                             child: CircularProgressIndicator(
                                 color: _yellow, strokeWidth: 2)),
                       )
-                    else if (_posts.isEmpty)
+                    else if (_feedItems.isEmpty)
                       _EmptyFeed(isDark: isDark)
                     else
-                      ..._posts.map((post) => _PostCard(
+                      ..._feedItems.map((item) {
+                        if (item.researchPost != null) {
+                          final post = item.researchPost!;
+                          return _PostCard(
                             post: post,
                             currentUid: uid,
                             isDark: isDark,
@@ -197,10 +228,16 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                             onShare: () => _sharePost(post),
                             onMessage: () =>
                                 Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (_) => ChatInboxPage(
-                                      currentUid: uid),
-                                )),
-                          )),
+                              builder: (_) => ChatInboxPage(currentUid: uid),
+                            )),
+                          );
+                        }
+
+                        return _CommunityProblemCard(
+                          problem: item.communityPost!,
+                          isDark: isDark,
+                        );
+                      }),
                   ],
                 ),
               ),
@@ -212,8 +249,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   }
 
   void _sharePost(ResearchPost post) {
-    Clipboard.setData(ClipboardData(
-        text: '${post.title}\n\n${post.abstract}'));
+    Clipboard.setData(ClipboardData(text: '${post.title}\n\n${post.abstract}'));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Post link copied to clipboard!')),
     );
@@ -249,7 +285,8 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
             }).toList();
 
             return Dialog(
-              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               backgroundColor: overlayBg,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -265,7 +302,8 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                         children: [
                           IconButton(
                             onPressed: () => Navigator.of(dialogContext).pop(),
-                            icon: const Icon(Icons.arrow_back_rounded, color: _yellow),
+                            icon: const Icon(Icons.arrow_back_rounded,
+                                color: _yellow),
                           ),
                           Expanded(
                             child: Text(
@@ -290,12 +328,16 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                         }),
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A),
+                          color: isDark
+                              ? const Color(0xFFF0F0F0)
+                              : const Color(0xFF1A1A1A),
                         ),
                         decoration: InputDecoration(
                           hintText: 'Search posts, SDGs, authors...',
-                          hintStyle: GoogleFonts.poppins(fontSize: 13, color: subtle),
-                          prefixIcon: const Icon(Icons.search_rounded, color: _yellow, size: 20),
+                          hintStyle:
+                              GoogleFonts.poppins(fontSize: 13, color: subtle),
+                          prefixIcon: const Icon(Icons.search_rounded,
+                              color: _yellow, size: 20),
                           suffixIcon: query.isEmpty
                               ? null
                               : IconButton(
@@ -303,7 +345,8 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                                     controller.clear();
                                     query = '';
                                   }),
-                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  icon:
+                                      const Icon(Icons.close_rounded, size: 18),
                                   color: subtle,
                                 ),
                           filled: true,
@@ -317,14 +360,17 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                     ),
                     Divider(
                       height: 1,
-                      color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEAEAEA),
+                      color: isDark
+                          ? const Color(0xFF2A2A2A)
+                          : const Color(0xFFEAEAEA),
                     ),
                     Expanded(
                       child: filtered.isEmpty
                           ? Center(
                               child: Text(
                                 'No matching posts.',
-                                style: GoogleFonts.poppins(color: subtle, fontSize: 13),
+                                style: GoogleFonts.poppins(
+                                    color: subtle, fontSize: 13),
                               ),
                             )
                           : ListView.separated(
@@ -373,8 +419,10 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                                       color: subtle,
                                     ),
                                   ),
-                                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                                      size: 14, color: _yellow),
+                                  trailing: const Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 14,
+                                      color: _yellow),
                                 );
                               },
                             ),
@@ -388,6 +436,18 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
       },
     );
   }
+}
+
+class _FeedItem {
+  const _FeedItem.research(this.researchPost) : communityPost = null;
+
+  const _FeedItem.community(this.communityPost) : researchPost = null;
+
+  final ResearchPost? researchPost;
+  final CommunityProblemPost? communityPost;
+
+  String get createdAt =>
+      researchPost?.createdAt ?? communityPost?.createdAt ?? '';
 }
 
 // ── Stories row ────────────────────────────────────────────────────────────────
@@ -505,7 +565,9 @@ class _StoryBubble extends StatelessWidget {
                             ],
                             stops: const [0.0, 0.3, 0.7, 1.0],
                           ),
-                    color: isAdd ? const Color(0xFFFFD60A).withValues(alpha: 0.15) : null,
+                    color: isAdd
+                        ? const Color(0xFFFFD60A).withValues(alpha: 0.15)
+                        : null,
                   ),
                 ),
                 // ── Inner White Gap (The classic 'Story' ring look) ────
@@ -515,7 +577,9 @@ class _StoryBubble extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                    border: isAdd ? Border.all(color: const Color(0xFFFFD60A), width: 1.5) : null,
+                    border: isAdd
+                        ? Border.all(color: const Color(0xFFFFD60A), width: 1.5)
+                        : null,
                   ),
                 ),
                 // ── Main Bubble ─────────────────────────────────────────
@@ -557,7 +621,8 @@ class _StoryBubble extends StatelessWidget {
                         color: Color(0xFFFFD60A),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add, color: Color(0xFF1A1A1A), size: 14),
+                      child: const Icon(Icons.add,
+                          color: Color(0xFF1A1A1A), size: 14),
                     ),
                   ),
               ],
@@ -571,7 +636,8 @@ class _StoryBubble extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: isDark ? const Color(0xFFE0E0E0) : const Color(0xFF1A1A1A),
+                color:
+                    isDark ? const Color(0xFFE0E0E0) : const Color(0xFF1A1A1A),
                 letterSpacing: 0.2,
               ),
             ),
@@ -584,7 +650,9 @@ class _StoryBubble extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 8.5,
                   fontWeight: FontWeight.w500,
-                  color: isDark ? const Color(0xFF757575) : const Color(0xFF9E9E9E),
+                  color: isDark
+                      ? const Color(0xFF757575)
+                      : const Color(0xFF9E9E9E),
                 ),
               ),
             ],
@@ -613,8 +681,7 @@ class _CreatePostBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
-    final subtle =
-        isDark ? const Color(0xFF616161) : const Color(0xFF9E9E9E);
+    final subtle = isDark ? const Color(0xFF616161) : const Color(0xFF9E9E9E);
     return Container(
       color: bg,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
@@ -637,8 +704,8 @@ class _CreatePostBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Text("What's on your research mind?",
-                        style: GoogleFonts.poppins(
-                            color: subtle, fontSize: 13)),
+                        style:
+                            GoogleFonts.poppins(color: subtle, fontSize: 13)),
                   ),
                 ),
               ),
@@ -646,9 +713,7 @@ class _CreatePostBar extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Divider(
-              color: isDark
-                  ? const Color(0xFF2A2A2A)
-                  : const Color(0xFFEEEEEE),
+              color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEEEEEE),
               height: 1),
           const SizedBox(height: 10),
           Row(
@@ -699,9 +764,7 @@ class _QuickAction extends StatelessWidget {
           const SizedBox(width: 6),
           Text(label,
               style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: color)),
+                  fontSize: 13, fontWeight: FontWeight.w600, color: color)),
         ],
       ),
     );
@@ -753,12 +816,11 @@ class _PostCardState extends State<_PostCard> {
     final bg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final textColor =
         isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A);
-    final subtle =
-        isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
-    final divider =
-        isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEEEEEE);
+    final subtle = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
+    final divider = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEEEEEE);
 
-    final totalReactions = widget.post.reactions.values.fold(0, (a, b) => a + b);
+    final totalReactions =
+        widget.post.reactions.values.fold(0, (a, b) => a + b);
 
     return Container(
       color: bg,
@@ -771,7 +833,10 @@ class _PostCardState extends State<_PostCard> {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Row(
               children: [
-                _Avatar(uid: widget.post.authorId, email: widget.post.authorEmail, size: 44),
+                _Avatar(
+                    uid: widget.post.authorId,
+                    email: widget.post.authorEmail,
+                    size: 44),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -793,8 +858,7 @@ class _PostCardState extends State<_PostCard> {
                                 color: subtle, fontSize: 11),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.public_rounded,
-                              color: subtle, size: 12),
+                          Icon(Icons.public_rounded, color: subtle, size: 12),
                         ],
                       ),
                     ],
@@ -802,13 +866,12 @@ class _PostCardState extends State<_PostCard> {
                 ),
                 if (widget.post.sdgTags.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _yellow.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: _yellow.withValues(alpha: 0.3)),
+                      border: Border.all(color: _yellow.withValues(alpha: 0.3)),
                     ),
                     child: Text(widget.post.sdgTags.first,
                         style: GoogleFonts.poppins(
@@ -853,7 +916,9 @@ class _PostCardState extends State<_PostCard> {
           ),
 
           // ── Post image(s) ─────────────────────────────────────────
-          if (widget.post.imageUrls.isNotEmpty || (widget.post.imageUrl != null && widget.post.imageUrl!.isNotEmpty)) ...[
+          if (widget.post.imageUrls.isNotEmpty ||
+              (widget.post.imageUrl != null &&
+                  widget.post.imageUrl!.isNotEmpty)) ...[
             const SizedBox(height: 10),
             GestureDetector(
               onTap: widget.onTap,
@@ -886,8 +951,7 @@ class _PostCardState extends State<_PostCard> {
                       ),
                       Text(
                         'Goal: ₱${widget.post.fundingGoal.toStringAsFixed(0)}',
-                        style: GoogleFonts.poppins(
-                            color: subtle, fontSize: 11),
+                        style: GoogleFonts.poppins(color: subtle, fontSize: 11),
                       ),
                     ],
                   ),
@@ -895,15 +959,15 @@ class _PostCardState extends State<_PostCard> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
-                      value: (widget.post.fundingRaised /
-                              widget.post.fundingGoal)
-                          .clamp(0.0, 1.0),
+                      value:
+                          (widget.post.fundingRaised / widget.post.fundingGoal)
+                              .clamp(0.0, 1.0),
                       minHeight: 6,
                       backgroundColor: isDark
                           ? const Color(0xFF2A2A2A)
                           : const Color(0xFFEEEEEE),
-                      valueColor: const AlwaysStoppedAnimation(
-                          Color(0xFF66BB6A)),
+                      valueColor:
+                          const AlwaysStoppedAnimation(Color(0xFF66BB6A)),
                     ),
                   ),
                 ],
@@ -912,7 +976,9 @@ class _PostCardState extends State<_PostCard> {
           ],
 
           // ── Reaction + share counts ──────────────────────────────────
-          if (widget.post.likes > 0 || totalReactions > 0 || widget.post.shares > 0)
+          if (widget.post.likes > 0 ||
+              totalReactions > 0 ||
+              widget.post.shares > 0)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               child: Row(
@@ -921,14 +987,14 @@ class _PostCardState extends State<_PostCard> {
                     const Text('👍', style: TextStyle(fontSize: 14)),
                     const SizedBox(width: 4),
                     Text('${widget.post.likes}',
-                        style: GoogleFonts.poppins(
-                            color: subtle, fontSize: 12)),
+                        style:
+                            GoogleFonts.poppins(color: subtle, fontSize: 12)),
                   ],
                   const Spacer(),
                   if (widget.post.shares > 0)
                     Text('${widget.post.shares} shares',
-                        style: GoogleFonts.poppins(
-                            color: subtle, fontSize: 12)),
+                        style:
+                            GoogleFonts.poppins(color: subtle, fontSize: 12)),
                 ],
               ),
             ),
@@ -948,16 +1014,13 @@ class _PostCardState extends State<_PostCard> {
                     // Like with long-press reactions
                     GestureDetector(
                       onTap: widget.onLike,
-                      onLongPress: () =>
-                          setState(() => _showReactions = true),
+                      onLongPress: () => setState(() => _showReactions = true),
                       child: _ActionBtn(
                         icon: _liked
                             ? Icons.thumb_up_rounded
                             : Icons.thumb_up_outlined,
                         label: 'Like',
-                        color: _liked
-                            ? const Color(0xFF42A5F5)
-                            : subtle,
+                        color: _liked ? const Color(0xFF42A5F5) : subtle,
                       ),
                     ),
                     // Comment
@@ -1001,9 +1064,7 @@ class _PostCardState extends State<_PostCard> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF2A2A2A)
-                            : Colors.white,
+                        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
@@ -1018,16 +1079,14 @@ class _PostCardState extends State<_PostCard> {
                         children: _PostCardState._reactionEmojis.entries
                             .map((e) => GestureDetector(
                                   onTap: () {
-                                    setState(
-                                        () => _showReactions = false);
+                                    setState(() => _showReactions = false);
                                     widget.onLike();
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 6),
                                     child: Text(e.value.$1,
-                                        style: const TextStyle(
-                                            fontSize: 28)),
+                                        style: const TextStyle(fontSize: 28)),
                                   ),
                                 ))
                             .toList(),
@@ -1059,6 +1118,610 @@ class _PostCardState extends State<_PostCard> {
   }
 }
 
+class _CommunityProblemCard extends StatelessWidget {
+  const _CommunityProblemCard({
+    required this.problem,
+    required this.isDark,
+  });
+
+  final CommunityProblemPost problem;
+  final bool isDark;
+
+  static const _yellow = Color(0xFFFFD60A);
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final textColor =
+        isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A);
+    final subtle = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
+    final divider = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEEEEEE);
+
+    final trimmedName = problem.reporterName.trim();
+    final avatarText =
+        trimmedName.isNotEmpty ? trimmedName[0].toUpperCase() : '?';
+    final images = problem.imageUrls.isNotEmpty
+        ? problem.imageUrls
+        : (problem.imageUrl != null && problem.imageUrl!.isNotEmpty)
+            ? [problem.imageUrl!]
+            : const <String>[];
+
+    return Container(
+      color: bg,
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _yellow.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: _yellow.withValues(alpha: 0.4), width: 1.5),
+                  ),
+                  child: Center(
+                    child: Text(
+                      avatarText,
+                      style: GoogleFonts.poppins(
+                        color: _yellow,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        problem.reporterName,
+                        style: GoogleFonts.poppins(
+                          color: textColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            _timeAgo(problem.createdAt),
+                            style: GoogleFonts.poppins(
+                                color: subtle, fontSize: 11),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.public_rounded, color: subtle, size: 12),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF5350).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFEF5350).withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Text(
+                    'Community Report',
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFFEF5350),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Text(
+              problem.title,
+              style: GoogleFonts.poppins(
+                color: textColor,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+            child: Text(
+              problem.description,
+              style: GoogleFonts.poppins(
+                color: subtle,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ),
+          if (images.isNotEmpty) ...[
+            _CommunityImagePreview(
+              images: images,
+              onOpen: (index) => _openPhotoViewer(context, images, index),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (problem.likes > 0 || problem.shares > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  if (problem.likes > 0) ...[
+                    const Text('👍', style: TextStyle(fontSize: 14)),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${problem.likes}',
+                      style: GoogleFonts.poppins(color: subtle, fontSize: 12),
+                    ),
+                  ],
+                  const Spacer(),
+                  if (problem.shares > 0)
+                    Text(
+                      '${problem.shares} shares',
+                      style: GoogleFonts.poppins(color: subtle, fontSize: 12),
+                    ),
+                ],
+              ),
+            ),
+          Divider(color: divider, height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                const Icon(Icons.report_problem_rounded,
+                    color: Color(0xFFEF5350), size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'Community problem report',
+                  style: GoogleFonts.poppins(
+                    color: subtle,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(color: divider, height: 1),
+        ],
+      ),
+    );
+  }
+
+  void _openPhotoViewer(
+    BuildContext context,
+    List<String> images,
+    int initialIndex,
+  ) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (_) => _CommunityPhotoViewer(
+        images: images,
+        initialIndex: initialIndex,
+      ),
+    );
+  }
+
+  String _timeAgo(String iso) {
+    try {
+      final dt = DateTime.parse(iso);
+      final diff = DateTime.now().difference(dt);
+      if (diff.inMinutes < 1) return 'Just now';
+      if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+      if (diff.inDays < 1) return '${diff.inHours}h ago';
+      if (diff.inDays < 7) return '${diff.inDays}d ago';
+      return iso.split('T').first;
+    } catch (_) {
+      return iso.split('T').first;
+    }
+  }
+}
+
+class _CommunityImagePreview extends StatefulWidget {
+  const _CommunityImagePreview({
+    required this.images,
+    required this.onOpen,
+  });
+
+  final List<String> images;
+  final ValueChanged<int> onOpen;
+
+  @override
+  State<_CommunityImagePreview> createState() => _CommunityImagePreviewState();
+}
+
+class _CommunityImagePreviewState extends State<_CommunityImagePreview> {
+  int _current = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.images.length == 1) {
+      return GestureDetector(
+        onTap: () => widget.onOpen(0),
+        child: SizedBox(
+          height: 220,
+          width: double.infinity,
+          child: _buildImage(widget.images.first),
+        ),
+      );
+    }
+
+    if (widget.images.length == 2) {
+      return SizedBox(
+        height: 220,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => widget.onOpen(0),
+                child: _buildImage(widget.images[0]),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => widget.onOpen(1),
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: _buildImage(widget.images[1])),
+                    Positioned(
+                      right: 8,
+                      bottom: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '2 photos',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 220,
+      child: Stack(
+        children: [
+          PageView.builder(
+            itemCount: widget.images.length,
+            onPageChanged: (i) => setState(() => _current = i),
+            itemBuilder: (_, i) => GestureDetector(
+              onTap: () => widget.onOpen(i),
+              child: _buildImage(widget.images[i]),
+            ),
+          ),
+          Positioned(
+            top: 10,
+            right: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_current + 1}/${widget.images.length}',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 8,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.images.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: _current == i ? 18 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: _current == i
+                        ? const Color(0xFFFFD60A)
+                        : Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImage(String src) {
+    if (src.startsWith('placeholder://')) {
+      return _CommunityPlaceholderImage(
+        label: _placeholderLabel(src),
+        fit: BoxFit.cover,
+      );
+    }
+
+    if (src.startsWith('assets/')) {
+      return Image.asset(
+        src,
+        width: double.infinity,
+        height: 220,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _CommunityPlaceholderImage(
+          label: 'Image Placeholder',
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    return Image.network(
+      src,
+      width: double.infinity,
+      height: 220,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _CommunityPlaceholderImage(
+        label: 'Image Placeholder',
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  String _placeholderLabel(String source) {
+    if (!source.startsWith('placeholder://')) return 'Photo Placeholder';
+    final raw = source.replaceFirst('placeholder://', '');
+    if (raw.isEmpty) return 'Photo Placeholder';
+    final parts = raw.split('-').where((part) => part.isNotEmpty);
+    final title = parts
+        .map((part) => part[0].toUpperCase() + part.substring(1))
+        .join(' ');
+    return title.isEmpty ? 'Photo Placeholder' : title;
+  }
+}
+
+class _CommunityPhotoViewer extends StatefulWidget {
+  const _CommunityPhotoViewer({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  final List<String> images;
+  final int initialIndex;
+
+  @override
+  State<_CommunityPhotoViewer> createState() => _CommunityPhotoViewerState();
+}
+
+class _CommunityPhotoViewerState extends State<_CommunityPhotoViewer> {
+  late final PageController _controller;
+  late int _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex;
+    _controller = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog.fullscreen(
+      backgroundColor: Colors.black,
+      child: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _controller,
+              itemCount: widget.images.length,
+              onPageChanged: (i) => setState(() => _current = i),
+              itemBuilder: (_, i) {
+                final source = widget.images[i];
+                return Center(
+                  child: InteractiveViewer(
+                    minScale: 1,
+                    maxScale: 4,
+                    child: _buildImage(source),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded,
+                    color: Colors.white, size: 28),
+              ),
+            ),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_current + 1}/${widget.images.length}',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 18,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    'Pinch to zoom',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage(String src) {
+    if (src.startsWith('placeholder://')) {
+      return _CommunityPlaceholderImage(
+        label: _placeholderLabel(src),
+        fit: BoxFit.contain,
+      );
+    }
+
+    if (src.startsWith('assets/')) {
+      return Image.asset(
+        src,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _CommunityPlaceholderImage(
+          label: 'Image Placeholder',
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+
+    return Image.network(
+      src,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => _CommunityPlaceholderImage(
+        label: 'Image Placeholder',
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+
+  String _placeholderLabel(String source) {
+    if (!source.startsWith('placeholder://')) return 'Photo Placeholder';
+    final raw = source.replaceFirst('placeholder://', '');
+    if (raw.isEmpty) return 'Photo Placeholder';
+    final parts = raw.split('-').where((part) => part.isNotEmpty);
+    final title = parts
+        .map((part) => part[0].toUpperCase() + part.substring(1))
+        .join(' ');
+    return title.isEmpty ? 'Photo Placeholder' : title;
+  }
+}
+
+class _CommunityPlaceholderImage extends StatelessWidget {
+  const _CommunityPlaceholderImage({
+    required this.label,
+    required this.fit,
+  });
+
+  final String label;
+  final BoxFit fit;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF303030), Color(0xFF121212)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.image_outlined,
+                size: 44, color: Color(0xFFFFD60A)),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: const Color(0xFFFFD60A),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Placeholder Image',
+              style: GoogleFonts.poppins(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (fit == BoxFit.cover) return child;
+    return AspectRatio(
+      aspectRatio: 4 / 3,
+      child: child,
+    );
+  }
+}
+
 class _ActionBtn extends StatelessWidget {
   const _ActionBtn(
       {required this.icon, required this.label, required this.color});
@@ -1077,9 +1740,7 @@ class _ActionBtn extends StatelessWidget {
           const SizedBox(width: 5),
           Text(label,
               style: GoogleFonts.poppins(
-                  color: color,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600)),
+                  color: color, fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -1129,7 +1790,9 @@ class _Avatar extends StatelessWidget {
 
     final initials = email.isNotEmpty
         ? email[0].toUpperCase()
-        : (userData?['name'] != null ? userData!['name']![0].toUpperCase() : '?');
+        : (userData?['name'] != null
+            ? userData!['name']![0].toUpperCase()
+            : '?');
 
     return Container(
       width: size,
@@ -1166,11 +1829,15 @@ class _ImagePeelGalleryState extends State<_ImagePeelGallery> {
   Widget _buildImage(String src) {
     if (src.startsWith('assets/')) {
       return Image.asset(src,
-          width: double.infinity, height: 220, fit: BoxFit.cover,
+          width: double.infinity,
+          height: 220,
+          fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => const SizedBox.shrink());
     }
     return Image.network(src,
-        width: double.infinity, height: 220, fit: BoxFit.cover,
+        width: double.infinity,
+        height: 220,
+        fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => const SizedBox.shrink());
   }
 
@@ -1192,8 +1859,9 @@ class _ImagePeelGalleryState extends State<_ImagePeelGallery> {
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(widget.images.length, (i) =>
-                AnimatedContainer(
+              children: List.generate(
+                widget.images.length,
+                (i) => AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   width: _current == i ? 18 : 6,
@@ -1244,4 +1912,3 @@ class _EmptyFeed extends StatelessWidget {
     );
   }
 }
-
