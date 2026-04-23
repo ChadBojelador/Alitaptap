@@ -1,48 +1,39 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:alitaptap_mobile/core/mock_data.dart';
-import 'package:alitaptap_mobile/core/models/research_post.dart';
-import 'package:alitaptap_mobile/services/api_service.dart';
-import 'expo_post_detail_page.dart';
+import 'package:alitaptap_mobile/core/models/story_post.dart';
 
 class SdgStoryViewer extends StatefulWidget {
   const SdgStoryViewer({
     super.key,
-    required this.sdgLabel,
-    required this.sdgName,
-    required this.accentColor,
-    required this.currentUid,
-    required this.currentEmail,
+    required this.stories,
+    this.initialIndex = 0,
   });
 
-  final String sdgLabel;
-  final String sdgName;
-  final Color accentColor;
-  final String currentUid;
-  final String currentEmail;
+  final List<StoryPost> stories;
+  final int initialIndex;
 
   @override
   State<SdgStoryViewer> createState() => _SdgStoryViewerState();
 }
 
 class _SdgStoryViewerState extends State<SdgStoryViewer> {
-  final _api = ApiService();
-  late List<ResearchPost> _filteredPosts;
+  late final List<StoryPost> _stories;
   int _currentIndex = 0;
   double _progress = 0.0;
   Timer? _timer;
-  final _pageController = PageController();
+  late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
-    // Filter posts that contain this SDG tag
-    _filteredPosts = MockData.researchPosts
-        .where((post) => post.sdgTags.contains(widget.sdgLabel))
-        .toList();
+    _stories = List<StoryPost>.from(widget.stories);
+    _currentIndex = _stories.isEmpty
+        ? 0
+        : widget.initialIndex.clamp(0, _stories.length - 1);
+    _pageController = PageController(initialPage: _currentIndex);
 
-    if (_filteredPosts.isNotEmpty) {
+    if (_stories.isNotEmpty) {
       _startTimer();
     }
   }
@@ -57,9 +48,9 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
   void _startTimer() {
     _timer?.cancel();
     _progress = 0.0;
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 120), (timer) {
       setState(() {
-        _progress += 0.02; // 5 seconds total (100ms * 50 steps)
+        _progress += 0.02;
         if (_progress >= 1.0) {
           _nextStory();
         }
@@ -68,7 +59,7 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
   }
 
   void _nextStory() {
-    if (_currentIndex < _filteredPosts.length - 1) {
+    if (_currentIndex < _stories.length - 1) {
       setState(() {
         _currentIndex++;
         _pageController.animateToPage(
@@ -99,53 +90,40 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
     }
   }
 
-  Future<void> _toggleLike() async {
-    final post = _filteredPosts[_currentIndex];
-    // Pause timer while liking? Or just let it run.
-    try {
-      final updated = await _api.toggleLike(postId: post.postId, userId: widget.currentUid);
-      setState(() {
-        _filteredPosts[_currentIndex] = updated;
-      });
-    } catch (_) {}
-  }
-
-  void _viewFullThesis() {
-    _timer?.cancel(); // Pause story when navigating away
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ExpoPostDetailPage(
-          post: _filteredPosts[_currentIndex],
-          currentUid: widget.currentUid,
-          currentEmail: widget.currentEmail,
-        ),
-      ),
-    ).then((_) {
-      // Resume or just stay paused? Usually better to restart or keep paused.
-      // We'll just restart for now.
-      _startTimer(); 
-    });
+  Color _accentColorForSdg(String sdgLabel) {
+    switch (sdgLabel) {
+      case 'SDG 3':
+        return const Color(0xFFEF5350);
+      case 'SDG 12':
+        return const Color(0xFFFFB300);
+      case 'SDG 11':
+        return const Color(0xFFAB47BC);
+      default:
+        return const Color(0xFF42A5F5);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_filteredPosts.isEmpty) {
+    if (_stories.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.black,
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.auto_stories_outlined, color: widget.accentColor, size: 48),
+              const Icon(Icons.auto_stories_outlined,
+                  color: Color(0xFFFFD60A), size: 48),
               const SizedBox(height: 16),
               Text(
-                'No research stories for ${widget.sdgLabel} yet.',
+                'No story posts available yet.',
                 style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
               ),
               const SizedBox(height: 24),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('Close', style: GoogleFonts.poppins(color: widget.accentColor)),
+                child: Text('Close',
+                    style: GoogleFonts.poppins(color: const Color(0xFFFFD60A))),
               )
             ],
           ),
@@ -153,8 +131,8 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
       );
     }
 
-    final currentPost = _filteredPosts[_currentIndex];
-    final isLiked = currentPost.likedBy.contains(widget.currentUid);
+    final currentStory = _stories[_currentIndex];
+    final accent = _accentColorForSdg(currentStory.sdgLabel);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -163,33 +141,21 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
           PageView.builder(
             controller: _pageController,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _filteredPosts.length,
+            itemCount: _stories.length,
             itemBuilder: (context, index) {
-              final post = _filteredPosts[index];
+              final story = _stories[index];
+              final pageAccent = _accentColorForSdg(story.sdgLabel);
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    post.imageUrl ?? '',
+                  Image.asset(
+                    story.imagePath,
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                          color: widget.accentColor.withValues(alpha: 0.5),
-                        ),
-                      );
-                    },
                     errorBuilder: (_, __, ___) => Container(
                       color: const Color(0xFF1A1A1A),
                       child: Center(
                         child: Icon(Icons.auto_awesome_mosaic_rounded,
-                            color: widget.accentColor.withValues(alpha: 0.2),
-                            size: 80),
+                            color: pageAccent.withValues(alpha: 0.3), size: 80),
                       ),
                     ),
                   ),
@@ -218,7 +184,7 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               child: Row(
-                children: List.generate(_filteredPosts.length, (index) {
+                children: List.generate(_stories.length, (index) {
                   return Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -230,7 +196,7 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                               : (index < _currentIndex ? 1.0 : 0.0),
                           backgroundColor: Colors.white24,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            index == _currentIndex ? widget.accentColor : Colors.white,
+                            index == _currentIndex ? accent : Colors.white,
                           ),
                           minHeight: 3,
                         ),
@@ -251,10 +217,11 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: widget.accentColor,
+                      color: accent,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.science_rounded, color: Colors.white, size: 16),
+                    child: const Icon(Icons.science_rounded,
+                        color: Colors.white, size: 16),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -263,7 +230,7 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          widget.sdgLabel,
+                          currentStory.sdgLabel,
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontSize: 14,
@@ -271,7 +238,7 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                           ),
                         ),
                         Text(
-                          widget.sdgName,
+                          currentStory.sdgName,
                           style: GoogleFonts.poppins(
                             color: Colors.white70,
                             fontSize: 11,
@@ -283,7 +250,8 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+                    icon: const Icon(Icons.close_rounded,
+                        color: Colors.white, size: 28),
                   ),
                 ],
               ),
@@ -319,13 +287,14 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: widget.accentColor.withValues(alpha: 0.9),
+                    color: accent.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    'STUDENT RESEARCH',
+                    'STORY POST',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 10,
@@ -336,7 +305,7 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  currentPost.title,
+                  currentStory.title,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: 22,
@@ -346,50 +315,32 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  currentPost.abstract,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+                  currentStory.description,
+                  maxLines: 4,
+                  overflow: TextOverflow.fade,
                   style: GoogleFonts.poppins(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 13,
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _viewFullThesis,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text(
-                          'View Full Thesis',
-                          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                        ),
-                      ),
+                const SizedBox(height: 16),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Text(
+                    'Aligned SDG: ${currentStory.sdgLabel} - ${currentStory.sdgName}',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: _toggleLike,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isLiked ? widget.accentColor.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isLiked ? widget.accentColor : Colors.white24),
-                        ),
-                        child: Icon(
-                          isLiked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-                          color: isLiked ? widget.accentColor : Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),

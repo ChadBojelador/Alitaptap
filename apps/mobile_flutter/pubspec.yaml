@@ -55,3 +55,6 @@ flutter:
     - assets/branding/peeltab_2.jpg
     - assets/branding/peeltab_3.png
     - assets/branding/peeltab_4.jpg
+    - assets/mock_pictures/problem_post_picture/
+    - assets/mock_pictures/research_post_picture/
+    - assets/mock_pictures/story_post/

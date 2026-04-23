@@ -200,8 +200,6 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                     // ── Stories row ────────────────────────────────────
                     _StoriesRow(
                       isDark: isDark,
-                      currentUid: uid,
-                      currentEmail: email,
                     ),
 
                     const SizedBox(height: 14),
@@ -461,23 +459,36 @@ class _FeedItem {
 
 // ── Stories row ────────────────────────────────────────────────────────────────
 class _StoriesRow extends StatelessWidget {
-  const _StoriesRow({
-    required this.isDark,
-    required this.currentUid,
-    required this.currentEmail,
-  });
+  const _StoriesRow({required this.isDark});
   final bool isDark;
-  final String currentUid;
-  final String currentEmail;
 
   static const _yellow = Color(0xFFFFD60A);
-  static const _stories = [
-    ('SDG 3', 'Health', Icons.favorite_rounded, Color(0xFFEF5350)),
-    ('SDG 13', 'Climate', Icons.eco_rounded, Color(0xFF66BB6A)),
-    ('SDG 4', 'Education', Icons.school_rounded, Color(0xFF42A5F5)),
-    ('SDG 11', 'Cities', Icons.location_city_rounded, Color(0xFFAB47BC)),
-    ('SDG 6', 'Water', Icons.water_drop_rounded, Color(0xFF26C6DA)),
-  ];
+
+  Color _storyColor(String sdgLabel) {
+    switch (sdgLabel) {
+      case 'SDG 3':
+        return const Color(0xFFEF5350);
+      case 'SDG 12':
+        return const Color(0xFFFFB300);
+      case 'SDG 11':
+        return const Color(0xFFAB47BC);
+      default:
+        return const Color(0xFF42A5F5);
+    }
+  }
+
+  IconData _storyIcon(String sdgLabel) {
+    switch (sdgLabel) {
+      case 'SDG 3':
+        return Icons.favorite_rounded;
+      case 'SDG 12':
+        return Icons.recycling_rounded;
+      case 'SDG 11':
+        return Icons.location_city_rounded;
+      default:
+        return Icons.auto_stories_rounded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -491,35 +502,41 @@ class _StoriesRow extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           children: [
-            // Add story
             _StoryBubble(
-              label: 'Your Story',
+              label: 'Add Story',
               subtitle: '',
               icon: Icons.add_rounded,
               color: _yellow,
               isDark: isDark,
               isAdd: true,
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Story upload coming soon.')),
+                );
+              },
             ),
-            ..._stories.map((s) => _StoryBubble(
-                  label: s.$1,
-                  subtitle: s.$2,
-                  icon: s.$3,
-                  color: s.$4,
-                  isDark: isDark,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => SdgStoryViewer(
-                          sdgLabel: s.$1,
-                          sdgName: s.$2,
-                          accentColor: s.$4,
-                          currentUid: currentUid,
-                          currentEmail: currentEmail,
-                        ),
+            ...List.generate(MockData.storyPosts.length, (index) {
+              final story = MockData.storyPosts[index];
+              final color = _storyColor(story.sdgLabel);
+              return _StoryBubble(
+                label: story.bubbleLabel,
+                subtitle: story.sdgLabel,
+                icon: _storyIcon(story.sdgLabel),
+                color: color,
+                imagePath: story.imagePath,
+                isDark: isDark,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SdgStoryViewer(
+                        stories: MockData.storyPosts,
+                        initialIndex: index,
                       ),
-                    );
-                  },
-                )),
+                    ),
+                  );
+                },
+              );
+            }),
           ],
         ),
       ),
@@ -534,6 +551,7 @@ class _StoryBubble extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.isDark,
+    this.imagePath,
     this.isAdd = false,
     this.onTap,
   });
@@ -542,6 +560,7 @@ class _StoryBubble extends StatelessWidget {
   final IconData icon;
   final Color color;
   final bool isDark;
+  final String? imagePath;
   final bool isAdd;
   final VoidCallback? onTap;
 
@@ -613,11 +632,25 @@ class _StoryBubble extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ),
                   ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 26,
-                  ),
+                  child: imagePath != null
+                      ? ClipOval(
+                          child: Image.asset(
+                            imagePath!,
+                            fit: BoxFit.cover,
+                            width: 58,
+                            height: 58,
+                            errorBuilder: (_, __, ___) => Icon(
+                              icon,
+                              color: Colors.white,
+                              size: 26,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          icon,
+                          color: Colors.white,
+                          size: 26,
+                        ),
                 ),
                 // ── Add Icon Badge ─────────────────────────────────────
                 if (isAdd)
