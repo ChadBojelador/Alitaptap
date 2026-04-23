@@ -18,7 +18,7 @@
 
 ## 🌟 Overview
 
-ALITAPTAP is a comprehensive platform that bridges the gap between community needs and student research. We empower students to build meaningful research around real-world problems, align their work with UN Sustainable Development Goals (SDGs), and transform academic projects into measurable social impact.
+ALITAPTAP is a social media platform that bridges the gap between community needs and student research. We empower students to build meaningful research around real-world problems, align their work with UN Sustainable Development Goals (SDGs), and transform academic projects into measurable social impact.
 
 ### 🎯 The Problem We Solve
 
