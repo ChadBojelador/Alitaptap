@@ -9,6 +9,7 @@ import 'chat_inbox_page.dart';
 import 'create_post_page.dart';
 import 'expo_post_detail_page.dart';
 import 'people_page.dart';
+import 'sdg_story_viewer.dart';
 
 class ExpoFeedPage extends StatefulWidget {
   const ExpoFeedPage({super.key});
@@ -147,7 +148,11 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                   padding: EdgeInsets.zero,
                   children: [
                     // ── Stories row ────────────────────────────────────
-                    _StoriesRow(isDark: isDark, currentEmail: email),
+                    _StoriesRow(
+                      isDark: isDark,
+                      currentUid: uid,
+                      currentEmail: email,
+                    ),
 
                     // ── Create post bar ────────────────────────────────
                     _CreatePostBar(
@@ -389,8 +394,13 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
 
 // ── Stories row ────────────────────────────────────────────────────────────────
 class _StoriesRow extends StatelessWidget {
-  const _StoriesRow({required this.isDark, required this.currentEmail});
+  const _StoriesRow({
+    required this.isDark,
+    required this.currentUid,
+    required this.currentEmail,
+  });
   final bool isDark;
+  final String currentUid;
   final String currentEmail;
 
   static const _yellow = Color(0xFFFFD60A);
@@ -429,6 +439,19 @@ class _StoriesRow extends StatelessWidget {
                   icon: s.$3,
                   color: s.$4,
                   isDark: isDark,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => SdgStoryViewer(
+                          sdgLabel: s.$1,
+                          sdgName: s.$2,
+                          accentColor: s.$4,
+                          currentUid: currentUid,
+                          currentEmail: currentEmail,
+                        ),
+                      ),
+                    );
+                  },
                 )),
           ],
         ),
@@ -445,6 +468,7 @@ class _StoryBubble extends StatelessWidget {
     required this.color,
     required this.isDark,
     this.isAdd = false,
+    this.onTap,
   });
   final String label;
   final String subtitle;
@@ -452,66 +476,70 @@ class _StoryBubble extends StatelessWidget {
   final Color color;
   final bool isDark;
   final bool isAdd;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 84,
-      margin: const EdgeInsets.only(right: 10),
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: isAdd
-                  ? null
-                  : LinearGradient(
-                      colors: [color, color.withValues(alpha: 0.6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-              color: isAdd
-                  ? (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0))
-                  : null,
-              border: Border.all(
-                color: isAdd ? const Color(0xFFFFD60A) : color,
-                width: 2.5,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 84,
+        margin: const EdgeInsets.only(right: 10),
+        child: Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: isAdd
+                    ? null
+                    : LinearGradient(
+                        colors: [color, color.withValues(alpha: 0.6)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                color: isAdd
+                    ? (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0))
+                    : null,
+                border: Border.all(
+                  color: isAdd ? const Color(0xFFFFD60A) : color,
+                  width: 2.5,
+                ),
               ),
+              child: Icon(icon,
+                  color: isAdd ? const Color(0xFFFFD60A) : Colors.white,
+                  size: 28),
             ),
-            child: Icon(icon,
-                color: isAdd ? const Color(0xFFFFD60A) : Colors.white,
-                size: 28),
-          ),
-          const SizedBox(height: 6),
-          Text(label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: isDark
-                    ? const Color(0xFFBDBDBD)
-                    : const Color(0xFF424242),
-              )),
-          if (!isAdd) ...[
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontSize: 9,
-                fontWeight: FontWeight.w500,
-                color:
-                    isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666),
+            const SizedBox(height: 6),
+            Text(label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? const Color(0xFFBDBDBD)
+                      : const Color(0xFF424242),
+                )),
+            if (!isAdd) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color:
+                      isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666),
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
