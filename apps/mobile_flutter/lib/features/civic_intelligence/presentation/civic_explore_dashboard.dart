@@ -170,35 +170,6 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
             ),
           ),
 
-          // ── Stats Section ──────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      label: 'Reports',
-                      count: '1,248',
-                      icon: Icons.assignment_rounded,
-                      color: _amber,
-                      isDark: isDark,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _StatCard(
-                      label: 'Verified',
-                      count: '852',
-                      icon: Icons.verified_user_rounded,
-                      color: const Color(0xFF4CAF50),
-                      isDark: isDark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
 
           // ── Opportunity Heatmap ─────────────────────────────────────
           SliverToBoxAdapter(
@@ -252,9 +223,42 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      _HeatLegend(label: 'Underserved', color: Colors.blueGrey.shade100, isDark: isDark),
-                      const SizedBox(width: 16),
-                      _HeatLegend(label: 'High Priority', color: _amber, isDark: isDark),
+                      Text(
+                        'LOW PRIORITY',
+                        style: GoogleFonts.robotoMono(
+                          fontSize: 10,
+                          color: isDark ? Colors.white38 : Colors.black38,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Wrap(
+                        spacing: 6,
+                        children: List.generate(5, (i) {
+                          final color = Color.lerp(
+                            const Color(0xFFFFC700).withValues(alpha: 0.2),
+                            const Color(0xFFFFC700),
+                            i / 4,
+                          )!;
+                          return Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'HIGH PRIORITY',
+                        style: GoogleFonts.robotoMono(
+                          fontSize: 10,
+                          color: const Color(0xFFFFC700),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -320,64 +324,6 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.count,
-    required this.icon,
-    required this.color,
-    required this.isDark,
-  });
-
-  final String label;
-  final String count;
-  final IconData icon;
-  final Color color;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.1), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            count,
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-            ),
-          ),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: isDark ? Colors.white54 : Colors.black45,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _ResearchListItem extends StatelessWidget {
   const _ResearchListItem({
@@ -590,6 +536,26 @@ class _SDGGridMatrix extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<int, String> sdgNames = {
+      1: 'No Poverty',
+      2: 'Zero Hunger',
+      3: 'Good Health',
+      4: 'Quality Education',
+      5: 'Gender Equality',
+      6: 'Clean Water',
+      7: 'Clean Energy',
+      8: 'Decent Work',
+      9: 'Innovation',
+      10: 'Reduced Inequality',
+      11: 'Sustainable Cities',
+      12: 'Consumption',
+      13: 'Climate Action',
+      14: 'Life Below Water',
+      15: 'Life on Land',
+      16: 'Peace & Justice',
+      17: 'Partnerships',
+    };
+
     // Calculate SDG counts from MockData issues
     final Map<int, int> counts = {};
     for (var i = 1; i <= 17; i++) {
@@ -605,18 +571,8 @@ class _SDGGridMatrix extends StatelessWidget {
           counts[num] = (counts[num] ?? 0) + 1;
         }
       }
-      for (final tag in issue.tags) {
-        if (tag.startsWith('SDG ')) {
-          final numStr = tag.replaceAll('SDG ', '');
-          final num = int.tryParse(numStr);
-          if (num != null && num >= 1 && num <= 17) {
-            counts[num] = (counts[num] ?? 0) + 1;
-          }
-        }
-      }
     }
 
-    // List of all 17 SDGs in ascending order
     final activeSdgs = List.generate(17, (i) => i + 1);
     final values = counts.values.toList();
     final maxCount = values.isEmpty ? 1 : values.reduce((a, b) => a > b ? a : b).clamp(1, 100);
@@ -625,9 +581,10 @@ class _SDGGridMatrix extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 6,
+        crossAxisCount: 4,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
+        childAspectRatio: 1.1,
       ),
       itemCount: activeSdgs.length,
       itemBuilder: (context, index) {
@@ -635,13 +592,12 @@ class _SDGGridMatrix extends StatelessWidget {
         final count = counts[sdgNum] ?? 0;
         final intensity = (count / maxCount).clamp(0.05, 1.0);
         
-        // Intensity color mapping
         final Color color;
         if (count == 0) {
-           color = isDark ? const Color(0xFF2A2A2A) : Colors.blueGrey.shade50;
+           color = isDark ? const Color(0xFF222222) : Colors.blueGrey.shade50;
         } else {
            color = Color.lerp(
-             const Color(0xFFFFC700).withValues(alpha: 0.2),
+             const Color(0xFFFFC700).withValues(alpha: 0.15),
              const Color(0xFFFFC700),
              intensity,
            )!;
@@ -650,21 +606,40 @@ class _SDGGridMatrix extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
               width: 0.5,
             ),
           ),
-          child: Center(
-            child: Text(
-              sdgNum.toString(),
-              style: GoogleFonts.robotoMono(
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                color: intensity > 0.6 ? Colors.black : (isDark ? Colors.white38 : Colors.black38),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'SDG $sdgNum',
+                style: GoogleFonts.robotoMono(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: intensity > 0.6 ? Colors.black : (isDark ? Colors.white : Colors.black87),
+                ),
               ),
-            ),
+              const SizedBox(height: 2),
+              Text(
+                sdgNames[sdgNum] ?? '',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                  color: intensity > 0.6 
+                      ? Colors.black.withValues(alpha: 0.6) 
+                      : (isDark ? Colors.white38 : Colors.black45),
+                  height: 1.0,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         );
       },
@@ -672,34 +647,3 @@ class _SDGGridMatrix extends StatelessWidget {
   }
 }
 
-class _HeatLegend extends StatelessWidget {
-  const _HeatLegend({required this.label, required this.color, required this.isDark});
-  final String label;
-  final Color color;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 10,
-            color: isDark ? Colors.white54 : Colors.black54,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-}
