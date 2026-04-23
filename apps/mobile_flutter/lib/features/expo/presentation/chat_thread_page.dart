@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:alitaptap_mobile/core/mock_data.dart';
 
 class ChatThreadPage extends StatefulWidget {
   const ChatThreadPage({
@@ -49,6 +50,24 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     await _chatRef.set(
       {'unread_${widget.currentUid}': 0},
       SetOptions(merge: true),
+    );
+  }
+
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature feature coming soon! 🚀',
+            style: GoogleFonts.poppins(
+              color: const Color(0xFF1A1A1A),
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            )),
+        backgroundColor: _yellow,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -148,11 +167,11 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.videocam_rounded, color: _yellow),
-            onPressed: () {},
+            onPressed: () => _showComingSoon(context, 'Video Calling'),
           ),
           IconButton(
             icon: const Icon(Icons.call_rounded, color: _yellow),
-            onPressed: () {},
+            onPressed: () => _showComingSoon(context, 'Voice Calling'),
           ),
         ],
       ),
@@ -163,35 +182,64 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: _chatRef
                   .collection('messages')
-                  .orderBy('created_at', descending: false)
                   .snapshots(),
               builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
+                if (snap.hasError) {
+                  debugPrint('Messages Error: ${snap.error}');
+                }
+                if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
                   return const Center(
                       child: CircularProgressIndicator(
                           color: _yellow, strokeWidth: 2));
                 }
                 final docs = snap.data?.docs ?? [];
-                if (docs.isEmpty) {
+                final displayedMsgs = <Map<String, dynamic>>[];
+
+                // Add mock messages for this specific conversation
+                if (MockData.mockMessages.containsKey(widget.otherUid)) {
+                  for (var mock in MockData.mockMessages[widget.otherUid]!) {
+                    displayedMsgs.add({
+                      'sender_uid': mock['sender_uid'] == 'me' ? widget.currentUid : mock['sender_uid'],
+                      'text': mock['text'],
+                      'created_at': Timestamp.fromDate(mock['created_at'] as DateTime),
+                    });
+                  }
+                }
+
+                // Add real messages from Firestore
+                for (var doc in docs) {
+                  displayedMsgs.add(doc.data() as Map<String, dynamic>);
+                }
+
+                // Sort by time
+                displayedMsgs.sort((a, b) {
+                  final tA = a['created_at'] as Timestamp?;
+                  final tB = b['created_at'] as Timestamp?;
+                  if (tA == null || tB == null) return 0;
+                  return tA.compareTo(tB);
+                });
+
+                if (displayedMsgs.isEmpty) {
                   return Center(
                     child: Text('Say hello! 👋',
                         style: GoogleFonts.poppins(
                             color: subtle, fontSize: 14)),
                   );
                 }
+
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (_scrollCtrl.hasClients) {
                     _scrollCtrl.jumpTo(
                         _scrollCtrl.position.maxScrollExtent);
                   }
                 });
+
                 return ListView.builder(
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                  itemCount: docs.length,
+                  itemCount: displayedMsgs.length,
                   itemBuilder: (context, i) {
-                    final data =
-                        docs[i].data() as Map<String, dynamic>;
+                    final data = displayedMsgs[i];
                     final isMe =
                         data['sender_uid'] == widget.currentUid;
                     final text = data['text'] as String? ?? '';

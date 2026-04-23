@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:alitaptap_mobile/core/mock_data.dart';
 
 import 'chat_thread_page.dart';
 import 'people_page.dart';
@@ -90,16 +91,48 @@ class ChatInboxPage extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('chats')
             .where('participants', arrayContains: currentUid)
-            .orderBy('last_message_at', descending: true)
             .snapshots(),
         builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
+          if (snap.hasError) {
+            debugPrint('Firestore Error: ${snap.error}');
+          }
+          if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
             return const Center(
                 child: CircularProgressIndicator(
                     color: _yellow, strokeWidth: 2));
           }
           final docs = snap.data?.docs ?? [];
-          if (docs.isEmpty) {
+          final displayedChats = <Map<String, dynamic>>[];
+
+          // Add real data from Firestore
+          for (var doc in docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            displayedChats.add(data);
+          }
+
+          // Add mock data if not already present in real data
+          for (var mock in MockData.mockChats) {
+            final otherUid = mock['other_uid'] as String;
+            final isExisting = displayedChats.any((c) {
+              final parts = List<String>.from(c['participants'] ?? []);
+              return parts.contains(otherUid);
+            });
+
+            if (!isExisting) {
+              displayedChats.add({
+                'participants': [currentUid, otherUid],
+                'emails': {
+                  currentUid: currentEmail,
+                  otherUid: mock['other_email'],
+                },
+                'last_message': mock['last_message'],
+                'last_message_at': Timestamp.fromDate(mock['last_message_at'] as DateTime),
+                'unread_$currentUid': mock['unreadCount'],
+              });
+            }
+          }
+
+          if (displayedChats.isEmpty) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -119,11 +152,12 @@ class ChatInboxPage extends StatelessWidget {
               ),
             );
           }
+
           return ListView.builder(
             padding: const EdgeInsets.all(12),
-            itemCount: docs.length,
+            itemCount: displayedChats.length,
             itemBuilder: (context, i) {
-              final data = docs[i].data() as Map<String, dynamic>;
+              final data = displayedChats[i];
               final participants =
                   List<String>.from(data['participants'] as List);
               final otherUid =
