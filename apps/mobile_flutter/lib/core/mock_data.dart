@@ -110,8 +110,21 @@ class MockData {
     _mI('017', 'Unsegregated Public Trash', 'SDG 12', 14.5547, 121.0244),
     _mI('018', 'Excessive Plastic Packaging', 'SDG 12', 14.5550, 121.0250),
 
-    // SDG 4: Quality Education (LOW - 1 item)
-    _mI('019', 'Poor Internet in School', 'SDG 4', 14.5600, 121.0300),
+    // SDG 3: Good Health (MODERATE - 2 items)
+    _mI('019', 'Lack of Community Clinic Outpost', 'SDG 3', 14.5580, 121.0100),
+    _mI('020', 'High Mosquito Density in Area', 'SDG 3', 14.5590, 121.0110),
+
+    // --- OTHER SDGs (Singles to fill the heatmap grid) ---
+    _mI('021', 'Micro-Lending Access Issue', 'SDG 1', 14.5600, 121.0120),
+    _mI('022', 'Food Security in Urban Slums', 'SDG 2', 14.5610, 121.0130),
+    _mI('023', 'Classroom Overcrowding', 'SDG 4', 14.5620, 121.0140),
+    _mI('024', 'Limited Vocational Training', 'SDG 5', 14.5630, 121.0150),
+    _mI('025', 'Frequent Power Grid Fluctuations', 'SDG 7', 14.5640, 121.0160),
+    _mI('026', 'Low Technical Jobs Availability', 'SDG 8', 14.5650, 121.0170),
+    _mI('027', 'Slow Digital Infrastructure', 'SDG 9', 14.5660, 121.0180),
+    _mI('028', 'River-to-Ocean Plastic Flow', 'SDG 14', 14.5670, 121.0190),
+    _mI('029', 'Loss of Local Tree Canopy', 'SDG 15', 14.5680, 121.0200),
+    _mI('030', 'Lack of Community Lead Org', 'SDG 17', 14.5690, 121.0210),
   ];
 
   static Issue _mI(String id, String title, String sdg, double lat, double lng) {
