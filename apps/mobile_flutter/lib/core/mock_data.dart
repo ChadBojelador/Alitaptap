@@ -84,40 +84,49 @@ class MockData {
   ];
 
   static final List<Issue> issues = [
-    Issue(
-      issueId: 'mock_issue_001',
-      reporterId: 'community_user_001',
-      title: 'Road Damage and Potholes',
-      description: "Our local roads are getting harder to navigate by the day. From deep potholes to crumbling asphalt, these conditions aren't just an inconvenience—they're a safety hazard.",
-      lat: 14.5995,
-      lng: 120.9842,
-      status: 'validated',
-      createdAt: DateTime.now().subtract(const Duration(days: 10)).toIsoformatString(),
-      aiSdgTag: 'SDG 11',
-    ),
-    Issue(
-      issueId: 'mock_issue_002',
-      reporterId: 'community_user_002',
-      title: 'Illegal Waste Dumping Hotspot',
-      description: "Construction debris and household waste are being dumped at this vacant lot every weekend. It's attracting pests and causing foul odors for the entire block.",
-      lat: 14.5547,
-      lng: 121.0244,
-      status: 'validated',
-      createdAt: DateTime.now().subtract(const Duration(days: 3)).toIsoformatString(),
-      aiSdgTag: 'SDG 12',
-    ),
-    Issue(
-      issueId: 'mock_issue_003',
-      reporterId: 'community_user_003',
-      title: 'Severe Coastal Trash Accumulation',
-      description: "After the recent storm, the shoreline is covered in thick layers of single-use plastics and microplastics. Local ecosystems are being choked.",
-      lat: 14.5420,
-      lng: 120.9780,
-      status: 'validated',
-      createdAt: DateTime.now().subtract(const Duration(hours: 18)).toIsoformatString(),
-      aiSdgTag: 'SDG 13',
-    ),
+    // SDG 11: Sustainable Cities (HOT - 8 items)
+    _mI('001', 'Damaged Drainage System', 'SDG 11', 14.5995, 120.9842),
+    _mI('002', 'Unsafe Bridge Structure', 'SDG 11', 14.6010, 120.9850),
+    _mI('003', 'Insufficient Street Lighting', 'SDG 11', 14.6020, 120.9860),
+    _mI('004', 'Illegal Parking Congestion', 'SDG 11', 14.6030, 120.9870),
+    _mI('005', 'Lack of PWD Ramps', 'SDG 11', 14.6040, 120.9880),
+    _mI('006', 'Urban Garden Space Needed', 'SDG 11', 14.6050, 120.9890),
+    _mI('007', 'Noise Pollution from Factory', 'SDG 11', 14.6060, 120.9900),
+    _mI('008', 'Crumbling Pedestrian Walkway', 'SDG 11', 14.6070, 120.9910),
+
+    // SDG 13: Climate Action (HIGH - 5 items)
+    _mI('009', 'Frequent Coastal Flooding', 'SDG 13', 14.5420, 120.9780),
+    _mI('010', 'Eroding River Banks', 'SDG 13', 14.5430, 120.9790),
+    _mI('011', 'Extreme Heat in Market Area', 'SDG 13', 14.5440, 120.9800),
+    _mI('012', 'Loss of Local Mangroves', 'SDG 13', 14.5450, 120.9810),
+    _mI('013', 'Unpredictable Storm Surges', 'SDG 13', 14.5460, 120.9820),
+
+    // SDG 6: Clean Water (MODERATE - 3 items)
+    _mI('014', 'Discolored Tap Water', 'SDG 6', 14.5500, 121.0200),
+    _mI('015', 'Regular Water Service Outages', 'SDG 6', 14.5510, 121.0210),
+    _mI('016', 'Stagnant Water in Canals', 'SDG 6', 14.5520, 121.0220),
+
+    // SDG 12: Responsible Consumption (MODERATE - 2 items)
+    _mI('017', 'Unsegregated Public Trash', 'SDG 12', 14.5547, 121.0244),
+    _mI('018', 'Excessive Plastic Packaging', 'SDG 12', 14.5550, 121.0250),
+
+    // SDG 4: Quality Education (LOW - 1 item)
+    _mI('019', 'Poor Internet in School', 'SDG 4', 14.5600, 121.0300),
   ];
+
+  static Issue _mI(String id, String title, String sdg, double lat, double lng) {
+    return Issue(
+      issueId: 'mock_issue_$id',
+      reporterId: 'user_mock',
+      title: title,
+      description: 'Automatically generated mock issue for $sdg alignment testing.',
+      lat: lat,
+      lng: lng,
+      status: 'validated',
+      createdAt: DateTime.now().toIsoformatString(),
+      aiSdgTag: sdg,
+    );
+  }
 
   // --- CHAT MOCKS ---
   
