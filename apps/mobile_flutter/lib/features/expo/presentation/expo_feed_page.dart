@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,6 +23,7 @@ class ExpoFeedPage extends StatefulWidget {
 
 class _ExpoFeedPageState extends State<ExpoFeedPage> {
   final _api = ApiService();
+  final _random = Random();
   List<ResearchPost> _posts = [];
   List<_FeedItem> _feedItems = [];
   bool _loading = true;
@@ -52,19 +55,20 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
       ...posts.map(_FeedItem.research),
       ...MockData.communityProblems.map(_FeedItem.community),
     ];
-    items.sort(
-      (a, b) =>
-          _parseCreatedAt(b.createdAt).compareTo(_parseCreatedAt(a.createdAt)),
-    );
+
+    items.shuffle(_random);
+    final pinnedIndex = items.indexWhere(_isPinnedSmartBin);
+    if (pinnedIndex > 0) {
+      final pinned = items.removeAt(pinnedIndex);
+      items.insert(0, pinned);
+    }
+
     return items;
   }
 
-  DateTime _parseCreatedAt(String raw) {
-    try {
-      return DateTime.parse(raw);
-    } catch (_) {
-      return DateTime.fromMillisecondsSinceEpoch(0);
-    }
+  bool _isPinnedSmartBin(_FeedItem item) {
+    final title = item.researchPost?.title.toLowerCase() ?? '';
+    return title.startsWith('smartbin connect');
   }
 
   Future<void> _toggleLike(ResearchPost post) async {
@@ -77,7 +81,12 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
           final idx = _posts.indexWhere((p) => p.postId == post.postId);
           if (idx != -1) {
             _posts[idx] = updated;
-            _feedItems = _buildFeedItems(_posts);
+            final feedIdx = _feedItems.indexWhere(
+              (item) => item.researchPost?.postId == updated.postId,
+            );
+            if (feedIdx != -1) {
+              _feedItems[feedIdx] = _FeedItem.research(updated);
+            }
           }
         });
       }
@@ -1827,18 +1836,35 @@ class _ImagePeelGalleryState extends State<_ImagePeelGallery> {
   int _current = 0;
 
   Widget _buildImage(String src) {
+    if (src.startsWith('placeholder://')) {
+      return _ResearchPlaceholderImage(label: _placeholderLabel(src));
+    }
+
     if (src.startsWith('assets/')) {
       return Image.asset(src,
           width: double.infinity,
           height: 220,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink());
+          errorBuilder: (_, __, ___) =>
+              const _ResearchPlaceholderImage(label: 'Image Placeholder'));
     }
+
     return Image.network(src,
         width: double.infinity,
         height: 220,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink());
+        errorBuilder: (_, __, ___) =>
+            const _ResearchPlaceholderImage(label: 'Image Placeholder'));
+  }
+
+  String _placeholderLabel(String source) {
+    final raw = source.replaceFirst('placeholder://', '');
+    if (raw.isEmpty) return 'Research Placeholder';
+    return raw
+        .split('-')
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0].toUpperCase() + part.substring(1))
+        .join(' ');
   }
 
   @override
@@ -1877,6 +1903,55 @@ class _ImagePeelGalleryState extends State<_ImagePeelGallery> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ResearchPlaceholderImage extends StatelessWidget {
+  const _ResearchPlaceholderImage({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 220,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF263238), Color(0xFF111827)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.science_rounded,
+                size: 42, color: Color(0xFFFFD60A)),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: const Color(0xFFFFD60A),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Research Photo Placeholder',
+              style: GoogleFonts.poppins(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
