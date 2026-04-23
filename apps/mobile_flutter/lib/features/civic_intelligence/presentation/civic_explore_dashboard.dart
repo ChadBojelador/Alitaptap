@@ -200,6 +200,68 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
             ),
           ),
 
+          // ── Opportunity Heatmap ─────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Opportunity Heatmap',
+                            style: GoogleFonts.poppins(
+                              color: textColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            'Priority SDG Intelligence',
+                            style: GoogleFonts.poppins(
+                              color: subtle,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _amber.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'LIVE DATA',
+                          style: GoogleFonts.robotoMono(
+                            color: _amber,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _SDGGridMatrix(isDark: isDark),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _HeatLegend(label: 'Underserved', color: Colors.blueGrey.shade100, isDark: isDark),
+                      const SizedBox(width: 16),
+                      _HeatLegend(label: 'High Priority', color: _amber, isDark: isDark),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // ── Section Title: Top Research Projects ───────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -518,6 +580,126 @@ class _LivePulseState extends State<_LivePulse> with SingleTickerProviderStateMi
           ),
         );
       },
+    );
+  }
+}
+
+class _SDGGridMatrix extends StatelessWidget {
+  const _SDGGridMatrix({required this.isDark});
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    // Calculate SDG counts from MockData issues
+    final Map<int, int> counts = {};
+    for (var i = 1; i <= 17; i++) {
+      counts[i] = 0;
+    }
+
+    for (final issue in MockData.issues) {
+      final tag = issue.aiSdgTag ?? '';
+      if (tag.startsWith('SDG ')) {
+        final numStr = tag.replaceAll('SDG ', '');
+        final num = int.tryParse(numStr);
+        if (num != null && num >= 1 && num <= 17) {
+          counts[num] = (counts[num] ?? 0) + 1;
+        }
+      }
+      for (final tag in issue.tags) {
+        if (tag.startsWith('SDG ')) {
+          final numStr = tag.replaceAll('SDG ', '');
+          final num = int.tryParse(numStr);
+          if (num != null && num >= 1 && num <= 17) {
+            counts[num] = (counts[num] ?? 0) + 1;
+          }
+        }
+      }
+    }
+
+    // List of all 17 SDGs in ascending order
+    final activeSdgs = List.generate(17, (i) => i + 1);
+    final values = counts.values.toList();
+    final maxCount = values.isEmpty ? 1 : values.reduce((a, b) => a > b ? a : b).clamp(1, 100);
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 6,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: activeSdgs.length,
+      itemBuilder: (context, index) {
+        final sdgNum = activeSdgs[index];
+        final count = counts[sdgNum] ?? 0;
+        final intensity = (count / maxCount).clamp(0.05, 1.0);
+        
+        // Intensity color mapping
+        final Color color;
+        if (count == 0) {
+           color = isDark ? const Color(0xFF2A2A2A) : Colors.blueGrey.shade50;
+        } else {
+           color = Color.lerp(
+             const Color(0xFFFFC700).withValues(alpha: 0.2),
+             const Color(0xFFFFC700),
+             intensity,
+           )!;
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+              width: 0.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              sdgNum.toString(),
+              style: GoogleFonts.robotoMono(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: intensity > 0.6 ? Colors.black : (isDark ? Colors.white38 : Colors.black38),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HeatLegend extends StatelessWidget {
+  const _HeatLegend({required this.label, required this.color, required this.isDark});
+  final String label;
+  final Color color;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 10,
+            color: isDark ? Colors.white54 : Colors.black54,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }
