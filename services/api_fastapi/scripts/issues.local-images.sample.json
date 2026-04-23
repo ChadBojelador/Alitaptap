@@ -23,5 +23,15 @@
       "images/2.1.jpg",
       "images/2.jpg"
     ]
+  },
+  {
+    "reporter_id": "community_user_003",
+    "reporter_name": "Anonymous",
+    "title": "Punong Basurahan sa Barangay",
+    "description": "Grabe sa mga barangay streets talaga… minsan 2–3 times a week lang dumadaan yung garbage collection. Ang ending, overflowing na agad yung mga basurahan 😩 Puno agad ng plastic bottles, sachet, at kung ano-anong basura. Nakaka-frustrate kasi kahit maayos ka magtapon, wala nang space yung bins. So yung iba, napipilitan magtapon sa tabi o sa kalsada 😤 Kaya imbes na controlled yung basura, nagiging kalat-kalat pa rin sa paligid. Ang hirap din linisin lalo na pag umulan, kasi nadadala pa sa ibang lugar yung plastic waste 🥲",
+    "lat": 14.5800,
+    "lng": 121.0000,
+    "caption": "Overflowing garbage bins in barangay streets due to infrequent collection schedule.",
+    "local_image_paths": []
   }
 ]

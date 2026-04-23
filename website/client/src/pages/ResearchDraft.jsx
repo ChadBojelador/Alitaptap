@@ -37,6 +37,46 @@ export default function ResearchDraft({ user }) {
         if (editorRef.current) editorRef.current.innerHTML = d.content || '';
         updateWordCount(d.content || '');
       }).catch(() => {});
+    } else {
+      // Check for generated research docs from Dashboard
+      const generatedDocs = localStorage.getItem('generatedResearchDocs');
+      if (generatedDocs) {
+        try {
+          const docs = JSON.parse(generatedDocs);
+          setTitle(docs.title);
+          
+          // Format the research document as HTML
+          let html = `<h1>I. INTRODUCTION</h1>`;
+          html += `<p>${docs.introduction.replace(/\n\n/g, '</p><p>')}</p>`;
+          
+          html += `<h1>II. REVIEW OF RELATED LITERATURE</h1>`;
+          docs.rrl.forEach(section => {
+            html += `<h2>${section.category}</h2>`;
+            section.references.forEach((ref, idx) => {
+              html += `<p><strong>${idx + 1}. ${ref.citation}</strong></p>`;
+              html += `<p style="margin-left: 20px; text-align: justify;">${ref.summary}</p>`;
+            });
+          });
+          
+          html += `<h1>III. METHODOLOGY</h1>`;
+          html += `<p>${docs.methodology.replace(/\n\n/g, '</p><p>')}</p>`;
+          
+          html += `<h1>IV. EXPECTED OUTCOMES</h1>`;
+          html += `<ul>`;
+          docs.expectedOutcomes.forEach(outcome => {
+            html += `<li>${outcome}</li>`;
+          });
+          html += `</ul>`;
+          
+          if (editorRef.current) editorRef.current.innerHTML = html;
+          updateWordCount(html);
+          
+          // Clear the localStorage after loading
+          localStorage.removeItem('generatedResearchDocs');
+        } catch (e) {
+          console.error('Failed to load generated docs:', e);
+        }
+      }
     }
   }, [id]);
 
