@@ -166,6 +166,8 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                                 urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
                                 subdomains: const ['a', 'b', 'c', 'd'],
                                 userAgentPackageName: 'com.alitaptap.mobile',
+                                retinaMode: true,
+                                tileDisplay: const TileDisplay.fadeIn(),
                               ),
                               MarkerLayer(
                                 markers: _liveIssues.where((i) => i.lat != 0 && i.lng != 0).map((issue) {
