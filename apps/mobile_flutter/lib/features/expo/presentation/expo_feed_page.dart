@@ -741,6 +741,26 @@ class _StoriesRow extends StatelessWidget {
     }
   }
 
+  static const _emptySdgs = [
+    ('SDG 1', 'No Poverty', Icons.people_rounded, Color(0xFFE5243B)),
+    ('SDG 2', 'Zero Hunger', Icons.grass_rounded, Color(0xFFDDA63A)),
+    ('SDG 3', 'Good Health', Icons.favorite_rounded, Color(0xFF4C9F38)),
+    ('SDG 4', 'Education', Icons.school_rounded, Color(0xFFC5192D)),
+    ('SDG 5', 'Gender Eq.', Icons.balance_rounded, Color(0xFFFF3A21)),
+    ('SDG 6', 'Clean Water', Icons.water_drop_rounded, Color(0xFF26BDE2)),
+    ('SDG 7', 'Clean Energy', Icons.bolt_rounded, Color(0xFFFCC30B)),
+    ('SDG 8', 'Decent Work', Icons.work_rounded, Color(0xFFA21942)),
+    ('SDG 9', 'Innovation', Icons.precision_manufacturing_rounded, Color(0xFFFF6B35)),
+    ('SDG 10', 'Reduced Ineq.', Icons.equalizer_rounded, Color(0xFFDD1367)),
+    ('SDG 11', 'Sust. Cities', Icons.location_city_rounded, Color(0xFFAB47BC)),
+    ('SDG 12', 'Resp. Consump.', Icons.recycling_rounded, Color(0xFFBF8B2E)),
+    ('SDG 13', 'Climate Action', Icons.cloud_rounded, Color(0xFF3F7E44)),
+    ('SDG 14', 'Life Below Water', Icons.waves_rounded, Color(0xFF0A97D9)),
+    ('SDG 15', 'Life on Land', Icons.forest_rounded, Color(0xFF56C02B)),
+    ('SDG 16', 'Peace & Justice', Icons.gavel_rounded, Color(0xFF00689D)),
+    ('SDG 17', 'Partnerships', Icons.handshake_rounded, Color(0xFF19486A)),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final bg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
@@ -762,28 +782,39 @@ class _StoriesRow extends StatelessWidget {
               isAdd: true,
               onTap: onAddStory,
             ),
-            ...List.generate(stories.length, (index) {
-              final story = stories[index];
-              final color = _storyColor(story.sdgLabel);
-              return _StoryBubble(
-                label: story.bubbleLabel,
-                subtitle: story.sdgLabel,
-                icon: _storyIcon(story.sdgLabel),
-                color: color,
-                isDark: isDark,
-                imagePath: story.imagePath.isNotEmpty ? story.imagePath : null,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => SdgStoryViewer(
-                        stories: stories,
-                        initialIndex: index,
+            if (stories.isNotEmpty)
+              ...List.generate(stories.length, (index) {
+                final story = stories[index];
+                final color = _storyColor(story.sdgLabel);
+                return _StoryBubble(
+                  label: story.bubbleLabel,
+                  subtitle: story.sdgLabel,
+                  icon: _storyIcon(story.sdgLabel),
+                  color: color,
+                  isDark: isDark,
+                  imagePath: story.imagePath.isNotEmpty ? story.imagePath : null,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => SdgStoryViewer(
+                          stories: stories,
+                          initialIndex: index,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              );
-            }),
+                    );
+                  },
+                );
+              })
+            else
+              ..._emptySdgs.map((sdg) => _StoryBubble(
+                label: sdg.$1,
+                subtitle: sdg.$2,
+                icon: sdg.$3,
+                color: sdg.$4,
+                isDark: isDark,
+                isEmpty: true,
+                onTap: onAddStory,
+              )),
           ],
         ),
       ),
@@ -800,6 +831,7 @@ class _StoryBubble extends StatelessWidget {
     required this.isDark,
     this.imagePath,
     this.isAdd = false,
+    this.isEmpty = false,
     this.onTap,
   });
   final String label;
@@ -809,6 +841,7 @@ class _StoryBubble extends StatelessWidget {
   final bool isDark;
   final String? imagePath;
   final bool isAdd;
+  final bool isEmpty;
   final VoidCallback? onTap;
 
   @override
@@ -831,17 +864,24 @@ class _StoryBubble extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: isAdd
                         ? null
-                        : SweepGradient(
-                            colors: [
-                              color,
-                              color.withValues(alpha: 0.3),
-                              color.withValues(alpha: 0.8),
-                              color,
-                            ],
-                            stops: const [0.0, 0.3, 0.7, 1.0],
-                          ),
+                        : isEmpty
+                            ? null
+                            : SweepGradient(
+                                colors: [
+                                  color,
+                                  color.withValues(alpha: 0.3),
+                                  color.withValues(alpha: 0.8),
+                                  color,
+                                ],
+                                stops: const [0.0, 0.3, 0.7, 1.0],
+                              ),
                     color: isAdd
                         ? const Color(0xFFFFD60A).withValues(alpha: 0.15)
+                        : isEmpty
+                            ? color.withValues(alpha: 0.18)
+                            : null,
+                    border: isEmpty
+                        ? Border.all(color: color.withValues(alpha: 0.4), width: 1.5)
                         : null,
                   ),
                 ),
@@ -863,7 +903,7 @@ class _StoryBubble extends StatelessWidget {
                   height: 58,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    boxShadow: [
+                    boxShadow: isEmpty ? null : [
                       BoxShadow(
                         color: color.withValues(alpha: 0.25),
                         blurRadius: 10,
@@ -871,7 +911,10 @@ class _StoryBubble extends StatelessWidget {
                       ),
                     ],
                     gradient: LinearGradient(
-                      colors: [
+                      colors: isEmpty ? [
+                        color.withValues(alpha: 0.3),
+                        color.withValues(alpha: 0.15),
+                      ] : [
                         color,
                         color.withValues(alpha: 0.7),
                       ],
@@ -895,7 +938,7 @@ class _StoryBubble extends StatelessWidget {
                         )
                       : Icon(
                           icon,
-                          color: Colors.white,
+                          color: isEmpty ? Colors.white38 : Colors.white,
                           size: 26,
                         ),
                 ),

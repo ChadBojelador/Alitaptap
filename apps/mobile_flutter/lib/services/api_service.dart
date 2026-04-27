@@ -37,8 +37,9 @@ class ApiService {
 
     // Android emulators map host localhost via 10.0.2.2.
     if (defaultTargetPlatform == TargetPlatform.android) {
-      // Physical device: use your PC's LAN IP. Emulator: use 10.0.2.2.
-      return 'http://192.168.254.158:8000/api/v1';
+      // Use API_BASE_URL dart-define at build time for physical devices.
+      // Emulator default: 10.0.2.2 maps to host PC localhost.
+      return 'http://10.0.2.2:8000/api/v1';
     }
 
     return 'http://localhost:8000/api/v1';

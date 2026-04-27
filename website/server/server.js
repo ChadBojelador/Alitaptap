@@ -450,7 +450,7 @@ app.put('/api/user/persona', authMiddleware, apiLimiter,
     }
 );
 
-app.delete('/api/user', authMiddleware, async (req, res) => {
+app.delete('/api/user', authMiddleware, apiLimiter, async (req, res) => {
     try {
         const userId = req.user.id;
         await Draft.destroy({ where: { userId } });
@@ -499,6 +499,7 @@ app.get('/api/drafts', authMiddleware, async (req, res) => {
 app.get('/api/drafts/:id', authMiddleware, async (req, res) => {
     try {
         const draft = await Draft.findOne({ where: { id: req.params.id, userId: req.user.id } });
+        if (!draft) return res.status(404).json({ message: 'Draft not found' });
         const plain = draft.get({ plain: true });
         if (plain.analysis) plain.analysis = JSON.parse(plain.analysis);
         res.json(plain);

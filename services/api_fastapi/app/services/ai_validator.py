@@ -156,7 +156,14 @@ Respond with ONLY the JSON object, no additional text."""
             return False
         if len(title) > 200 or len(description) > 5000:
             return False
-        spam_keywords = ["viagra", "casino", "lottery", "click here", "buy now"]
+        spam_keywords = [
+            'viagra', 'casino', 'lottery', 'click here', 'buy now',
+            'free money', 'make money fast', 'work from home', 'earn cash',
+            'weight loss', 'diet pills', 'crypto investment', 'bitcoin',
+            'xxx', 'porn', 'sex', 'nude', 'naked',
+            'hack', 'crack', 'pirate', 'warez', 'keygen',
+            'nigger', 'faggot', 'retard', 'kys', 'kill yourself',
+        ]
         combined = (title + " " + description).lower()
         if any(keyword in combined for keyword in spam_keywords):
             return False

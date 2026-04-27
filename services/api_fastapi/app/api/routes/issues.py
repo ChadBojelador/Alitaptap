@@ -379,23 +379,27 @@ def get_title_suggestions(issue_id: str) -> TitleSuggestionsResponse:
     ]
 
     now = datetime.now(timezone.utc)
-    db['title_suggestions'].insert_one({
-        'issue_id': issue_id,
-        'suggestions': suggestions,
-        'impact_predictions': [
-            {
-                'title': d.title,
-                'social': d.impact.social,
-                'environmental': d.impact.environmental,
-                'economic': d.impact.economic,
-                'overall': d.impact.overall,
-                'summary': d.impact.summary,
-            }
-            for d in suggestion_details
-        ],
-        'model_version': 'heuristic-v1+impact-v1',
-        'created_at': now,
-    })
+    db['title_suggestions'].update_one(
+        {'issue_id': issue_id},
+        {'$set': {
+            'issue_id': issue_id,
+            'suggestions': suggestions,
+            'impact_predictions': [
+                {
+                    'title': d.title,
+                    'social': d.impact.social,
+                    'environmental': d.impact.environmental,
+                    'economic': d.impact.economic,
+                    'overall': d.impact.overall,
+                    'summary': d.impact.summary,
+                }
+                for d in suggestion_details
+            ],
+            'model_version': 'heuristic-v1+impact-v1',
+            'updated_at': now,
+        }},
+        upsert=True,
+    )
     return TitleSuggestionsResponse(
         issue_id=issue_id,
         suggestions=suggestions,

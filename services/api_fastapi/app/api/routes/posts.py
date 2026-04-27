@@ -7,7 +7,7 @@ from typing import Optional
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import APIRouter, HTTPException, UploadFile, File, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.core.mongodb import get_db
 from app.core.config import settings
 
@@ -39,8 +39,10 @@ async def upload_image(request: Request, file: UploadFile = File(...)):
         filename = f"{uuid.uuid4()}{ext}"
         filepath = _UPLOAD_DIR / filename
 
+        content = await file.read()
+        if len(content) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail='File too large (max 5MB)')
         with open(filepath, "wb") as buffer:
-            content = await file.read()
             buffer.write(content)
 
         base_url = str(request.base_url).rstrip('/')
@@ -90,13 +92,13 @@ class LikeRequest(BaseModel):
 
 class FundRequest(BaseModel):
     user_id: str
-    amount: float
+    amount: float = Field(gt=0, description='Must be a positive amount')
 
 
 class CommentCreate(BaseModel):
     author_id: str
     author_email: str
-    text: str
+    text: str = Field(min_length=1, max_length=2000)
 
 
 class CommentResponse(BaseModel):
@@ -174,33 +176,37 @@ def list_posts() -> list[PostResponse]:
 @router.post('/{post_id}/like', response_model=PostResponse)
 def toggle_like(post_id: str, payload: LikeRequest) -> PostResponse:
     db = get_db()
-    doc = db['research_posts'].find_one({'_id': _parse_object_id(post_id)})
+    oid = _parse_object_id(post_id)
+    doc = db['research_posts'].find_one({'_id': oid})
     if not doc:
         raise HTTPException(status_code=404, detail='Post not found')
     liked_by: list = doc.get('liked_by', [])
     if payload.user_id in liked_by:
-        liked_by.remove(payload.user_id)
+        db['research_posts'].update_one(
+            {'_id': oid},
+            {'$pull': {'liked_by': payload.user_id}},
+        )
     else:
-        liked_by.append(payload.user_id)
-    db['research_posts'].update_one(
-        {'_id': ObjectId(post_id)},
-        {'$set': {'liked_by': liked_by, 'likes': len(liked_by)}},
-    )
-    doc['liked_by'] = liked_by
-    doc['likes'] = len(liked_by)
+        db['research_posts'].update_one(
+            {'_id': oid},
+            {'$addToSet': {'liked_by': payload.user_id}},
+        )
+    doc = db['research_posts'].find_one({'_id': oid})
+    doc['likes'] = len(doc.get('liked_by', []))
+    db['research_posts'].update_one({'_id': oid}, {'$set': {'likes': doc['likes']}})
     return PostResponse(**_doc_to_post(doc))
 
 
 @router.post('/{post_id}/fund', response_model=PostResponse)
 def fund_post(post_id: str, payload: FundRequest) -> PostResponse:
     db = get_db()
-    doc = db['research_posts'].find_one({'_id': _parse_object_id(post_id)})
+    oid = _parse_object_id(post_id)
+    doc = db['research_posts'].find_one({'_id': oid})
     if not doc:
         raise HTTPException(status_code=404, detail='Post not found')
-    new_raised = doc.get('funding_raised', 0.0) + payload.amount
     db['research_posts'].update_one(
-        {'_id': ObjectId(post_id)},
-        {'$set': {'funding_raised': new_raised}},
+        {'_id': oid},
+        {'$inc': {'funding_raised': payload.amount}},
     )
     db['funding_transactions'].insert_one({
         'post_id': post_id,
@@ -208,7 +214,7 @@ def fund_post(post_id: str, payload: FundRequest) -> PostResponse:
         'amount': payload.amount,
         'created_at': datetime.now(timezone.utc),
     })
-    doc['funding_raised'] = new_raised
+    doc = db['research_posts'].find_one({'_id': oid})
     return PostResponse(**_doc_to_post(doc))
 
 

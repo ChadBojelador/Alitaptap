@@ -151,6 +151,6 @@ def get_user_role(user_id: str) -> dict:
     db = get_db()
     doc = db['users'].find_one({'user_id': user_id})
     if not doc:
-        return {'user_id': user_id, 'role': 'student'}
+        raise HTTPException(status_code=404, detail='User not found')
     role = doc.get('role', 'student')
     return {'user_id': user_id, 'role': role}

@@ -92,7 +92,7 @@ class _CreatePageState extends State<CreatePage> {
           projectId: _editingProject!.projectId,
           title: title, description: description, sdg: sdg,
           methodology: backbone?.methodology,
-          impact: backbone?.communityImpactLevel,
+          impact: backbone?.communityImpact.summary,
           feasibility: feasibility,
         );
         setState(() => _editingProject = null);
@@ -102,7 +102,7 @@ class _CreatePageState extends State<CreatePage> {
           title: title, description: description, sdg: sdg,
           mode: isAIGuided ? 'ai' : 'manual',
           methodology: backbone?.methodology,
-          impact: backbone?.communityImpactLevel,
+          impact: backbone?.communityImpact.summary,
           feasibility: feasibility,
         );
       }
@@ -121,13 +121,12 @@ class _CreatePageState extends State<CreatePage> {
       if (isAI) {
         _titleEditCtrl.text = project.title;
         _methodologyEditCtrl.text = project.methodology;
-        _impactEditCtrl.text = project.impact;
         _generatedBackbone = ResearchBackbone(
           researchTitle: project.title,
           methodology: project.methodology,
           sdgAlignment: project.sdg.split(', '),
           feasibilityScore: FeasibilityScore(cost: 'Medium', time: '6-12 months', dataAvailability: 'Moderate'),
-          communityImpactLevel: project.impact,
+          communityImpact: CommunityImpact.fromLegacy(project.impact.isEmpty ? 'Medium' : project.impact),
         );
       }
       _editingProject = project;
