@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:alitaptap_mobile/core/mock_data.dart';
 import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/core/models/match_result.dart';
 import 'package:alitaptap_mobile/core/models/news_article.dart';
@@ -177,14 +176,6 @@ class ApiService {
       if (kDebugMode) print('ApiService.getIssues failed: $e. Returning fallback mocks.');
     }
 
-    // Always include mock data if not already present in results to ensure app looks alive
-    final mocks = MockData.issues.where((m) => status == null || m.status == status);
-    for (final m in mocks) {
-      if (!results.any((r) => r.issueId == m.issueId)) {
-        results.add(m);
-      }
-    }
-
     return results;
   }
 
@@ -322,14 +313,6 @@ class ApiService {
       if (kDebugMode) print('ApiService.getPosts failed: $e. Using local mocks.');
     }
 
-    // Merge with mock data, avoiding duplicates by title or ID
-    for (final m in MockData.researchPosts) {
-      if (!results.any((r) => r.postId == m.postId || r.title == m.title)) {
-        results.add(m);
-      }
-    }
-    
-    // Sort by "created_at" descending if possible
     results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return results;
   }

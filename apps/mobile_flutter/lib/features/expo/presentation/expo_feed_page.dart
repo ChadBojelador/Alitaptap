@@ -1,9 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:alitaptap_mobile/core/mock_data.dart';
 import '../../../core/models/research_post.dart';
 import '../../../core/models/community_problem_post.dart';
 import '../../../services/api_service.dart';
@@ -23,7 +20,6 @@ class ExpoFeedPage extends StatefulWidget {
 
 class _ExpoFeedPageState extends State<ExpoFeedPage> {
   final _api = ApiService();
-  final _random = Random();
   List<ResearchPost> _posts = [];
   List<_FeedItem> _feedItems = [];
   bool _loading = true;
@@ -51,24 +47,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   }
 
   List<_FeedItem> _buildFeedItems(List<ResearchPost> posts) {
-    final items = <_FeedItem>[
-      ...posts.map(_FeedItem.research),
-      ...MockData.communityProblems.map(_FeedItem.community),
-    ];
-
-    items.shuffle(_random);
-    final pinnedIndex = items.indexWhere(_isPinnedSmartBin);
-    if (pinnedIndex > 0) {
-      final pinned = items.removeAt(pinnedIndex);
-      items.insert(0, pinned);
-    }
-
-    return items;
-  }
-
-  bool _isPinnedSmartBin(_FeedItem item) {
-    final title = item.researchPost?.title.toLowerCase() ?? '';
-    return title.startsWith('smartbin connect');
+    return posts.map(_FeedItem.research).toList();
   }
 
   Future<void> _toggleLike(ResearchPost post) async {
@@ -509,24 +488,20 @@ class _StoriesRow extends StatelessWidget {
                 );
               },
             ),
-            ...List.generate(MockData.storyPosts.length, (index) {
-              final story = MockData.storyPosts[index];
-              final color = _storyColor(story.sdgLabel);
+            ...List.generate(4, (index) {
+              final sdgLabels = ['SDG 3', 'SDG 12', 'SDG 11', 'SDG 11'];
+              final bubbleLabels = ['Health', 'Recycling', 'Cities', 'Safety'];
+              final sdgLabel = sdgLabels[index];
+              final color = _storyColor(sdgLabel);
               return _StoryBubble(
-                label: story.bubbleLabel,
-                subtitle: story.sdgLabel,
-                icon: _storyIcon(story.sdgLabel),
+                label: bubbleLabels[index],
+                subtitle: sdgLabel,
+                icon: _storyIcon(sdgLabel),
                 color: color,
-                imagePath: story.imagePath,
                 isDark: isDark,
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => SdgStoryViewer(
-                        stories: MockData.storyPosts,
-                        initialIndex: index,
-                      ),
-                    ),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Stories coming soon.')),
                   );
                 },
               );
@@ -1778,54 +1753,9 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Try to find mock user data
-    Map<String, String>? userData;
-    if (uid != null && MockData.mockUsers.containsKey(uid)) {
-      userData = MockData.mockUsers[uid];
-    } else {
-      // Try finding by email or name
-      final lookupEmail = email.trim().toLowerCase();
-      final lookupName = (name ?? '').trim().toLowerCase();
-      try {
-        final entry = MockData.mockUsers.entries.firstWhere(
-          (e) {
-            final mockEmail = (e.value['email'] ?? '').trim().toLowerCase();
-            final mockName = (e.value['name'] ?? '').trim().toLowerCase();
-            final emailMatch = lookupEmail.isNotEmpty &&
-                (mockEmail == lookupEmail || mockName == lookupEmail);
-            final nameMatch = lookupName.isNotEmpty && mockName == lookupName;
-            return emailMatch || nameMatch;
-          },
-          orElse: () => MapEntry('', <String, String>{}),
-        );
-        if (entry.key.isNotEmpty) userData = entry.value;
-      } catch (_) {}
-    }
-
-    final imageUrl = userData?['avatar'];
-
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      final ImageProvider avatarProvider = imageUrl.startsWith('assets/')
-          ? AssetImage(imageUrl)
-          : NetworkImage(imageUrl);
-
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          image: DecorationImage(
-            image: avatarProvider,
-            fit: BoxFit.cover,
-          ),
-          border: Border.all(color: _yellow.withValues(alpha: 0.4), width: 1.5),
-        ),
-      );
-    }
-
     final label = name?.trim().isNotEmpty == true
         ? name!.trim()
-        : (email.trim().isNotEmpty ? email.trim() : (userData?['name'] ?? ''));
+        : (email.trim().isNotEmpty ? email.trim() : '');
     final initials = label.isNotEmpty ? label[0].toUpperCase() : '?';
 
     return Container(
