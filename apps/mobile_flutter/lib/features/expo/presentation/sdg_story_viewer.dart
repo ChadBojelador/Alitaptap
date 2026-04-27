@@ -188,6 +188,26 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
             },
           ),
 
+          // Tap Detectors (Navigation)
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: _prevStory,
+                  behavior: HitTestBehavior.translucent,
+                  child: const SizedBox.expand(),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: _nextStory,
+                  behavior: HitTestBehavior.translucent,
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ],
+          ),
+
           // Progress Bars
           SafeArea(
             child: Padding(
@@ -257,6 +277,97 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                       ],
                     ),
                   ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert_rounded,
+                        color: Colors.white, size: 24),
+                    color: const Color(0xFF2A2A2A),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onSelected: (value) async {
+                      if (value == 'delete') {
+                        _timer?.cancel();
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogCtx) => AlertDialog(
+                            backgroundColor: const Color(0xFF1E1E1E),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: Text('Delete Story',
+                                style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700)),
+                            content: Text(
+                                'Are you sure you want to delete this story?',
+                                style: GoogleFonts.poppins(
+                                    color: Colors.white70, fontSize: 14)),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(dialogCtx).pop(false),
+                                child: Text('Cancel',
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white54)),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(dialogCtx).pop(true),
+                                child: Text('Delete',
+                                    style: GoogleFonts.poppins(
+                                        color: const Color(0xFFEF5350),
+                                        fontWeight: FontWeight.w600)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true && mounted) {
+                          try {
+                            await ApiService()
+                                .deleteStory(currentStory.storyId);
+                            if (!mounted) return;
+                            setState(() {
+                              _stories.removeAt(_currentIndex);
+                              if (_stories.isEmpty) {
+                                Navigator.of(context).pop(true);
+                                return;
+                              }
+                              _currentIndex = _currentIndex.clamp(
+                                  0, _stories.length - 1);
+                            });
+                            _startTimer();
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Failed to delete: $e')),
+                              );
+                              _startTimer();
+                            }
+                          }
+                        } else {
+                          _startTimer();
+                        }
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.delete_rounded,
+                                color: Color(0xFFEF5350), size: 20),
+                            const SizedBox(width: 10),
+                            Text('Delete Story',
+                                style: GoogleFonts.poppins(
+                                    color: const Color(0xFFEF5350),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close_rounded,
@@ -267,25 +378,7 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
             ),
           ),
 
-          // Tap Detectors
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: _prevStory,
-                  behavior: HitTestBehavior.translucent,
-                  child: const SizedBox.expand(),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: _nextStory,
-                  behavior: HitTestBehavior.translucent,
-                  child: const SizedBox.expand(),
-                ),
-              ),
-            ],
-          ),
+
 
           // Content
           Positioned(

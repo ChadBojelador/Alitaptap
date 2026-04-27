@@ -123,13 +123,24 @@ class _MainShellState extends State<MainShell> {
 
     final safeIndex = _index.clamp(0, pages.length - 1);
 
-    return Scaffold(
-      body: IndexedStack(index: safeIndex, children: pages),
-      bottomNavigationBar: _BottomNav(
-        index: safeIndex,
-        isDark: isDark,
-        onTap: (i) => setState(() => _index = i),
-        onActionTap: () => _openActionSheet(uid),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        // If not on the Home tab, navigate back to Home instead of exiting.
+        if (_index != 0) {
+          setState(() => _index = 0);
+        }
+        // If already on Home, do nothing — stay in the app.
+      },
+      child: Scaffold(
+        body: IndexedStack(index: safeIndex, children: pages),
+        bottomNavigationBar: _BottomNav(
+          index: safeIndex,
+          isDark: isDark,
+          onTap: (i) => setState(() => _index = i),
+          onActionTap: () => _openActionSheet(uid),
+        ),
       ),
     );
   }
