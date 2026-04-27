@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/research_post.dart';
 import '../../../core/models/community_problem_post.dart';
 import '../../../core/models/story_post.dart';
-import '../../../services/api_service.dart';
+import '../../../services/api_service.dart' show ApiService;
 import '../../../services/session_service.dart';
 import 'chat_inbox_page.dart';
 import 'create_post_page.dart';
@@ -725,6 +725,7 @@ class _StoriesRow extends StatelessWidget {
                 icon: _storyIcon(story.sdgLabel),
                 color: color,
                 isDark: isDark,
+                imagePath: story.imagePath.isNotEmpty ? story.imagePath : null,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -834,8 +835,8 @@ class _StoryBubble extends StatelessWidget {
                   ),
                   child: imagePath != null
                       ? ClipOval(
-                          child: Image.asset(
-                            imagePath!,
+                          child: Image.network(
+                            ApiService.fixImageUrl(imagePath),
                             fit: BoxFit.cover,
                             width: 58,
                             height: 58,
@@ -1762,7 +1763,7 @@ class _CommunityImagePreviewState extends State<_CommunityImagePreview> {
     }
 
     return Image.network(
-      src,
+      ApiService.fixImageUrl(src),
       width: double.infinity,
       height: 220,
       fit: BoxFit.cover,
@@ -1928,7 +1929,7 @@ class _CommunityPhotoViewerState extends State<_CommunityPhotoViewer> {
     }
 
     return Image.network(
-      src,
+      ApiService.fixImageUrl(src),
       fit: BoxFit.contain,
       errorBuilder: (_, __, ___) => _CommunityPlaceholderImage(
         label: 'Image Placeholder',
@@ -2104,7 +2105,7 @@ class _ImagePeelGalleryState extends State<_ImagePeelGallery> {
     }
 
     return Image.network(
-      src,
+      ApiService.fixImageUrl(src),
       width: double.infinity,
       height: 220,
       fit: BoxFit.cover,
