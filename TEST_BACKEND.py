@@ -14,12 +14,12 @@ def test_backend():
     try:
         response = requests.get(f"{base_url}/api/v1/health", timeout=5)
         if response.status_code == 200:
-            print("   ✅ Health check passed")
+            print("   [OK] Health check passed")
         else:
-            print(f"   ❌ Health check failed: {response.status_code}")
+            print(f"   [FAIL] Health check failed: {response.status_code}")
             return False
     except Exception as e:
-        print(f"   ❌ Cannot connect to backend: {e}")
+        print(f"   [FAIL] Cannot connect to backend: {e}")
         print("\n   Make sure the backend is running:")
         print("   Run: START_BACKEND.bat")
         return False
@@ -30,11 +30,11 @@ def test_backend():
         response = requests.get(f"{base_url}/api/v1/issues", timeout=5)
         if response.status_code == 200:
             issues = response.json()
-            print(f"   ✅ GET issues passed - Found {len(issues)} issues")
+            print(f"   [OK] GET issues passed - Found {len(issues)} issues")
         else:
-            print(f"   ❌ GET issues failed: {response.status_code}")
+            print(f"   [FAIL] GET issues failed: {response.status_code}")
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"   [FAIL] Error: {e}")
     
     # Test 3: Get posts
     print("\n3. Testing GET /api/v1/posts...")
@@ -42,11 +42,11 @@ def test_backend():
         response = requests.get(f"{base_url}/api/v1/posts", timeout=5)
         if response.status_code == 200:
             posts = response.json()
-            print(f"   ✅ GET posts passed - Found {len(posts)} posts")
+            print(f"   [OK] GET posts passed - Found {len(posts)} posts")
         else:
-            print(f"   ❌ GET posts failed: {response.status_code}")
+            print(f"   [FAIL] GET posts failed: {response.status_code}")
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"   [FAIL] Error: {e}")
     
     # Test 4: Create issue (test CRUD)
     print("\n4. Testing POST /api/v1/issues (CREATE)...")
@@ -67,7 +67,7 @@ def test_backend():
         if response.status_code == 200:
             created = response.json()
             issue_id = created.get("issue_id")
-            print(f"   ✅ CREATE issue passed - ID: {issue_id}")
+            print(f"   [OK] CREATE issue passed - ID: {issue_id}")
             
             # Test 5: Update issue
             print("\n5. Testing PUT /api/v1/issues/{id} (UPDATE)...")
@@ -78,9 +78,9 @@ def test_backend():
                 timeout=5
             )
             if response.status_code == 200:
-                print("   ✅ UPDATE issue passed")
+                print("   [OK] UPDATE issue passed")
             else:
-                print(f"   ❌ UPDATE failed: {response.status_code}")
+                print(f"   [FAIL] UPDATE failed: {response.status_code}")
             
             # Test 6: Delete issue
             print("\n6. Testing DELETE /api/v1/issues/{id} (DELETE)...")
@@ -89,18 +89,19 @@ def test_backend():
                 timeout=5
             )
             if response.status_code == 200:
-                print("   ✅ DELETE issue passed")
+                print("   [OK] DELETE issue passed")
             else:
-                print(f"   ❌ DELETE failed: {response.status_code}")
+                print(f"   [FAIL] DELETE failed: {response.status_code}")
         else:
-            print(f"   ❌ CREATE issue failed: {response.status_code}")
+            print(f"   [FAIL] CREATE issue failed: {response.status_code}")
             print(f"   Response: {response.text}")
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"   [FAIL] Error: {e}")
     
     print("\n" + "=" * 50)
-    print("✅ Backend is working correctly!")
+    print("ALL TESTS COMPLETE")
     print("=" * 50)
+
     print("\nYou can now:")
     print("1. View API docs: http://localhost:8000/docs")
     print("2. Run Flutter app: cd apps/mobile_flutter && flutter run")

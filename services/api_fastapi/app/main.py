@@ -1,21 +1,28 @@
+import logging
+import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.mongodb import init_mongodb, close_mongodb
 
+logger = logging.getLogger("alitaptap")
+logging.basicConfig(level=logging.DEBUG)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         init_mongodb()
+        logger.info("MongoDB initialized successfully")
     except Exception as e:
-        print(f"Warning: MongoDB initialization failed: {e}")
+        logger.error(f"MongoDB initialization failed: {e}")
     yield
     close_mongodb()
 
@@ -32,6 +39,26 @@ def create_app() -> FastAPI:
         allow_headers=['*'],
     )
 
+    # ── Global exception handler ─────────────────────────────────────
+    # Ensures *all* unhandled errors return JSON, not HTML.
+    # This fixes the mobile app's "unexpected error at character 1" crash.
+    @application.exception_handler(Exception)
+    async def _global_exception_handler(request: Request, exc: Exception):
+        tb = traceback.format_exc()
+        logger.error(f"Unhandled error on {request.method} {request.url}: {exc}\n{tb}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(exc)},
+        )
+
+    # ── Access logging middleware ─────────────────────────────────────
+    @application.middleware("http")
+    async def log_requests(request: Request, call_next):
+        logger.info(f"→ {request.method} {request.url}")
+        response = await call_next(request)
+        logger.info(f"← {request.method} {request.url} → {response.status_code}")
+        return response
+
     # Serve local images from scripts/images folder
     images_path = Path(__file__).parent.parent / "scripts" / "images"
     if images_path.exists():
@@ -47,3 +74,4 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+

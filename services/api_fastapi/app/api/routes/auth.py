@@ -1,6 +1,7 @@
 """Auth API — authentication and role management."""
 
 from enum import Enum
+import hashlib
 import secrets
 
 import bcrypt
@@ -45,8 +46,14 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, hashed: str) -> bool:
-    """Verify password against bcrypt hash."""
-    return bcrypt.checkpw(password.encode(), hashed.encode())
+    """Verify password against bcrypt hash or legacy SHA-256 hex hash."""
+    if hashed.startswith('$2b$') or hashed.startswith('$2a$'):
+        # Standard bcrypt hash
+        return bcrypt.checkpw(password.encode(), hashed.encode())
+    # Legacy SHA-256 hex hash (64-char hex string)
+    if len(hashed) == 64:
+        return hashlib.sha256(password.encode()).hexdigest() == hashed
+    return False
 
 
 class SocialLoginRequest(BaseModel):
@@ -125,6 +132,16 @@ def login(payload: LoginRequest) -> AuthResponse:
         raise HTTPException(status_code=401, detail='This account uses Google sign-in. Please use Continue with Google.')
     if not verify_password(payload.password, user['password_hash']):
         raise HTTPException(status_code=401, detail='Invalid email or password')
+
+    # Auto-upgrade legacy SHA-256 hashes to bcrypt on successful login
+    stored_hash = user['password_hash']
+    if not (stored_hash.startswith('$2b$') or stored_hash.startswith('$2a$')):
+        new_hash = hash_password(payload.password)
+        db['users'].update_one(
+            {'_id': user['_id']},
+            {'$set': {'password_hash': new_hash}},
+        )
+
     role = user.get('role', 'student')
     return AuthResponse(
         user_id=user['user_id'],
