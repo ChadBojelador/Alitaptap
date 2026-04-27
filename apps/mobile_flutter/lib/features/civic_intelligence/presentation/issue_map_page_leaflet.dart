@@ -377,7 +377,7 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'LOADING LEAFLET CIVIC LAYER...',
+                      'LOADING CIVIC INTELLIGENCE...',
                       style: GoogleFonts.robotoMono(
                         color: _leafletYellow,
                         fontSize: 11,
@@ -488,7 +488,7 @@ class _LeafletTopBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'CIVIC MAP [LEAFLET]',
+                  'CIVIC INTELLIGENCE MAP',
                   style: GoogleFonts.robotoMono(
                     fontSize: 11,
                     letterSpacing: 1.8,
