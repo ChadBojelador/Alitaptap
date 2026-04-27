@@ -57,6 +57,7 @@ class _RegisterPageState extends State<RegisterPage> {
     try {
       await _authService.register(email: email, password: pass, role: 'student');
       widget.onRoleSelected('student');
+      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       if (mounted) _setError(e);
     } finally {

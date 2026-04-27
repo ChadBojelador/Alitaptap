@@ -1,6 +1,7 @@
 """AI Validator Service — automated issue validation, summarization, and SDG tagging."""
 
 import json
+import html
 import logging
 from typing import Optional
 
@@ -112,10 +113,12 @@ Reject if: spam, offensive, off-topic, or unsafe."""
 
     def _build_validation_prompt(self, title: str, description: str) -> str:
         """Build validation prompt."""
+        safe_title = html.escape(title[:200])
+        safe_description = html.escape(description[:2000])
         return f"""Validate and process this community problem report:
 
-Title: {title}
-Description: {description}
+Title: {safe_title}
+Description: {safe_description}
 
 Respond with ONLY the JSON object, no additional text."""
 
@@ -153,7 +156,14 @@ Respond with ONLY the JSON object, no additional text."""
             return False
         if len(title) > 200 or len(description) > 5000:
             return False
-        spam_keywords = ["viagra", "casino", "lottery", "click here", "buy now"]
+        spam_keywords = [
+            'viagra', 'casino', 'lottery', 'click here', 'buy now',
+            'free money', 'make money fast', 'work from home', 'earn cash',
+            'weight loss', 'diet pills', 'crypto investment', 'bitcoin',
+            'xxx', 'porn', 'sex', 'nude', 'naked',
+            'hack', 'crack', 'pirate', 'warez', 'keygen',
+            'nigger', 'faggot', 'retard', 'kys', 'kill yourself',
+        ]
         combined = (title + " " + description).lower()
         if any(keyword in combined for keyword in spam_keywords):
             return False

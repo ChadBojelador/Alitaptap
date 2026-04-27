@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.mongodb import init_mongodb
+from app.core.mongodb import init_mongodb, close_mongodb
 
 
 @asynccontextmanager
@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Warning: MongoDB initialization failed: {e}")
     yield
+    close_mongodb()
 
 
 def create_app() -> FastAPI:

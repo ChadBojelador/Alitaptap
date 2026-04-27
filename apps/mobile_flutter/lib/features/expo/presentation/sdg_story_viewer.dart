@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:alitaptap_mobile/core/models/story_post.dart';
+import 'package:alitaptap_mobile/services/api_service.dart' show ApiService;
 
 class SdgStoryViewer extends StatefulWidget {
   const SdgStoryViewer({
@@ -148,17 +149,25 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(
-                    story.imagePath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFF1A1A1A),
-                      child: Center(
-                        child: Icon(Icons.auto_awesome_mosaic_rounded,
-                            color: pageAccent.withValues(alpha: 0.3), size: 80),
-                      ),
-                    ),
-                  ),
+                  story.imagePath.isNotEmpty
+                      ? Image.network(
+                          ApiService.fixImageUrl(story.imagePath),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: const Color(0xFF1A1A1A),
+                            child: Center(
+                              child: Icon(Icons.auto_awesome_mosaic_rounded,
+                                  color: pageAccent.withValues(alpha: 0.3), size: 80),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: const Color(0xFF1A1A1A),
+                          child: Center(
+                            child: Icon(Icons.auto_awesome_mosaic_rounded,
+                                color: pageAccent.withValues(alpha: 0.3), size: 80),
+                          ),
+                        ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

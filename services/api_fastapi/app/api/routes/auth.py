@@ -1,9 +1,9 @@
 """Auth API — authentication and role management."""
 
 from enum import Enum
-import hashlib
 import secrets
 
+import bcrypt
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 
@@ -39,18 +39,14 @@ class AuthResponse(BaseModel):
     role: str
 
 
-def hash_password(password: str, salt: str = None) -> tuple[str, str]:
-    """Hash password with salt."""
-    if salt is None:
-        salt = secrets.token_hex(16)
-    hashed = hashlib.sha256((password + salt).encode()).hexdigest()
-    return hashed, salt
+def hash_password(password: str) -> str:
+    """Hash password with bcrypt."""
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
-def verify_password(password: str, hashed: str, salt: str) -> bool:
-    """Verify password against hash."""
-    check_hash, _ = hash_password(password, salt)
-    return check_hash == hashed
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify password against bcrypt hash."""
+    return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
 class SocialLoginRequest(BaseModel):
@@ -96,17 +92,16 @@ def register(payload: RegisterRequest) -> AuthResponse:
         raise HTTPException(status_code=400, detail='Email already registered')
     
     # Hash password
-    hashed_password, salt = hash_password(payload.password)
-    
+    hashed_password = hash_password(payload.password)
+
     # Generate user_id
     user_id = secrets.token_urlsafe(16)
-    
+
     # Create user
     user_doc = {
         'user_id': user_id,
         'email': payload.email,
         'password_hash': hashed_password,
-        'password_salt': salt,
         'role': payload.role.value,
     }
     db['users'].insert_one(user_doc)
@@ -128,7 +123,7 @@ def login(payload: LoginRequest) -> AuthResponse:
     # Social-only accounts have no password
     if not user.get('password_hash'):
         raise HTTPException(status_code=401, detail='This account uses Google sign-in. Please use Continue with Google.')
-    if not verify_password(payload.password, user['password_hash'], user['password_salt']):
+    if not verify_password(payload.password, user['password_hash']):
         raise HTTPException(status_code=401, detail='Invalid email or password')
     role = user.get('role', 'student')
     return AuthResponse(
@@ -156,6 +151,6 @@ def get_user_role(user_id: str) -> dict:
     db = get_db()
     doc = db['users'].find_one({'user_id': user_id})
     if not doc:
-        return {'user_id': user_id, 'role': 'student'}
+        raise HTTPException(status_code=404, detail='User not found')
     role = doc.get('role', 'student')
     return {'user_id': user_id, 'role': role}

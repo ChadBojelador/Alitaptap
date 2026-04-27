@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/core/models/match_result.dart';
@@ -11,6 +12,7 @@ import 'package:alitaptap_mobile/core/models/news_article.dart';
 import 'package:alitaptap_mobile/core/models/research_backbone.dart';
 import 'package:alitaptap_mobile/core/models/research_post.dart';
 import 'package:alitaptap_mobile/core/models/story_post.dart';
+import 'package:alitaptap_mobile/core/models/student_project.dart';
 import 'package:alitaptap_mobile/core/models/title_suggestions.dart';
 
 
@@ -35,8 +37,9 @@ class ApiService {
 
     // Android emulators map host localhost via 10.0.2.2.
     if (defaultTargetPlatform == TargetPlatform.android) {
-      // Physical device: use your PC's LAN IP. Emulator: use 10.0.2.2.
-      return 'http://192.168.254.158:8000/api/v1';
+      // Use API_BASE_URL dart-define at build time for physical devices.
+      // Emulator default: 10.0.2.2 maps to host PC localhost.
+      return 'http://10.0.2.2:8000/api/v1';
     }
 
     return 'http://localhost:8000/api/v1';
@@ -389,18 +392,22 @@ class ApiService {
   }
 
   Future<String> uploadImage(File file) async {
+    final ext = file.path.split('.').last.toLowerCase();
     final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/posts/upload'));
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
-    
-    final streamedResponse = await request.send().timeout(const Duration(seconds: 15));
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      contentType: MediaType('image', ext == 'png' ? 'png' : 'jpeg'),
+    ));
+
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
     final response = await http.Response.fromStream(streamedResponse);
-    
+
     if (response.statusCode != 200) {
       throw Exception('Failed to upload image: ${response.body}');
     }
-    
+
     final data = jsonDecode(response.body) as Map<String, dynamic>;
-    // Fix the URL so Android emulator can reach the host machine.
     return fixImageUrl(data['image_url'] as String?);
   }
 
@@ -656,6 +663,94 @@ class ApiService {
     return matches
         .map((e) => MatchResult.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  // -----------------------------------------------------------------------
+  // Student Projects
+  // -----------------------------------------------------------------------
+
+  Future<StudentProject> createProject({
+    required String authorId,
+    required String title,
+    required String description,
+    required String sdg,
+    String mode = 'manual',
+    String? methodology,
+    String? impact,
+    String? feasibility,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/projects'),
+        headers: _headers,
+        body: jsonEncode({
+          'author_id': authorId,
+          'title': title,
+          'description': description,
+          'sdg': sdg,
+          'mode': mode,
+          if (methodology != null) 'methodology': methodology,
+          if (impact != null) 'impact': impact,
+          if (feasibility != null) 'feasibility': feasibility,
+        }),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to create project: ${response.body}');
+    }
+    return StudentProject.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<List<StudentProject>> getProjects(String authorId) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/projects').replace(queryParameters: {'author_id': authorId});
+      final response = await _sendWithTimeout(http.get(uri));
+      if (response.statusCode == 200) {
+        final list = jsonDecode(response.body) as List<dynamic>;
+        return list.map((e) => StudentProject.fromJson(e as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      if (kDebugMode) print('ApiService.getProjects failed: $e');
+    }
+    return [];
+  }
+
+  Future<StudentProject> updateProject({
+    required String projectId,
+    String? title,
+    String? description,
+    String? sdg,
+    String? methodology,
+    String? impact,
+    String? feasibility,
+  }) async {
+    final body = <String, dynamic>{};
+    if (title != null) body['title'] = title;
+    if (description != null) body['description'] = description;
+    if (sdg != null) body['sdg'] = sdg;
+    if (methodology != null) body['methodology'] = methodology;
+    if (impact != null) body['impact'] = impact;
+    if (feasibility != null) body['feasibility'] = feasibility;
+    final response = await _sendWithTimeout(
+      http.put(
+        Uri.parse('$_baseUrl/projects/$projectId'),
+        headers: _headers,
+        body: jsonEncode(body),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update project: ${response.body}');
+    }
+    return StudentProject.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<void> deleteProject(String projectId) async {
+    final response = await _sendWithTimeout(
+      http.delete(Uri.parse('$_baseUrl/projects/$projectId')),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete project: ${response.body}');
+    }
   }
 
   /// Generate AI-guided research backbone from problem, idea, and approach.
