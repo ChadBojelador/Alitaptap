@@ -31,17 +31,10 @@ class ApiService {
       return envBaseUrl;
     }
 
-    if (kIsWeb) {
-      return 'http://localhost:8000/api/v1';
-    }
-
-    // Android emulators map host localhost via 10.0.2.2.
-    // For physical devices, pass --dart-define=API_BASE_URL=http://<LAN_IP>:8000/api/v1
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000/api/v1';
-    }
-
-    return 'http://localhost:8000/api/v1';
+    // Production: always use the live Render backend.
+    // Override for local dev with:
+    //   flutter run --dart-define=API_BASE_URL=http://192.168.x.x:8000/api/v1
+    return 'https://alitaptap-wlbr.onrender.com/api/v1';
   }
 
   /// Returns the host:port that images should use — derived from the same
