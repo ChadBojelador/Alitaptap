@@ -151,11 +151,13 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
     final position = _userPosition;
     if (position == null) return;
 
-    final currentZoom = _zoom < _focusZoom ? _focusZoom : _zoom;
-    _mapController.move(
-      latlng.LatLng(position.latitude, position.longitude),
-      currentZoom,
-    );
+    final zoomToUse = _zoom.isFinite ? (_zoom < _focusZoom ? _focusZoom : _zoom) : _focusZoom;
+    if (position.latitude.isFinite && position.longitude.isFinite) {
+      _mapController.move(
+        latlng.LatLng(position.latitude, position.longitude),
+        zoomToUse,
+      );
+    }
   }
 
   void _onMapTap(latlng.LatLng latLng) {
@@ -207,17 +209,27 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
       backgroundColor: _leafletBg,
       body: Stack(
         children: [
-          FlutterMap(
+          SizedBox.expand(
+            child: FlutterMap(
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _defaultCenter,
               initialZoom: _defaultZoom,
-              minZoom: 5.5,
-              maxZoom: 20.0,
+              minZoom: 3.0,
+              maxZoom: 18.0,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
+              cameraConstraint: CameraConstraint.contain(
+                bounds: LatLngBounds(
+                  const latlng.LatLng(-85.0, -180.0),
+                  const latlng.LatLng(85.0, 180.0),
+                ),
+              ),
               onTap: (_, point) => _onMapTap(point),
               onPositionChanged: (position, _) {
-                if (mounted) {
-                  setState(() => _zoom = position.zoom);
+                if (position.zoom.isFinite) {
+                  _zoom = position.zoom;
                 }
               },
             ),
@@ -227,9 +239,12 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
                 subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.alitaptap.mobile',
                 maxNativeZoom: 19,
+                tileDisplay: const TileDisplay.fadeIn(),
+                keepBuffer: 1,
+                panBuffer: 1,
               ),
               MarkerLayer(markers: _buildIssueMarkers()),
-              if (_userPosition != null)
+              if (_userPosition != null && _userPosition!.latitude.isFinite && _userPosition!.longitude.isFinite)
                 MarkerLayer(
                   markers: [
                     Marker(
@@ -245,6 +260,7 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
                 ),
             ],
           ),
+        ),
           IgnorePointer(
             child: Container(
               decoration: BoxDecoration(
@@ -361,7 +377,7 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'LOADING LEAFLET CIVIC LAYER...',
+                      'LOADING CIVIC INTELLIGENCE...',
                       style: GoogleFonts.robotoMono(
                         color: _leafletYellow,
                         fontSize: 11,
@@ -402,6 +418,7 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
 
   List<Marker> _buildIssueMarkers() {
     return _issues
+        .where((issue) => issue.lat.isFinite && issue.lng.isFinite)
         .map(
           (issue) => Marker(
             point: latlng.LatLng(issue.lat, issue.lng),
@@ -471,7 +488,7 @@ class _LeafletTopBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'CIVIC MAP [LEAFLET]',
+                  'CIVIC MAP',
                   style: GoogleFonts.robotoMono(
                     fontSize: 11,
                     letterSpacing: 1.8,
@@ -579,27 +596,50 @@ class _LeafletIssueSidebar extends StatelessWidget {
                             ),
                             color: const Color(0xFF111C30),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              Text(
-                                issue.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(
-                                  color: _leafletText,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                              if (issue.imageUrl != null && issue.imageUrl!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Image.network(
+                                      issue.imageUrl!,
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        width: 48, height: 48, color: const Color(0xFF2C2C2E),
+                                        child: const Icon(Icons.broken_image_rounded, size: 16, color: Colors.grey),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                issue.description,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(
-                                  color: _leafletText.withValues(alpha: 0.75),
-                                  fontSize: 11,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      issue.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.poppins(
+                                        color: _leafletText,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      issue.description,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.poppins(
+                                        color: _leafletText.withValues(alpha: 0.75),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -727,18 +767,18 @@ class _IssuePinMarker extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: _leafletRed.withValues(alpha: 0.93),
-        border: Border.all(color: _leafletYellow.withValues(alpha: 0.85)),
+        color: _leafletYellow.withValues(alpha: 0.93),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.85)),
         boxShadow: [
           BoxShadow(
-            color: _leafletRed.withValues(alpha: 0.45),
+            color: _leafletYellow.withValues(alpha: 0.45),
             blurRadius: 12,
             spreadRadius: 1.6,
           ),
         ],
       ),
       child: const Center(
-        child: Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
+        child: Icon(Icons.location_on_rounded, color: Color(0xFF171100), size: 20),
       ),
     );
   }
@@ -757,7 +797,7 @@ class _UserLocationMarker extends StatelessWidget {
           height: 38,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(0xFF00B8FF).withValues(alpha: 0.23),
+            color: _leafletYellow.withValues(alpha: 0.23),
           ),
         ),
         Container(
@@ -765,7 +805,7 @@ class _UserLocationMarker extends StatelessWidget {
           height: 14,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(0xFF00B8FF),
+            color: _leafletYellow,
             border: Border.all(color: Colors.white, width: 1.8),
           ),
         ),

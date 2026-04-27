@@ -25,11 +25,21 @@ class ApiService {
 
   static String _resolveDefaultBaseUrl() {
     const envBaseUrl = String.fromEnvironment('API_BASE_URL');
-    if (envBaseUrl.isNotEmpty) return envBaseUrl;
-    if (kIsWeb) return 'http://127.0.0.1:8000/api/v1';
-    // Use 10.0.2.2 for emulator, override via API_BASE_URL env for physical device
-    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:8000/api/v1';
-    return 'http://127.0.0.1:8000/api/v1';
+    if (envBaseUrl.isNotEmpty) {
+      return envBaseUrl;
+    }
+
+    if (kIsWeb) {
+      return 'http://localhost:8000/api/v1';
+    }
+
+    // Android emulators map host localhost via 10.0.2.2.
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      // Physical device: use your PC's LAN IP. Emulator: use 10.0.2.2.
+      return 'http://192.168.254.158:8000/api/v1';
+    }
+
+    return 'http://localhost:8000/api/v1';
   }
 
   /// Rewrites image URLs so they are reachable from the device.

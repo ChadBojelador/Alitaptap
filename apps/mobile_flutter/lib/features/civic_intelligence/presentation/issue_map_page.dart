@@ -143,11 +143,18 @@ class _IssueMapPageState extends State<IssueMapPage>
   @override
   void dispose() {
     _mapController?.removeListener(_onCameraMove);
+    _projectionTimer?.cancel();
     _ideaController.dispose();
     _sidebarAnim.dispose();
     _connectionAnim.dispose();
+    _pinPulse.dispose();
     super.dispose();
   }
+
+  late final AnimationController _pinPulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat();
 
   // ── Data ────────────────────────────────────────────────────────────────────
 
@@ -209,12 +216,16 @@ class _IssueMapPageState extends State<IssueMapPage>
     } catch (_) {}
   }
 
+  Timer? _projectionTimer;
+
   void _onCameraMove() {
-    unawaited(_updateUserScreenPosition());
-    unawaited(_updateIssueScreenPositions());
-    if (mounted) {
-      setState(() {});
-    }
+    _projectionTimer?.cancel();
+    _projectionTimer = Timer(const Duration(milliseconds: 32), () {
+      if (mounted) {
+        unawaited(_updateUserScreenPosition());
+        unawaited(_updateIssueScreenPositions());
+      }
+    });
   }
 
   Future<void> _resolveCurrentLocation() async {
@@ -281,18 +292,25 @@ class _IssueMapPageState extends State<IssueMapPage>
       return;
     }
 
-    final positions = <String, Offset>{};
-    for (final issue in _issues) {
+    final futures = _issues.map((issue) async {
       try {
         final screenPoint =
             await controller.toScreenLocation(LatLng(issue.lat, issue.lng));
         final offset =
             Offset(screenPoint.x.toDouble(), screenPoint.y.toDouble());
-        // Only keep positions that are actually on-screen (non-zero)
         if (offset.dx != 0 || offset.dy != 0) {
-          positions[issue.issueId] = offset;
+          return MapEntry(issue.issueId, offset);
         }
       } catch (_) {}
+      return null;
+    });
+
+    final results = await Future.wait(futures);
+    final positions = <String, Offset>{};
+    for (final res in results) {
+      if (res != null) {
+        positions[res.key] = res.value;
+      }
     }
 
     if (!mounted) return;
@@ -545,7 +563,7 @@ class _IssueMapPageState extends State<IssueMapPage>
                 top: _issueScreenPositions[issue.issueId]!.dy - 10,
                 child: GestureDetector(
                   onTap: () => _onPinTapped(issue),
-                  child: const _RadarBlip(),
+                  child: _RadarBlip(animation: _pinPulse),
                 ),
               ),
 
@@ -917,33 +935,17 @@ class _UserBlipState extends State<_UserBlip>
   }
 }
 
-/// Radar blip for issue pins — small red glowing dot with pulse.
-class _RadarBlip extends StatefulWidget {
-  const _RadarBlip();
-
-  @override
-  State<_RadarBlip> createState() => _RadarBlipState();
-}
-
-class _RadarBlipState extends State<_RadarBlip>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..repeat();
-
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
-  }
+/// Radar blip for issue pins — small yellow glowing dot with pulse.
+class _RadarBlip extends StatelessWidget {
+  const _RadarBlip({required this.animation});
+  final Animation<double> animation;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _anim,
+      animation: animation,
       builder: (_, __) {
-        final t = _anim.value;
+        final t = animation.value;
         return SizedBox(
           width: 32,
           height: 32,
@@ -957,7 +959,7 @@ class _RadarBlipState extends State<_RadarBlip>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: _cyberRed.withValues(alpha: 0.55 * (1 - t)),
+                    color: _cyberGreen.withValues(alpha: 0.55 * (1 - t)),
                     width: 1,
                   ),
                 ),
@@ -968,10 +970,10 @@ class _RadarBlipState extends State<_RadarBlip>
                 height: 10,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _cyberRed,
+                  color: _cyberGreen,
                   boxShadow: [
                     BoxShadow(
-                      color: _cyberRed.withValues(alpha: 0.6),
+                      color: _cyberGreen.withValues(alpha: 0.6),
                       blurRadius: 8,
                       spreadRadius: 1,
                     ),
@@ -1284,14 +1286,14 @@ class _SidebarIssueRowState extends State<_SidebarIssueRow> {
               height: 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: _cyberRed.withValues(alpha: 0.12),
+                color: _cyberGreen.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: _cyberRed.withValues(alpha: 0.35)),
+                border: Border.all(color: _cyberGreen.withValues(alpha: 0.35)),
               ),
               child: Text(
                 (widget.index + 1).toString().padLeft(2, '0'),
                 style: GoogleFonts.robotoMono(
-                  color: _cyberRed,
+                  color: _cyberGreen,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                 ),

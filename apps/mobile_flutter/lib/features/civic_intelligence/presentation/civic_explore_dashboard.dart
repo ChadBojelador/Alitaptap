@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart' as latlng;
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:maplibre_gl/maplibre_gl.dart' hide LatLng, LatLngBounds;
 import 'package:alitaptap_mobile/core/models/research_post.dart';
 import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/core/mock_data.dart';
@@ -76,6 +76,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
     final bg = isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF7F8FA);
     final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
+    final headerColor = _amber;
     final subtle = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
 
     return Scaffold(
@@ -93,7 +94,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
               title: Text(
                 'Explore Intelligence',
                 style: GoogleFonts.poppins(
-                  color: textColor,
+                  color: headerColor,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -138,46 +139,61 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                         ),
                       ],
                       border: Border.all(
-                        color: _amber.withValues(alpha: 0.3),
-                        width: 2,
+                        color: _amber.withValues(alpha: 0.5),
+                        width: 1.5,
                       ),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      children: [
-                        // Map Representation: Live Snapshot
-                        AbsorbPointer(
-                          child: effectiveMapEngine == MapEngine.leaflet
-                              ? FlutterMap(
-                                  options: const MapOptions(
-                                    initialCenter:
-                                        latlng.LatLng(12.8797, 121.7740),
-                                    initialZoom: 4.5,
-                                    interactionOptions:
-                                        InteractionOptions(flags: 0),
-                                  ),
-                                  children: [
-                                    TileLayer(
-                                      urlTemplate:
-                                          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                                      subdomains: const ['a', 'b', 'c', 'd'],
-                                      userAgentPackageName:
-                                          'com.alitaptap.mobile',
-                                    ),
-                                  ],
-                                )
-                              : MapLibreMap(
-                                  styleString:
-                                      '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}',
-                                  initialCameraPosition: const CameraPosition(
-                                    target: LatLng(12.8797, 121.7740),
-                                    zoom: 4.5,
-                                  ),
-                                  annotationOrder: const [],
-                                  annotationConsumeTapEvents: const [
-                                    AnnotationType.circle
-                                  ],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(22.5),
+                      child: Stack(
+                        children: [
+                        // Real Live Map Preview
+                        IgnorePointer(
+                          child: FlutterMap(
+                            options: MapOptions(
+                              initialCenter: const latlng.LatLng(12.8797, 121.7740),
+                              initialZoom: 5.0,
+                              minZoom: 3.0,
+                              maxZoom: 18.0,
+                              cameraConstraint: CameraConstraint.contain(
+                                bounds: LatLngBounds(
+                                  const latlng.LatLng(-85.0, -180.0),
+                                  const latlng.LatLng(85.0, 180.0),
                                 ),
+                              ),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                                subdomains: const ['a', 'b', 'c', 'd'],
+                                userAgentPackageName: 'com.alitaptap.mobile',
+                                retinaMode: true,
+                                tileDisplay: const TileDisplay.fadeIn(),
+                              ),
+                              MarkerLayer(
+                                markers: _liveIssues.where((i) => i.lat != 0 && i.lng != 0).map((issue) {
+                                  return Marker(
+                                    point: latlng.LatLng(issue.lat, issue.lng),
+                                    width: 12,
+                                    height: 12,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: _amber,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: _amber.withValues(alpha: 0.5),
+                                            blurRadius: 4,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
                         ),
                         // Dark Overlay
                         Container(
@@ -216,7 +232,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                                     Text(
                                       'Live Intelligence Map',
                                       style: GoogleFonts.poppins(
-                                        color: Colors.white,
+                                        color: headerColor,
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -247,6 +263,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
               ),
             ),
           ),
+        ),
 
           // ── Opportunity Heatmap ─────────────────────────────────────
           SliverToBoxAdapter(
@@ -264,7 +281,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                           Text(
                             'Opportunity Heatmap',
                             style: GoogleFonts.poppins(
-                              color: textColor,
+                              color: headerColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),
@@ -351,14 +368,14 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Top Research Projects',
-                    style: GoogleFonts.poppins(
-                      color: textColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                    Text(
+                      'Top Research Projects',
+                      style: GoogleFonts.poppins(
+                        color: headerColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
                   Text(
                     'View Expo',
                     style: GoogleFonts.poppins(

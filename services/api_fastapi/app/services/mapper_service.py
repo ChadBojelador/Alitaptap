@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
+from bson import ObjectId
 
 from app.core.config import settings
 from app.core.mongodb import get_db
@@ -66,19 +67,16 @@ class MapperService:
     ) -> tuple[str, list[MatchItem]]:
         """Match *idea_text* against validated issues.
 
-        Returns:
-            A tuple of (run_id, list[MatchItem]) sorted by descending score.
-
-        Raises:
-            ValueError:  If there are no validated issues to match against.
-            RuntimeError: If Firebase is not initialised.
         """
         db = get_db()
 
         # 1. Fetch validated issues ----------------------------------------
-        issues = list(db['issues'].find({'status': 'validated'}))
-        for issue in issues:
-            issue['_id'] = str(issue['_id'])
+        docs = list(db['issues'].find({'status': 'validated'}))
+
+        issues: list[dict] = []
+        for doc in docs:
+            doc['issue_id'] = str(doc.pop('_id'))
+            issues.append(doc)
 
         if not issues:
             raise ValueError(
@@ -126,12 +124,12 @@ class MapperService:
             )
 
             matches.append(MatchItem(
-                issue_id=issue['_id'],
+                issue_id=issue['issue_id'],
                 score=round(score, 4),
                 reason=reason,
             ))
 
-        # 6. Persist mapper run to MongoDB --------------------------------
+        # 6. Persist mapper run to MongoDB ----------------------------------
         run_doc = {
             'student_id': student_id,
             'idea_text': idea_text,
@@ -167,9 +165,12 @@ class MapperService:
         db = get_db()
 
         # Fetch all validated issues
-        issues = list(db['issues'].find({'status': 'validated'}))
-        for issue in issues:
-            issue['_id'] = str(issue['_id'])
+        docs = list(db['issues'].find({'status': 'validated'}))
+
+        issues: list[dict] = []
+        for doc in docs:
+            doc['issue_id'] = str(doc.pop('_id'))
+            issues.append(doc)
 
         if not issues:
             return []
@@ -203,7 +204,7 @@ class MapperService:
         for rank, (issue, distance) in enumerate(nearest, start=1):
             reason = f"Located {distance:.1f} km away from your location."
             matches.append(MatchItem(
-                issue_id=issue['_id'],
+                issue_id=issue['issue_id'],
                 score=max(0.0, 1.0 - (distance / 100.0)),  # Score based on proximity
                 reason=reason,
             ))
