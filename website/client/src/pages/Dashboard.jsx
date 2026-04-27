@@ -54,30 +54,7 @@ export default function Dashboard({ user }) {
       const res = await axios.get(`${ALITAPTAP_API}/issues?status=validated`);
       setIssues(res.data);
     } catch {
-      // Demo data fallback
-      setIssues([
-        {
-          issue_id: "demo_001",
-          title: "Recurring Flooding Near Market Street",
-          description: "Floodwater rises quickly during heavy rain and blocks access to homes and stores.",
-          created_at: "2024-01-15T10:30:00Z",
-          status: "validated"
-        },
-        {
-          issue_id: "demo_002",
-          title: "Plastic Waste Along Riverbank",
-          description: "Accumulated plastic waste along the river causes foul odor and clogged drainage.",
-          created_at: "2024-01-16T14:20:00Z",
-          status: "validated"
-        },
-        {
-          issue_id: "demo_003",
-          title: "Barangay Punong Basurahan",
-          description: "Grabe sa mga barangay streets talaga… minsan 2–3 times a week lang dumadaan yung garbage collection. Ang ending, overflowing na agad yung mga basurahan 😩 Puno agad ng plastic bottles, sachet, at kung ano-anong basura. Nakaka-frustrate kasi kahit maayos ka magtapon, wala nang space yung bins. So yung iba, napipilitan magtapon sa tabi o sa kalsada 😤 Kaya imbes na controlled yung basura, nagiging kalat-kalat pa rin sa paligid. Ang hirap din linisin lalo na pag umulan, kasi nadadala pa sa ibang lugar yung plastic waste 🥲",
-          created_at: "2024-01-17T09:15:00Z",
-          status: "validated"
-        }
-      ]);
+      setIssues([]);
     }
     setLoading(false);
   };
@@ -87,104 +64,6 @@ export default function Dashboard({ user }) {
     setPlan_generating(true);
     setPlan(null);
     
-    // Check if this is the Barangay Punong Basurahan issue
-    if (selected.issue_id === 'demo_003' || selected.title === 'Barangay Punong Basurahan') {
-      // Simulate AI thinking process
-      const thinkingSteps = [
-        'Analyzing community problem...',
-        'Identifying key pain points...',
-        'Researching similar solutions...',
-        'Designing hardware architecture...',
-        'Planning IoT integration...',
-        'Generating project roadmap...'
-      ];
-      
-      for (let i = 0; i < thinkingSteps.length; i++) {
-        setAiThinking(thinkingSteps[i]);
-        await new Promise(resolve => setTimeout(resolve, 800));
-      }
-      
-      // Custom plan for Smart Waste Bin with Plastic Shredder
-      setPlan({
-        title: 'Smart Waste Bin with Integrated Plastic Shredder',
-        problem: 'Overflowing garbage bins due to infrequent collection (2-3 times/week) causing street littering and plastic waste accumulation in barangays.',
-        features: [
-          'Automated plastic shredding to reduce volume by 80%',
-          'IoT sensors for real-time fill-level monitoring',
-          'Mobile app alerts for collection schedules',
-          'Solar-powered operation for sustainability',
-          'Separate compartments for biodegradable and non-biodegradable waste',
-          'GPS tracking and route optimization for collectors'
-        ],
-        plan: [
-          { step: 1, title: 'Hardware Design & Prototyping', desc: 'Design the smart bin chassis with integrated shredder mechanism. Select IoT sensors (ultrasonic for fill level, weight sensors). Create CAD models and build initial prototype with Arduino/Raspberry Pi.' },
-          { step: 2, title: 'Shredder Mechanism Development', desc: 'Engineer the plastic shredding system with safety features. Test with various plastic types (bottles, sachets). Implement motor control and jam detection. Add safety interlocks and emergency stop.' },
-          { step: 3, title: 'IoT & Software Integration', desc: 'Develop mobile app for residents and collectors. Implement real-time monitoring dashboard. Set up cloud database for bin status tracking. Create alert system for collection schedules.' },
-          { step: 4, title: 'Pilot Testing & Deployment', desc: 'Deploy 5-10 units in target barangay. Gather user feedback and usage data. Optimize collection routes based on fill patterns. Train barangay workers on maintenance and operation.' }
-        ],
-        tech_stack: {
-          hardware: 'Raspberry Pi 4, Ultrasonic Sensors, DC Motors, Solar Panels',
-          mobile: 'Flutter (iOS & Android)',
-          backend: 'FastAPI (Python) + Firebase',
-          database: 'Firebase Firestore + Real-time Database',
-          ai: 'TensorFlow Lite for waste classification'
-        },
-        folder_structure: `/smart-waste-bin
-  /hardware
-    /arduino-sketches
-    /cad-models
-  /mobile-app
-    /lib
-    /assets
-  /backend
-    /api
-    /models
-  /docs
-    /research-paper
-    /user-manual
-  README.md`,
-        starter_code: `# Smart Waste Bin - IoT Backend
-# FastAPI endpoint for bin monitoring
-
-from fastapi import FastAPI
-from pydantic import BaseModel
-from datetime import datetime
-
-app = FastAPI()
-
-class BinStatus(BaseModel):
-    bin_id: str
-    fill_level: float  # 0-100%
-    location: dict
-    last_collection: datetime
-    needs_collection: bool
-
-@app.post("/api/bins/status")
-async def update_bin_status(status: BinStatus):
-    # Store in Firebase
-    # Trigger alert if fill_level > 80%
-    if status.fill_level > 80:
-        # Send notification to collectors
-        pass
-    return {"status": "updated", "bin_id": status.bin_id}
-
-@app.get("/api/bins/{bin_id}")
-async def get_bin_status(bin_id: str):
-    # Fetch from Firebase
-    return {"bin_id": bin_id, "fill_level": 45, "status": "ok"}`,
-        sdg: 'SDG 11 - Sustainable Cities and Communities'
-      });
-      setActiveTab('plan');
-      setAiThinking('');
-      setPlan_generating(false);
-      setChatMessages([{
-        role: 'assistant',
-        content: 'I\'ve generated a Smart Waste Bin solution for your barangay garbage problem. Feel free to ask me to modify any aspect of the plan - features, tech stack, timeline, or implementation details!'
-      }]);
-      return;
-    }
-    
-    // Original AI generation for other issues
     try {
       const prompt = `Turn this community problem into a structured project plan:\n\nTitle: ${selected.title}\n\nDescription: ${selected.description}`;
       const res = await axios.post(`${BACKEND_URL}/api/chat`, { message: prompt });
