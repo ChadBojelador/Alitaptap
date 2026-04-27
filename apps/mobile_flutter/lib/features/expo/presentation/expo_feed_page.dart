@@ -111,7 +111,8 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
       ('SDG 17', 'Partnerships for the Goals'),
     ];
 
-    await showModalBottomSheet<void>(
+    // Sheet returns true on successful upload, null/false otherwise.
+    final success = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: bg,
@@ -153,24 +154,21 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                   sdgName: sdgPair.$2,
                   imageUrl: imageUrl,
                 );
-                if (mounted) {
-                  Navigator.of(sheetCtx).pop();
-                }
-                final fresh = await _api.getStories();
-                if (mounted) {
-                  setState(() => _stories = fresh);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Story posted!')),
-                  );
+                // Defer pop to next frame to avoid InheritedWidget dependency conflict.
+                // Direct pop causes _dependents.isEmpty assertion because MediaQuery
+                // is still registered as a dependency of this StatefulBuilder.
+                if (ctx.mounted) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (ctx.mounted) Navigator.of(ctx).pop(true);
+                  });
                 }
               } catch (e) {
-                if (mounted) {
+                if (ctx.mounted) {
+                  setSheet(() => submitting = false);
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(content: Text('Failed: $e')),
                   );
                 }
-              } finally {
-                if (mounted) setSheet(() => submitting = false);
               }
             }
 
@@ -340,6 +338,19 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
 
     titleCtrl.dispose();
     descCtrl.dispose();
+
+    // Handle result AFTER the sheet is fully dismissed (no context conflicts).
+    if (success == true && mounted) {
+      try {
+        final fresh = await _api.getStories();
+        if (mounted) setState(() => _stories = fresh);
+      } catch (_) {}
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Story posted!')),
+        );
+      }
+    }
   }
 
   @override
@@ -445,6 +456,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                       isDark: isDark,
                       stories: _stories,
                       onAddStory: _showAddStorySheet,
+                      onRefresh: _load,
                     ),
 
                     const SizedBox(height: 14),
@@ -708,10 +720,12 @@ class _StoriesRow extends StatelessWidget {
     required this.isDark,
     required this.stories,
     required this.onAddStory,
+    required this.onRefresh,
   });
   final bool isDark;
   final List<StoryPost> stories;
   final VoidCallback onAddStory;
+  final VoidCallback onRefresh;
 
   static const _yellow = Color(0xFFFFD60A);
 
@@ -794,14 +808,16 @@ class _StoriesRow extends StatelessWidget {
                   isDark: isDark,
                   imagePath: story.imagePath.isNotEmpty ? story.imagePath : null,
                   onTap: () {
-                    Navigator.of(context).push(
+                    Navigator.of(context).push<bool>(
                       MaterialPageRoute(
                         builder: (_) => SdgStoryViewer(
                           stories: stories,
                           initialIndex: index,
                         ),
                       ),
-                    );
+                    ).then((deleted) {
+                      if (deleted == true) onRefresh();
+                    });
                   },
                 );
               })

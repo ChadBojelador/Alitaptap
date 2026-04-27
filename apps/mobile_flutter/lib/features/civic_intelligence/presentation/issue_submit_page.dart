@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart' as latlong;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:alitaptap_mobile/services/api_service.dart';
 
 const _amber = Color(0xFFFFC700);
@@ -44,6 +46,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   String? _suggestedImageUrl;
   bool _fetchingLocation = false;
   bool _resolvingAddress = false;
+  File? _pickedImage;
 
   @override
   void initState() {
@@ -148,17 +151,23 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     }
 
     setState(() => _elaborating = true);
+    final api = ApiService();
 
     try {
+      String? finalImageUrl = _suggestedImageUrl;
+      if (_pickedImage != null) {
+        finalImageUrl = await api.uploadImage(_pickedImage!);
+      }
+
       // Real Server Call
-      await ApiService().submitIssue(
+      await api.submitIssue(
         reporterId: widget.reporterId,
         reporterName: widget.reporterName,
         title: title,
         description: description,
         lat: _selectedLat ?? 12.8797,
         lng: _selectedLng ?? 121.7740,
-        imageUrl: _suggestedImageUrl,
+        imageUrl: finalImageUrl,
       );
 
       if (!mounted) return;
@@ -182,6 +191,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       _selectedLat = null;
       _selectedLng = null;
       _locationName = null;
+      _pickedImage = null;
+      _suggestedImageUrl = null;
 
     } catch (e) {
       setState(() => _elaborating = false);
@@ -210,21 +221,27 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     }
 
     setState(() => _elaborating = true);
+    final api = ApiService();
     
     // Simulate AI thinking and calling server
     try {
       final sdg = _suggestSDG(problem);
       final elaborated = _generateElaboratedDescription(problem);
       
+      String? finalImageUrl = _suggestedImageUrl;
+      if (_pickedImage != null) {
+        finalImageUrl = await api.uploadImage(_pickedImage!);
+      }
+      
       // Real Server Call
-      await ApiService().submitIssue(
+      await api.submitIssue(
         reporterId: widget.reporterId,
         reporterName: widget.reporterName,
         title: problem.split('\n')[0].substring(0, problem.split('\n')[0].length > 50 ? 50 : problem.split('\n')[0].length),
         description: problem,
         lat: _selectedLat ?? 12.8797,
         lng: _selectedLng ?? 121.7740,
-        imageUrl: _suggestedImageUrl,
+        imageUrl: finalImageUrl,
       );
 
       if (!mounted) return;
@@ -244,6 +261,8 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       _selectedLat = null;
       _selectedLng = null;
       _locationName = null;
+      _pickedImage = null;
+      _suggestedImageUrl = null;
       
     } catch (e) {
       setState(() => _elaborating = false);
@@ -1121,16 +1140,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               ),
               const SizedBox(height: 12),
               GestureDetector(
-                onTap: () {
-                  final keyword = _problemCtrl.text.isNotEmpty ? _problemCtrl.text.split(' ').first : 'city';
-                  setState(() {
-                    _locationName = 'Main Street, Batangas City';
-                    _suggestedImageUrl = 'https://images.unsplash.com/photo-1518005020250-675f04a7470f?auto=format&fit=crop&q=80&w=800'; 
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('✓ Photo attached from camera/gallery')),
-                  );
-                },
+                onTap: _showImageSourceSheet,
                 child: Container(
                   height: 120,
                   decoration: BoxDecoration(
@@ -1141,17 +1151,23 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                       style: BorderStyle.solid,
                     ),
                   ),
-                  child: _suggestedImageUrl != null 
+                  child: (_pickedImage != null || _suggestedImageUrl != null) 
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.network(_suggestedImageUrl!, fit: BoxFit.cover),
+                            if (_pickedImage != null)
+                              Image.file(_pickedImage!, fit: BoxFit.cover)
+                            else if (_suggestedImageUrl != null)
+                              Image.network(_suggestedImageUrl!, fit: BoxFit.cover),
                             Positioned(
                               top: 8, right: 8,
                               child: GestureDetector(
-                                onTap: () => setState(() => _suggestedImageUrl = null),
+                                onTap: () => setState(() {
+                                  _pickedImage = null;
+                                  _suggestedImageUrl = null;
+                                }),
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
@@ -1335,6 +1351,121 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
             const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1200,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _pickedImage = File(pickedFile.path);
+          _suggestedImageUrl = null; // Clear any previously suggested/demo URL
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _dark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select Image Source',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _ImageSourceButton(
+                    icon: Icons.camera_alt_rounded,
+                    label: 'Camera',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _pickImage(ImageSource.camera);
+                    },
+                  ),
+                  _ImageSourceButton(
+                    icon: Icons.photo_library_rounded,
+                    label: 'Gallery',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _pickImage(ImageSource.gallery);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ImageSourceButton extends StatelessWidget {
+  const _ImageSourceButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _amber.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: _amber.withValues(alpha: 0.3)),
+            ),
+            child: Icon(icon, color: _amber, size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

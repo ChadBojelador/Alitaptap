@@ -73,9 +73,17 @@ class ApiService {
   /// Sends request, throws a clean user-facing message on error.
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
     try {
+      if (kDebugMode) print('[ApiService] POST $_baseUrl$path');
       final res = await http.post(_uri(path), headers: _headers, body: jsonEncode(body))
           .timeout(_requestTimeout);
-      final decoded = jsonDecode(res.body);
+      if (kDebugMode) print('[ApiService] Response ${res.statusCode}: ${res.body.length > 200 ? res.body.substring(0, 200) : res.body}');
+      // Guard against non-JSON responses (e.g. HTML error pages)
+      dynamic decoded;
+      try {
+        decoded = jsonDecode(res.body);
+      } on FormatException {
+        throw Exception('Server returned invalid response (${res.statusCode}): ${res.body.length > 100 ? res.body.substring(0, 100) : res.body}');
+      }
       if (res.statusCode != 200) {
         final detail = decoded is Map ? (decoded['detail'] ?? decoded['error'] ?? res.body) : res.body;
         throw Exception(detail.toString());
@@ -596,6 +604,16 @@ class ApiService {
     return StoryPost.fromJson(
       jsonDecode(response.body) as Map<String, dynamic>,
     );
+  }
+
+  /// Delete a story by ID.
+  Future<void> deleteStory(String storyId) async {
+    final response = await _sendWithTimeout(
+      http.delete(Uri.parse('$_baseUrl/stories/$storyId')),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete story: ${response.body}');
+    }
   }
 
   // -----------------------------------------------------------------------
