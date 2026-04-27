@@ -95,6 +95,33 @@ class ApiService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  /// Sign in or register via social provider (Google / Facebook).
+  Future<Map<String, dynamic>> socialLogin({
+    required String email,
+    required String provider,
+    required String providerId,
+    String displayName = '',
+    String role = 'student',
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/auth/social'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'provider': provider,
+          'provider_id': providerId,
+          'display_name': displayName,
+          'role': role,
+        }),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Social login failed: ${response.body}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   /// Save user role to backend.
   Future<void> setUserRole({
     required String userId,

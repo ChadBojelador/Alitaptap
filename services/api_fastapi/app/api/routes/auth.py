@@ -54,6 +54,37 @@ def verify_password(password: str, hashed: str, salt: str) -> bool:
     return check_hash == hashed
 
 
+class SocialLoginRequest(BaseModel):
+    email: EmailStr
+    provider: str  # 'google' | 'facebook'
+    provider_id: str
+    display_name: str = ''
+    role: Role = Role.student
+
+
+@router.post('/social', response_model=AuthResponse)
+def social_login(payload: SocialLoginRequest) -> AuthResponse:
+    """Sign in or register via Google / Facebook."""
+    db = get_db()
+    user = db['users'].find_one({'email': payload.email})
+    if user:
+        return AuthResponse(
+            user_id=user['user_id'],
+            email=user['email'],
+            role=user.get('role', 'student'),
+        )
+    user_id = secrets.token_urlsafe(16)
+    db['users'].insert_one({
+        'user_id': user_id,
+        'email': payload.email,
+        'display_name': payload.display_name,
+        'provider': payload.provider,
+        'provider_id': payload.provider_id,
+        'role': payload.role.value,
+    })
+    return AuthResponse(user_id=user_id, email=payload.email, role=payload.role.value)
+
+
 @router.post('/register', response_model=AuthResponse)
 def register(payload: RegisterRequest) -> AuthResponse:
     """Register a new user."""

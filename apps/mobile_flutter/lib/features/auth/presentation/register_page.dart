@@ -24,6 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _loading = false;
   bool _obscurePass = true;
   bool _obscureConfirm = true;
+  String? _error;
 
   @override
   void dispose() {
@@ -33,33 +34,57 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  void _setError(dynamic e) {
+    final msg = e.toString().replaceFirst('Exception: ', '');
+    setState(() => _error = msg);
+  }
+
   Future<void> _register() async {
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text.trim();
     final confirm = _confirmCtrl.text.trim();
 
     if (email.isEmpty || pass.isEmpty || confirm.isEmpty || _selectedRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields and select a role.')),
-      );
+      setState(() => _error = 'Please fill in all fields and select a role.');
       return;
     }
     if (pass != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match.')),
-      );
+      setState(() => _error = 'Passwords do not match.');
       return;
     }
 
-    setState(() => _loading = true);
+    setState(() { _loading = true; _error = null; });
     try {
       await _authService.register(email: email, password: pass, role: _selectedRole!);
       widget.onRoleSelected(_selectedRole!);
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed: $e')),
-      );
+      if (mounted) _setError(e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    final role = _selectedRole ?? 'student';
+    setState(() { _loading = true; _error = null; });
+    try {
+      final result = await _authService.signInWithGoogle(defaultRole: role);
+      widget.onRoleSelected(result);
+    } catch (e) {
+      if (mounted) _setError(e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _facebookSignIn() async {
+    final role = _selectedRole ?? 'student';
+    setState(() { _loading = true; _error = null; });
+    try {
+      final result = await _authService.signInWithFacebook(defaultRole: role);
+      widget.onRoleSelected(result);
+    } catch (e) {
+      if (mounted) _setError(e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -108,7 +133,32 @@ class _RegisterPageState extends State<RegisterPage> {
                       Text('Create Account', style: GoogleFonts.poppins(color: textColor, fontSize: 26, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 6),
                       Text('Join ALITAPTAP and make an impact.', style: GoogleFonts.poppins(color: subtleColor, fontSize: 13)),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
+
+                      // ── Social buttons ──────────────────────────────
+                      _SocialBtn(
+                        onTap: _loading ? null : _googleSignIn,
+                        icon: const Icon(Icons.g_mobiledata_rounded, color: Color(0xFF4285F4), size: 26),
+                        label: 'Continue with Google',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 10),
+                      _SocialBtn(
+                        onTap: _loading ? null : _facebookSignIn,
+                        icon: const Icon(Icons.facebook_rounded, color: Color(0xFF1877F2), size: 22),
+                        label: 'Continue with Facebook',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(children: [
+                        Expanded(child: Divider(color: subtleColor.withValues(alpha: 0.3))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text('or register with email', style: GoogleFonts.poppins(color: subtleColor, fontSize: 11)),
+                        ),
+                        Expanded(child: Divider(color: subtleColor.withValues(alpha: 0.3))),
+                      ]),
+                      const SizedBox(height: 20),
                       _label('Email', textColor),
                       const SizedBox(height: 8),
                       TextField(
@@ -162,6 +212,18 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 12),
                       _RoleCard(icon: Icons.school_rounded, title: 'Student / Researcher', subtitle: 'I want to find research opportunities.', selected: _selectedRole == 'student', isDark: isDark, onTap: () => setState(() => _selectedRole = 'student')),
                       const SizedBox(height: 32),
+                      if (_error != null) ...[  
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF5350).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFEF5350).withValues(alpha: 0.4)),
+                          ),
+                          child: Text(_error!, style: GoogleFonts.poppins(color: const Color(0xFFEF5350), fontSize: 12)),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       GestureDetector(
                         onTap: _loading ? null : _register,
                         child: Container(
@@ -202,6 +264,38 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _label(String text, Color color) => Text(text, style: GoogleFonts.poppins(color: color, fontSize: 13, fontWeight: FontWeight.w600));
+}
+
+class _SocialBtn extends StatelessWidget {
+  const _SocialBtn({required this.onTap, required this.icon, required this.label, required this.isDark});
+  final VoidCallback? onTap;
+  final Widget icon;
+  final String label;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF242424) : _white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isDark ? const Color(0xFF333333) : const Color(0xFFE0E0E0)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(width: 10),
+            Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFFF0F0F0) : _dark)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _RoleCard extends StatelessWidget {
