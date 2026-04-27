@@ -552,6 +552,37 @@ class ApiService {
     return [];
   }
 
+  /// Create a new SDG story bubble.
+  Future<StoryPost> createStory({
+    required String bubbleLabel,
+    required String title,
+    required String description,
+    required String sdgLabel,
+    required String sdgName,
+    String? imageUrl,
+  }) async {
+    final response = await _sendWithTimeout(
+      http.post(
+        Uri.parse('$_baseUrl/stories'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'bubble_label': bubbleLabel,
+          'title': title,
+          'description': description,
+          'sdg_label': sdgLabel,
+          'sdg_name': sdgName,
+          if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
+        }),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to create story: ${response.body}');
+    }
+    return StoryPost.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
   // -----------------------------------------------------------------------
   // Neural Mapper
   // -----------------------------------------------------------------------

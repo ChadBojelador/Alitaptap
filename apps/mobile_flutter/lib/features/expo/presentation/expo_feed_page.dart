@@ -75,6 +75,227 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
     } catch (_) {}
   }
 
+  Future<void> _showAddStorySheet() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A);
+    final subtle = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF666666);
+    const yellow = Color(0xFFFFD60A);
+
+    final titleCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    String? selectedSdg;
+    bool submitting = false;
+
+    const sdgOptions = [
+      ('SDG 1', 'No Poverty'),
+      ('SDG 2', 'Zero Hunger'),
+      ('SDG 3', 'Good Health & Well-being'),
+      ('SDG 4', 'Quality Education'),
+      ('SDG 5', 'Gender Equality'),
+      ('SDG 6', 'Clean Water & Sanitation'),
+      ('SDG 7', 'Affordable Clean Energy'),
+      ('SDG 8', 'Decent Work & Economic Growth'),
+      ('SDG 9', 'Industry, Innovation & Infrastructure'),
+      ('SDG 10', 'Reduced Inequalities'),
+      ('SDG 11', 'Sustainable Cities & Communities'),
+      ('SDG 12', 'Responsible Consumption & Production'),
+      ('SDG 13', 'Climate Action'),
+      ('SDG 14', 'Life Below Water'),
+      ('SDG 15', 'Life on Land'),
+      ('SDG 16', 'Peace, Justice & Strong Institutions'),
+      ('SDG 17', 'Partnerships for the Goals'),
+    ];
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheet) {
+            Future<void> submit() async {
+              final title = titleCtrl.text.trim();
+              final desc = descCtrl.text.trim();
+              if (title.isEmpty || desc.isEmpty || selectedSdg == null) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('Please fill in all fields.')),
+                );
+                return;
+              }
+              final sdgPair = sdgOptions.firstWhere((e) => e.$1 == selectedSdg);
+              setSheet(() => submitting = true);
+              try {
+                await _api.createStory(
+                  bubbleLabel: title.length > 12 ? title.substring(0, 12) : title,
+                  title: title,
+                  description: desc,
+                  sdgLabel: sdgPair.$1,
+                  sdgName: sdgPair.$2,
+                );
+                if (mounted) {
+                  Navigator.of(sheetCtx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Story posted!')),
+                  );
+                  // Reload stories row
+                  final fresh = await _api.getStories();
+                  if (mounted) setState(() => _stories = fresh);
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text('Failed: $e')),
+                  );
+                }
+              } finally {
+                if (mounted) setSheet(() => submitting = false);
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20, right: 20, top: 20,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Handle
+                  Center(
+                    child: Container(
+                      width: 40, height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF444444) : const Color(0xFFDDDDDD),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Add Story',
+                    style: GoogleFonts.poppins(
+                      color: yellow,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // SDG picker
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF242424) : const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: yellow.withValues(alpha: 0.25)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        hint: Text('Select SDG', style: GoogleFonts.poppins(color: subtle, fontSize: 13)),
+                        value: selectedSdg,
+                        dropdownColor: isDark ? const Color(0xFF242424) : Colors.white,
+                        isExpanded: true,
+                        icon: const Icon(Icons.expand_more_rounded, color: yellow),
+                        items: sdgOptions.map((pair) => DropdownMenuItem(
+                          value: pair.$1,
+                          child: Text('${pair.$1} — ${pair.$2}',
+                              style: GoogleFonts.poppins(color: textColor, fontSize: 12)),
+                        )).toList(),
+                        onChanged: (v) => setSheet(() => selectedSdg = v),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Title
+                  TextField(
+                    controller: titleCtrl,
+                    style: GoogleFonts.poppins(fontSize: 14, color: textColor),
+                    decoration: InputDecoration(
+                      hintText: 'Story title...',
+                      hintStyle: GoogleFonts.poppins(color: subtle, fontSize: 14),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF242424) : const Color(0xFFF5F5F5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: yellow.withValues(alpha: 0.2)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: yellow.withValues(alpha: 0.2)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: yellow, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Description
+                  TextField(
+                    controller: descCtrl,
+                    maxLines: 3,
+                    style: GoogleFonts.poppins(fontSize: 13, color: textColor),
+                    decoration: InputDecoration(
+                      hintText: 'Describe the research story or impact...',
+                      hintStyle: GoogleFonts.poppins(color: subtle, fontSize: 13),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF242424) : const Color(0xFFF5F5F5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: yellow.withValues(alpha: 0.2)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: yellow.withValues(alpha: 0.2)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: yellow, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Post button
+                  GestureDetector(
+                    onTap: submitting ? null : submit,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: submitting ? yellow.withValues(alpha: 0.5) : yellow,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Center(
+                        child: submitting
+                            ? const SizedBox(
+                                width: 18, height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Color(0xFF1A1A1A)),
+                              )
+                            : Text('Post Story',
+                                style: GoogleFonts.poppins(
+                                  color: const Color(0xFF1A1A1A),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                )),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    titleCtrl.dispose();
+    descCtrl.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -177,6 +398,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                     _StoriesRow(
                       isDark: isDark,
                       stories: _stories,
+                      onAddStory: _showAddStorySheet,
                     ),
 
                     const SizedBox(height: 14),
@@ -436,9 +658,14 @@ class _FeedItem {
 
 // ── Stories row ────────────────────────────────────────────────────────────────
 class _StoriesRow extends StatelessWidget {
-  const _StoriesRow({required this.isDark, required this.stories});
+  const _StoriesRow({
+    required this.isDark,
+    required this.stories,
+    required this.onAddStory,
+  });
   final bool isDark;
   final List<StoryPost> stories;
+  final VoidCallback onAddStory;
 
   static const _yellow = Color(0xFFFFD60A);
 
@@ -487,11 +714,7 @@ class _StoriesRow extends StatelessWidget {
               color: _yellow,
               isDark: isDark,
               isAdd: true,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Story upload coming soon.')),
-                );
-              },
+              onTap: onAddStory,
             ),
             ...List.generate(stories.length, (index) {
               final story = stories[index];
