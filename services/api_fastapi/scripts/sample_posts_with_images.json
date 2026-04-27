@@ -1,0 +1,31 @@
+[
+  {
+    "author_id": "uid_001",
+    "author_email": "student@ust.edu.ph",
+    "title": "Bamboo-based Air Filtration System",
+    "abstract": "Low-cost air purifiers using indigenous bamboo materials sourced from local farms.",
+    "problem_solved": "Urban air pollution in Metro Manila affecting low-income communities",
+    "sdg_tags": ["SDG 11", "SDG 13"],
+    "funding_goal": 3000.0,
+    "_image_file": "scripts/images/bamboo-construction.jpg"
+  },
+  {
+    "author_id": "uid_002",
+    "author_email": "researcher@dlsu.edu.ph",
+    "title": "Mobile Flood Early Warning System",
+    "abstract": "SMS-based alerts for flood-prone barangays using low-cost river water sensors.",
+    "problem_solved": "Lack of timely flood warnings in low-income riverside communities",
+    "sdg_tags": ["SDG 11"],
+    "funding_goal": 10000.0,
+    "_image_file": "scripts/images/doppler-radar.jpg"
+  },
+  {
+    "author_id": "uid_003",
+    "author_email": "researcher@up.edu.ph",
+    "title": "Solar-powered Water Purifier for Off-grid Barangays",
+    "abstract": "Harnessing solar energy to purify water in communities without grid electricity.",
+    "problem_solved": "Lack of clean drinking water in remote rural areas",
+    "sdg_tags": ["SDG 6", "SDG 7"],
+    "funding_goal": 5000.0
+  }
+]
