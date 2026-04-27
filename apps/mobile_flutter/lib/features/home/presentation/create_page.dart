@@ -5,6 +5,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:alitaptap_mobile/core/models/research_backbone.dart';
+import 'package:alitaptap_mobile/services/session_service.dart';
+import 'package:alitaptap_mobile/core/models/student_project.dart';
 import 'package:alitaptap_mobile/services/api_service.dart';
 
 const _amber = Color(0xFFFFC700);
@@ -31,7 +33,6 @@ class _CreatePageState extends State<CreatePage> {
   // AI guided mode controllers
   final _problemCtrl = TextEditingController();
   final _ideaCtrl = TextEditingController();
-  final _approachCtrl = TextEditingController();
   final _aiDescriptionCtrl = TextEditingController();
   
   bool _aiGenerating = false;
@@ -43,9 +44,10 @@ class _CreatePageState extends State<CreatePage> {
   late TextEditingController _impactEditCtrl;
   late List<TextEditingController> _sdgEditCtrls;
   
-  // Saved projects list
-  final List<Map<String, String>> _savedProjects = [];
-  int? _editingProjectIndex;
+  final _api = ApiService();
+  List<StudentProject> _savedProjects = [];
+  bool _loadingProjects = false;
+  StudentProject? _editingProject;
 
   @override
   void initState() {
@@ -54,6 +56,15 @@ class _CreatePageState extends State<CreatePage> {
     _methodologyEditCtrl = TextEditingController();
     _impactEditCtrl = TextEditingController();
     _sdgEditCtrls = [];
+    _loadProjects();
+  }
+
+  String get _currentUserId => SessionService.uid.isNotEmpty ? SessionService.uid : 'anonymous';
+
+  Future<void> _loadProjects() async {
+    setState(() => _loadingProjects = true);
+    final projects = await _api.getProjects(_currentUserId);
+    if (mounted) setState(() { _savedProjects = projects; _loadingProjects = false; });
   }
 
   @override
@@ -63,7 +74,6 @@ class _CreatePageState extends State<CreatePage> {
     _sdgCtrl.dispose();
     _problemCtrl.dispose();
     _ideaCtrl.dispose();
-    _approachCtrl.dispose();
     _titleEditCtrl.dispose();
     _methodologyEditCtrl.dispose();
     _impactEditCtrl.dispose();
@@ -74,76 +84,71 @@ class _CreatePageState extends State<CreatePage> {
     super.dispose();
   }
 
-  void _saveProject(String title, String description, String sdg, {bool isAIGuided = false, ResearchBackbone? backbone}) {
-    setState(() {
-      if (_editingProjectIndex != null) {
-        _savedProjects[_editingProjectIndex!] = {
-          'title': title,
-          'description': description,
-          'sdg': sdg,
-          'date': _savedProjects[_editingProjectIndex!]['date']!,
-          'mode': isAIGuided ? 'ai' : 'manual',
-          'methodology': backbone?.methodology ?? '',
-          'impact': backbone?.communityImpactLevel ?? '',
-          'feasibility': backbone != null ? 'Cost: ${backbone.feasibilityScore.cost} | Time: ${backbone.feasibilityScore.time} | Data: ${backbone.feasibilityScore.dataAvailability}' : '',
-        };
-        _editingProjectIndex = null;
+  Future<void> _saveProject(String title, String description, String sdg, {bool isAIGuided = false, ResearchBackbone? backbone}) async {
+    final feasibility = backbone != null
+        ? 'Cost: ${backbone.feasibilityScore.cost} | Time: ${backbone.feasibilityScore.time} | Data: ${backbone.feasibilityScore.dataAvailability}'
+        : null;
+    try {
+      if (_editingProject != null) {
+        await _api.updateProject(
+          projectId: _editingProject!.projectId,
+          title: title, description: description, sdg: sdg,
+          methodology: backbone?.methodology,
+          impact: backbone?.communityImpactLevel,
+          feasibility: feasibility,
+        );
+        setState(() => _editingProject = null);
       } else {
-        _savedProjects.add({
-          'title': title,
-          'description': description,
-          'sdg': sdg,
-          'date': DateTime.now().toString().split(' ')[0],
-          'mode': isAIGuided ? 'ai' : 'manual',
-          'methodology': backbone?.methodology ?? '',
-          'impact': backbone?.communityImpactLevel ?? '',
-          'feasibility': backbone != null ? 'Cost: ${backbone.feasibilityScore.cost} | Time: ${backbone.feasibilityScore.time} | Data: ${backbone.feasibilityScore.dataAvailability}' : '',
-        });
-      }
-    });
-  }
-
-  void _loadProjectForEdit(int index) {
-    final project = _savedProjects[index];
-    final isAI = project['mode'] == 'ai';
-    setState(() {
-      _titleCtrl.text = project['title']!;
-      _descriptionCtrl.text = project['description']!;
-      _sdgCtrl.text = project['sdg']!;
-      
-      if (isAI) {
-        _titleEditCtrl.text = project['title']!;
-        _methodologyEditCtrl.text = project['methodology'] ?? '';
-        _impactEditCtrl.text = project['impact'] ?? '';
-        _generatedBackbone = ResearchBackbone(
-          researchTitle: project['title']!,
-          methodology: project['methodology'] ?? '',
-          sdgAlignment: project['sdg']!.split(', '),
-          feasibilityScore: FeasibilityScore(
-            cost: 'Medium',
-            time: '6-12 months',
-            dataAvailability: 'Moderate',
-          ),
-          communityImpactLevel: project['impact'] ?? 'Medium',
+        await _api.createProject(
+          authorId: _currentUserId,
+          title: title, description: description, sdg: sdg,
+          mode: isAIGuided ? 'ai' : 'manual',
+          methodology: backbone?.methodology,
+          impact: backbone?.communityImpactLevel,
+          feasibility: feasibility,
         );
       }
-      
-      _editingProjectIndex = index;
+      await _loadProjects();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  void _loadProjectForEdit(StudentProject project) {
+    final isAI = project.mode == 'ai';
+    setState(() {
+      _titleCtrl.text = project.title;
+      _descriptionCtrl.text = project.description;
+      _sdgCtrl.text = project.sdg;
+      if (isAI) {
+        _titleEditCtrl.text = project.title;
+        _methodologyEditCtrl.text = project.methodology;
+        _impactEditCtrl.text = project.impact;
+        _generatedBackbone = ResearchBackbone(
+          researchTitle: project.title,
+          methodology: project.methodology,
+          sdgAlignment: project.sdg.split(', '),
+          feasibilityScore: FeasibilityScore(cost: 'Medium', time: '6-12 months', dataAvailability: 'Moderate'),
+          communityImpactLevel: project.impact,
+        );
+      }
+      _editingProject = project;
       _showModeSelection = false;
       _isAIGuided = isAI;
     });
   }
 
-  void _deleteProject(int index) {
-    setState(() {
-      _savedProjects.removeAt(index);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✓ Project deleted')),
-    );
+  Future<void> _deleteProject(StudentProject project) async {
+    try {
+      await _api.deleteProject(project.projectId);
+      await _loadProjects();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✓ Project deleted')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 
-  Future<void> _exportProjectToPDF(Map<String, String> project) async {
+  Future<void> _exportProjectToPDF(StudentProject project) async {
     try {
       final pdf = pw.Document();
       final now = DateTime.now();
@@ -156,74 +161,25 @@ class _CreatePageState extends State<CreatePage> {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text(
-                  'ALITAPTAP Project Report',
-                  style: pw.TextStyle(
-                    fontSize: 24,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
+                pw.Text('ALITAPTAP Project Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 8),
-                pw.Text(
-                  'Exported on $dateStr',
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    color: PdfColors.grey,
-                  ),
-                ),
+                pw.Text('Exported on $dateStr', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
                 pw.SizedBox(height: 16),
-                pw.Text(
-                  'Project Title',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
+                pw.Text('Project Title', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 6),
-                pw.Text(
-                  project['title']!,
-                  style: const pw.TextStyle(fontSize: 14),
-                ),
+                pw.Text(project.title, style: const pw.TextStyle(fontSize: 14)),
                 pw.SizedBox(height: 16),
-                pw.Text(
-                  'Description',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
+                pw.Text('Description', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 6),
-                pw.Text(
-                  project['description']!,
-                  style: const pw.TextStyle(fontSize: 11),
-                  textAlign: pw.TextAlign.justify,
-                ),
+                pw.Text(project.description, style: const pw.TextStyle(fontSize: 11), textAlign: pw.TextAlign.justify),
                 pw.SizedBox(height: 16),
-                pw.Text(
-                  'SDG Topics',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
+                pw.Text('SDG Topics', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 6),
-                pw.Text(
-                  project['sdg']!,
-                  style: const pw.TextStyle(fontSize: 11),
-                ),
+                pw.Text(project.sdg, style: const pw.TextStyle(fontSize: 11)),
                 pw.SizedBox(height: 16),
-                pw.Text(
-                  'Date Created',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
+                pw.Text('Date Created', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 6),
-                pw.Text(
-                  project['date']!,
-                  style: const pw.TextStyle(fontSize: 11),
-                ),
+                pw.Text(project.date, style: const pw.TextStyle(fontSize: 11)),
               ],
             );
           },
@@ -231,7 +187,7 @@ class _CreatePageState extends State<CreatePage> {
       );
 
       final dir = await getApplicationDocumentsDirectory();
-      final fileName = 'project_${project['title']!.replaceAll(' ', '_')}_$dateStr.pdf';
+      final fileName = 'project_${project.title.replaceAll(' ', '_')}_$dateStr.pdf';
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(await pdf.save());
 
@@ -241,58 +197,19 @@ class _CreatePageState extends State<CreatePage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error exporting PDF: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error exporting PDF: $e')));
     }
   }
 
-  Future<void> _exportProjectToTXT(Map<String, String> project) async {
+  Future<void> _exportProjectToTXT(StudentProject project) async {
     try {
       final now = DateTime.now();
       final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       
-      final content = '''ALITAPTAP Project Report
-Exported on $dateStr
-
-${'='*50}
-
-Project Title:
-${project['title']}
-
-${'='*50}
-
-Description:
-${project['description']}
-
-${'='*50}
-
-SDG Topics:
-${project['sdg']}
-
-${'='*50}
-
-Date Created:
-${project['date']}
-
-${'='*50}
-
-Methodology:
-${project['methodology'] ?? 'N/A'}
-
-${'='*50}
-
-Community Impact Level:
-${project['impact'] ?? 'N/A'}
-
-${'='*50}
-
-Feasibility Score:
-${project['feasibility'] ?? 'N/A'}
-''';
+      final content = 'ALITAPTAP Project Report\nExported on $dateStr\n\n${'=' * 50}\n\nProject Title:\n${project.title}\n\n${'=' * 50}\n\nDescription:\n${project.description}\n\n${'=' * 50}\n\nSDG Topics:\n${project.sdg}\n\n${'=' * 50}\n\nDate Created:\n${project.date}\n\n${'=' * 50}\n\nMethodology:\n${project.methodology.isEmpty ? 'N/A' : project.methodology}\n\n${'=' * 50}\n\nCommunity Impact Level:\n${project.impact.isEmpty ? 'N/A' : project.impact}\n\n${'=' * 50}\n\nFeasibility Score:\n${project.feasibility.isEmpty ? 'N/A' : project.feasibility}\n';
 
       final dir = await getApplicationDocumentsDirectory();
-      final fileName = 'project_${project['title']!.replaceAll(' ', '_')}_$dateStr.txt';
+      final fileName = 'project_${project.title.replaceAll(' ', '_')}_$dateStr.txt';
       final file = File('${dir.path}/$fileName');
       await file.writeAsString(content);
 
@@ -335,9 +252,8 @@ ${project['feasibility'] ?? 'N/A'}
     setState(() => _aiGenerating = true);
 
     try {
-      final apiService = ApiService();
-      final backbone = await apiService.generateResearchBackbone(
-        studentId: 'user_id',
+      final backbone = await _api.generateResearchBackbone(
+        studentId: _currentUserId,
         problem: problem,
         sdgOrIdea: idea,
         approach: approach,
@@ -569,31 +485,25 @@ ${project['feasibility'] ?? 'N/A'}
           const SizedBox(height: 40),
           
           // Saved Projects Section
-          if (_savedProjects.isNotEmpty) ...[
+          if (_loadingProjects)
+            const Center(child: CircularProgressIndicator())
+          else if (_savedProjects.isNotEmpty) ...[
             Text(
               'Your Projects',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
+              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: textColor),
             ),
             const SizedBox(height: 12),
-            ..._savedProjects.asMap().entries.map((entry) {
-              final index = entry.key;
-              final project = entry.value;
+            ..._savedProjects.map((project) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: GestureDetector(
-                  onTap: () => _loadProjectForEdit(index),
+                  onTap: () => _loadProjectForEdit(project),
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: cardBg,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _amber.withValues(alpha: 0.2),
-                      ),
+                      border: Border.all(color: _amber.withValues(alpha: 0.2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,109 +513,39 @@ ${project['feasibility'] ?? 'N/A'}
                           children: [
                             Expanded(
                               child: Text(
-                                project['title']!,
+                                project.title,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: textColor,
-                                ),
+                                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: textColor),
                               ),
                             ),
                             PopupMenuButton(
                               onSelected: (value) {
-                                if (value == 'edit') {
-                                  _loadProjectForEdit(index);
-                                } else if (value == 'delete') {
-                                  _deleteProject(index);
-                                } else if (value == 'pdf') {
-                                  _exportProjectToPDF(project);
-                                } else if (value == 'txt') {
-                                  _exportProjectToTXT(project);
-                                }
+                                if (value == 'edit') _loadProjectForEdit(project);
+                                else if (value == 'delete') _deleteProject(project);
+                                else if (value == 'pdf') _exportProjectToPDF(project);
+                                else if (value == 'txt') _exportProjectToTXT(project);
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.edit, size: 18),
-                                      SizedBox(width: 8),
-                                      Text('Edit'),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'pdf',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.picture_as_pdf, size: 18, color: Colors.red),
-                                      SizedBox(width: 8),
-                                      Text('Export as PDF'),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'txt',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.description, size: 18, color: Colors.blue),
-                                      SizedBox(width: 8),
-                                      Text('Export as TXT'),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.delete, size: 18, color: Colors.red),
-                                      SizedBox(width: 8),
-                                      Text('Delete', style: TextStyle(color: Colors.red)),
-                                    ],
-                                  ),
-                                ),
+                                const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 18), SizedBox(width: 8), Text('Edit')])),
+                                const PopupMenuItem(value: 'pdf', child: Row(children: [Icon(Icons.picture_as_pdf, size: 18, color: Colors.red), SizedBox(width: 8), Text('Export as PDF')])),
+                                const PopupMenuItem(value: 'txt', child: Row(children: [Icon(Icons.description, size: 18, color: Colors.blue), SizedBox(width: 8), Text('Export as TXT')])),
+                                const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(color: Colors.red))])),
                               ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          project['date']!,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: subtleColor,
-                          ),
-                        ),
+                        Text(project.date, style: GoogleFonts.poppins(fontSize: 10, color: subtleColor)),
                         const SizedBox(height: 8),
-                        Text(
-                          project['description']!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: subtleColor,
-                            height: 1.4,
-                          ),
-                        ),
+                        Text(project.description, maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(fontSize: 11, color: subtleColor, height: 1.4)),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _amber.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            project['sdg']!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              color: _amber,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          decoration: BoxDecoration(color: _amber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                          child: Text(project.sdg, maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(fontSize: 10, color: _amber, fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -860,7 +700,7 @@ ${project['feasibility'] ?? 'N/A'}
         // Save Button
         Row(
           children: [
-            if (_editingProjectIndex != null)
+            if (_editingProject != null)
               Expanded(
                 child: GestureDetector(
                   onTap: () {
@@ -868,7 +708,7 @@ ${project['feasibility'] ?? 'N/A'}
                     _descriptionCtrl.clear();
                     _sdgCtrl.clear();
                     setState(() {
-                      _editingProjectIndex = null;
+                      _editingProject = null;
                       _showModeSelection = true;
                     });
                   },
@@ -890,10 +730,10 @@ ${project['feasibility'] ?? 'N/A'}
                   ),
                 ),
               ),
-            if (_editingProjectIndex != null) const SizedBox(width: 12),
+            if (_editingProject != null) const SizedBox(width: 12),
             Expanded(
               child: GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (_titleCtrl.text.isEmpty ||
                       _descriptionCtrl.text.isEmpty ||
                       _sdgCtrl.text.isEmpty) {
@@ -902,18 +742,13 @@ ${project['feasibility'] ?? 'N/A'}
                     );
                     return;
                   }
-              _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text, isAIGuided: false, backbone: null);
+                  final isEditing = _editingProject != null;
+                  await _saveProject(_titleCtrl.text, _descriptionCtrl.text, _sdgCtrl.text, isAIGuided: false, backbone: null);
                   _titleCtrl.clear();
                   _descriptionCtrl.clear();
                   _sdgCtrl.clear();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        _editingProjectIndex == null
-                            ? '✓ Project saved successfully'
-                            : '✓ Project updated successfully',
-                      ),
-                    ),
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(isEditing ? '✓ Project updated successfully' : '✓ Project saved successfully')),
                   );
                   setState(() => _showModeSelection = true);
                 },
@@ -936,7 +771,7 @@ ${project['feasibility'] ?? 'N/A'}
                       const Icon(Icons.check_rounded, color: _dark, size: 20),
                       const SizedBox(width: 10),
                       Text(
-                        _editingProjectIndex != null ? 'Update Project' : 'Save Project',
+                        _editingProject != null ? 'Update Project' : 'Save Project',
                         style: GoogleFonts.poppins(
                           color: _dark,
                           fontWeight: FontWeight.w700,
@@ -990,7 +825,7 @@ ${project['feasibility'] ?? 'N/A'}
         const SizedBox(height: 24),
 
         // Show input fields only if not editing
-        if (_editingProjectIndex == null && _generatedBackbone == null) ...[
+        if (_editingProject == null && _generatedBackbone == null) ...[
         Text(
           'What is the community problem?',
           style: GoogleFonts.poppins(
@@ -1358,7 +1193,7 @@ ${project['feasibility'] ?? 'N/A'}
                     _impactEditCtrl.clear();
                     setState(() {
                       _generatedBackbone = null;
-                      _editingProjectIndex = null;
+                      _editingProject = null;
                       _showModeSelection = true;
                     });
                   },
@@ -1383,8 +1218,9 @@ ${project['feasibility'] ?? 'N/A'}
               const SizedBox(width: 12),
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    _saveProject(
+                  onTap: () async {
+                    final isEditing = _editingProject != null;
+                    await _saveProject(
                       _titleEditCtrl.text,
                       _methodologyEditCtrl.text,
                       _generatedBackbone!.sdgAlignment.join(', '),
@@ -1398,17 +1234,11 @@ ${project['feasibility'] ?? 'N/A'}
                     _impactEditCtrl.clear();
                     setState(() {
                       _generatedBackbone = null;
-                      _editingProjectIndex = null;
+                      _editingProject = null;
                       _showModeSelection = true;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          _editingProjectIndex == null
-                              ? '✓ Project saved successfully'
-                              : '✓ Project updated successfully',
-                        ),
-                      ),
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(isEditing ? '✓ Project updated successfully' : '✓ Project saved successfully')),
                     );
                   },
                   child: Container(
@@ -1430,7 +1260,7 @@ ${project['feasibility'] ?? 'N/A'}
                         const Icon(Icons.check_rounded, color: _dark, size: 20),
                         const SizedBox(width: 10),
                         Text(
-                          _editingProjectIndex != null ? 'Update Project' : 'Save Project',
+                          _editingProject != null ? 'Update Project' : 'Save Project',
                           style: GoogleFonts.poppins(
                             color: _dark,
                             fontWeight: FontWeight.w700,

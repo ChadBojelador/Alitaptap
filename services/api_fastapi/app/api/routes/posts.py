@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 from bson import ObjectId
+from bson.errors import InvalidId
 from fastapi import APIRouter, HTTPException, UploadFile, File, Request
 from pydantic import BaseModel
 from app.core.mongodb import get_db
@@ -15,27 +16,39 @@ router = APIRouter(prefix='/posts', tags=['posts'])
 _UPLOAD_DIR = Path(__file__).parent.parent.parent.parent / "uploads"
 _UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
+_ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+
+
+def _parse_object_id(id_str: str) -> ObjectId:
+    try:
+        return ObjectId(id_str)
+    except (InvalidId, Exception):
+        raise HTTPException(status_code=400, detail='Invalid ID format')
+
 
 @router.post('/upload')
 async def upload_image(request: Request, file: UploadFile = File(...)):
     """Upload an image and return its URL."""
     try:
-        ext = Path(file.filename).suffix if file.filename else '.jpg'
-        if ext.lower() not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
-            ext = '.jpg'
-            
+        original_name = file.filename or 'upload'
+        ext = Path(original_name).suffix.lower()
+        if ext not in _ALLOWED_EXTENSIONS:
+            raise HTTPException(status_code=400, detail='Invalid file type. Only jpg, jpeg, png, gif, webp are allowed.')
+
+        # Use only a UUID as filename — never trust user-supplied name
         filename = f"{uuid.uuid4()}{ext}"
         filepath = _UPLOAD_DIR / filename
-        
+
         with open(filepath, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
-            
-        # Construct full URL
+
         base_url = str(request.base_url).rstrip('/')
         image_url = f"{base_url}/uploads/{filename}"
-        
+
         return {"image_url": image_url}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
@@ -161,7 +174,7 @@ def list_posts() -> list[PostResponse]:
 @router.post('/{post_id}/like', response_model=PostResponse)
 def toggle_like(post_id: str, payload: LikeRequest) -> PostResponse:
     db = get_db()
-    doc = db['research_posts'].find_one({'_id': ObjectId(post_id)})
+    doc = db['research_posts'].find_one({'_id': _parse_object_id(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail='Post not found')
     liked_by: list = doc.get('liked_by', [])
@@ -181,7 +194,7 @@ def toggle_like(post_id: str, payload: LikeRequest) -> PostResponse:
 @router.post('/{post_id}/fund', response_model=PostResponse)
 def fund_post(post_id: str, payload: FundRequest) -> PostResponse:
     db = get_db()
-    doc = db['research_posts'].find_one({'_id': ObjectId(post_id)})
+    doc = db['research_posts'].find_one({'_id': _parse_object_id(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail='Post not found')
     new_raised = doc.get('funding_raised', 0.0) + payload.amount
@@ -202,7 +215,7 @@ def fund_post(post_id: str, payload: FundRequest) -> PostResponse:
 @router.post('/{post_id}/comments', response_model=CommentResponse)
 def add_comment(post_id: str, payload: CommentCreate) -> CommentResponse:
     db = get_db()
-    if not db['research_posts'].find_one({'_id': ObjectId(post_id)}):
+    if not db['research_posts'].find_one({'_id': _parse_object_id(post_id)}):
         raise HTTPException(status_code=404, detail='Post not found')
     now = datetime.now(timezone.utc)
     data = {
@@ -224,6 +237,7 @@ def add_comment(post_id: str, payload: CommentCreate) -> CommentResponse:
 
 @router.get('/{post_id}/comments', response_model=list[CommentResponse])
 def get_comments(post_id: str) -> list[CommentResponse]:
+    _parse_object_id(post_id)  # validate format
     db = get_db()
     docs = db['post_comments'].find({'post_id': post_id}).sort('created_at', -1)
     result = []
@@ -253,7 +267,7 @@ class PostUpdate(BaseModel):
 @router.get('/{post_id}', response_model=PostResponse)
 def get_post(post_id: str) -> PostResponse:
     db = get_db()
-    doc = db['research_posts'].find_one({'_id': ObjectId(post_id)})
+    doc = db['research_posts'].find_one({'_id': _parse_object_id(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail='Post not found')
     return PostResponse(**_doc_to_post(doc))
@@ -262,7 +276,7 @@ def get_post(post_id: str) -> PostResponse:
 @router.put('/{post_id}', response_model=PostResponse)
 def update_post(post_id: str, payload: PostUpdate) -> PostResponse:
     db = get_db()
-    doc = db['research_posts'].find_one({'_id': ObjectId(post_id)})
+    doc = db['research_posts'].find_one({'_id': _parse_object_id(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail='Post not found')
     
@@ -284,20 +298,18 @@ def update_post(post_id: str, payload: PostUpdate) -> PostResponse:
     if payload.funding_goal is not None:
         update_data['funding_goal'] = payload.funding_goal
     
+    oid = _parse_object_id(post_id)
     if update_data:
-        db['research_posts'].update_one(
-            {'_id': ObjectId(post_id)},
-            {'$set': update_data}
-        )
-        doc = db['research_posts'].find_one({'_id': ObjectId(post_id)})
-    
+        db['research_posts'].update_one({'_id': oid}, {'$set': update_data})
+        doc = db['research_posts'].find_one({'_id': oid})
+
     return PostResponse(**_doc_to_post(doc))
 
 
 @router.delete('/{post_id}')
 def delete_post(post_id: str) -> dict:
     db = get_db()
-    result = db['research_posts'].delete_one({'_id': ObjectId(post_id)})
+    result = db['research_posts'].delete_one({'_id': _parse_object_id(post_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail='Post not found')
     

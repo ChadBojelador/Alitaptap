@@ -12,6 +12,7 @@ Users can edit all generated fields to leverage their own skills.
 
 from __future__ import annotations
 
+import html
 import logging
 from dataclasses import dataclass
 
@@ -72,17 +73,16 @@ class ResearchBackboneService:
 
     def _generate_title(self, problem: str, sdg_or_idea: str) -> str:
         """Generate research title from problem and idea."""
-        # Heuristic: combine problem and idea into academic title
-        problem_key = problem.split()[0].lower()
-        idea_key = sdg_or_idea.split()[0].lower()
+        problem_key = html.escape(problem.split()[0].lower() if problem.split() else 'problem')
+        idea_key = html.escape(sdg_or_idea.split()[0].lower() if sdg_or_idea.split() else 'innovation')
         return f"Addressing {problem_key} through {idea_key}: A Community-Centered Research Initiative"
 
     def _generate_methodology(self, approach: str) -> str:
         """Generate methodology from approach description."""
-        # Heuristic: structure approach into research methodology
+        safe_approach = html.escape(approach[:500])
         return (
             f"Mixed-methods approach combining qualitative and quantitative analysis. "
-            f"Primary methods: {approach}. "
+            f"Primary methods: {safe_approach}. "
             f"Data collection through community engagement, surveys, and field observations. "
             f"Analysis using thematic coding and statistical validation."
         )

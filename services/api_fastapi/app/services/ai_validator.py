@@ -1,6 +1,7 @@
 """AI Validator Service — automated issue validation, summarization, and SDG tagging."""
 
 import json
+import html
 import logging
 from typing import Optional
 
@@ -112,10 +113,12 @@ Reject if: spam, offensive, off-topic, or unsafe."""
 
     def _build_validation_prompt(self, title: str, description: str) -> str:
         """Build validation prompt."""
+        safe_title = html.escape(title[:200])
+        safe_description = html.escape(description[:2000])
         return f"""Validate and process this community problem report:
 
-Title: {title}
-Description: {description}
+Title: {safe_title}
+Description: {safe_description}
 
 Respond with ONLY the JSON object, no additional text."""
 

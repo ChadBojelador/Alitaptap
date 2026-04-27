@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/models/research_post.dart';
 import '../../../core/models/community_problem_post.dart';
 import '../../../core/models/story_post.dart';
@@ -85,6 +88,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     String? selectedSdg;
+    File? pickedImage;
     bool submitting = false;
 
     const sdgOptions = [
@@ -117,33 +121,47 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (ctx, setSheet) {
+            Future<void> pickImage() async {
+              final picked = await ImagePicker().pickImage(
+                source: ImageSource.gallery,
+                imageQuality: 80,
+              );
+              if (picked != null) setSheet(() => pickedImage = File(picked.path));
+            }
+
             Future<void> submit() async {
               final title = titleCtrl.text.trim();
               final desc = descCtrl.text.trim();
-              if (title.isEmpty || desc.isEmpty || selectedSdg == null) {
+              if (title.isEmpty || desc.isEmpty || selectedSdg == null || pickedImage == null) {
                 ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('Please fill in all fields.')),
+                  const SnackBar(content: Text('Please fill in all fields and add a photo.')),
                 );
                 return;
               }
               final sdgPair = sdgOptions.firstWhere((e) => e.$1 == selectedSdg);
               setSheet(() => submitting = true);
               try {
+                String? imageUrl;
+                if (pickedImage != null) {
+                  imageUrl = await _api.uploadImage(pickedImage!);
+                }
                 await _api.createStory(
                   bubbleLabel: title.length > 12 ? title.substring(0, 12) : title,
                   title: title,
                   description: desc,
                   sdgLabel: sdgPair.$1,
                   sdgName: sdgPair.$2,
+                  imageUrl: imageUrl,
                 );
                 if (mounted) {
                   Navigator.of(sheetCtx).pop();
+                }
+                final fresh = await _api.getStories();
+                if (mounted) {
+                  setState(() => _stories = fresh);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Story posted!')),
                   );
-                  // Reload stories row
-                  final fresh = await _api.getStories();
-                  if (mounted) setState(() => _stories = fresh);
                 }
               } catch (e) {
                 if (mounted) {
@@ -182,6 +200,34 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                       color: yellow,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Image picker
+                  GestureDetector(
+                    onTap: submitting ? null : pickImage,
+                    child: Container(
+                      height: 160,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF242424) : const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: yellow.withValues(alpha: 0.3)),
+                      ),
+                      child: pickedImage != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(13),
+                              child: Image.file(pickedImage!, fit: BoxFit.cover, width: double.infinity),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate_rounded, color: yellow, size: 36),
+                                const SizedBox(height: 8),
+                                Text('Tap to add photo',
+                                    style: GoogleFonts.poppins(color: yellow, fontSize: 13, fontWeight: FontWeight.w600)),
+                                Text('Required', style: GoogleFonts.poppins(color: const Color(0xFFEF5350), fontSize: 11)),
+                              ],
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),
