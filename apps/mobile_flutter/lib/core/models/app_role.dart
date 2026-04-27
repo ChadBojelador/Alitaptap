@@ -8,7 +8,6 @@ extension AppRoleX on AppRole {
     switch (value) {
       case 'admin':
         return AppRole.admin;
-      case 'community': // legacy — treat as student
       case 'student':
       default:
         return AppRole.student;

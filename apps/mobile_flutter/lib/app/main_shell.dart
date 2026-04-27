@@ -396,7 +396,6 @@ class _NavItem extends StatelessWidget {
 String _roleDisplayName(String role) {
   switch (role) {
     case 'student': return 'Student / Researcher';
-    case 'community': return 'Student / Researcher'; // legacy
     case 'admin': return 'Administrator';
     default: return role;
   }

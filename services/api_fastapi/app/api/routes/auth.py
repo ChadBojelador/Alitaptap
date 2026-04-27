@@ -68,8 +68,6 @@ def social_login(payload: SocialLoginRequest) -> AuthResponse:
     user = db['users'].find_one({'email': payload.email})
     if user:
         stored_role = user.get('role', 'student')
-        if stored_role == 'community':
-            stored_role = 'student'
         return AuthResponse(
             user_id=user['user_id'],
             email=user['email'],
@@ -133,8 +131,6 @@ def login(payload: LoginRequest) -> AuthResponse:
     if not verify_password(payload.password, user['password_hash'], user['password_salt']):
         raise HTTPException(status_code=401, detail='Invalid email or password')
     role = user.get('role', 'student')
-    if role == 'community':
-        role = 'student'
     return AuthResponse(
         user_id=user['user_id'],
         email=user['email'],
@@ -162,6 +158,4 @@ def get_user_role(user_id: str) -> dict:
     if not doc:
         return {'user_id': user_id, 'role': 'student'}
     role = doc.get('role', 'student')
-    if role == 'community':
-        role = 'student'
     return {'user_id': user_id, 'role': role}

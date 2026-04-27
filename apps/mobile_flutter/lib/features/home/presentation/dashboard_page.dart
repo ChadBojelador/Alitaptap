@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/models/app_role.dart';
 import '../../../core/models/issue.dart';
-import '../../../core/models/news_article.dart';
 import '../../../features/civic_intelligence/presentation/issue_detail_page.dart';
 import '../../../features/civic_intelligence/presentation/issue_map_page.dart';
 import '../../../features/civic_intelligence/presentation/issue_submit_page.dart';
 import '../../../features/civic_intelligence/presentation/match_idea_page.dart';
-import '../../../features/home/presentation/news_feed_widget.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 
@@ -30,7 +27,6 @@ class _DashboardPageState extends State<DashboardPage>
     with SingleTickerProviderStateMixin {
   final _api = ApiService();
   List<Issue> _issues = [];
-  List<NewsArticle> _news = [];
   bool _loading = true;
   late final TabController _tabController;
 
@@ -51,19 +47,9 @@ class _DashboardPageState extends State<DashboardPage>
     setState(() => _loading = true);
     try {
       final issues = await _api.getIssues();
-      final uid = SessionService.uid;
       setState(() {
-        if (widget.role == AppRole.community) {
-          _issues = issues.where((i) => i.reporterId == uid).toList();
-        } else {
-          _issues = issues.where((i) => i.status == 'validated').toList();
-        }
+        _issues = issues.where((i) => i.status == 'validated').toList();
       });
-
-      if (widget.role == AppRole.community) {
-        final news = await _api.getNews();
-        setState(() => _news = news);
-      }
     } catch (_) {}
     setState(() => _loading = false);
   }
@@ -74,7 +60,6 @@ class _DashboardPageState extends State<DashboardPage>
     final bg = isDark ? const Color(0xFF141414) : const Color(0xFFF7F8FA);
     final cardBg = isDark ? const Color(0xFF242424) : _white;
     final displayName = SessionService.email.split('@')[0];
-    final isCommunity = widget.role == AppRole.community;
     final uid = SessionService.uid;
 
     return Scaffold(
@@ -175,7 +160,7 @@ class _DashboardPageState extends State<DashboardPage>
                   child: Row(
                     children: [
                       _TabChip(
-                        label: isCommunity ? 'News' : 'Just For You',
+                        label: 'Just For You',
                         selected: _tabController.index == 0,
                         onTap: () => setState(() => _tabController.index = 0),
                         isDark: isDark,
@@ -199,7 +184,7 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
               ),
 
-              // ── News or Issues ───────────────────────────────────────
+              // ── Validated Issues ─────────────────────────────────────
               if (_loading)
                 const SliverToBoxAdapter(
                   child: Padding(
@@ -207,19 +192,6 @@ class _DashboardPageState extends State<DashboardPage>
                     child: Center(
                       child: CircularProgressIndicator(
                           color: _amber, strokeWidth: 2),
-                    ),
-                  ),
-                )
-              else if (isCommunity)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: NewsFeedWidget(article: _news[i]),
-                      ),
-                      childCount: _news.length,
                     ),
                   ),
                 )
@@ -266,7 +238,7 @@ class _DashboardPageState extends State<DashboardPage>
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
-                    _buildActions(context, isCommunity, uid, isDark, cardBg),
+                    _buildActions(context, uid, isDark, cardBg),
                   ),
                 ),
               ),
@@ -279,55 +251,52 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  List<Widget> _buildActions(BuildContext context, bool isCommunity, String uid,
+  List<Widget> _buildActions(BuildContext context, String uid,
       bool isDark, Color cardBg) {
-    final actions = isCommunity
-        ? [
-            _ActionTile(
-              icon: Icons.add_location_alt_rounded,
-              title: 'Report a Problem',
-              subtitle: 'Pin a community issue on the map.',
-              isPrimary: true,
-              isDark: isDark,
-              onTap: () => Navigator.of(context)
-                  .push(MaterialPageRoute(
-                    builder: (_) => IssueSubmitPage(reporterId: uid),
-                  ))
-                  .then((_) => _loadData()),
-            ),
-            _ActionTile(
-              icon: Icons.map_rounded,
-              title: 'Community Map',
-              subtitle: 'Browse all reported problems.',
-              isPrimary: false,
-              isDark: isDark,
-              onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const IssueMapPage())),
-            ),
-          ]
-        : [
-            _ActionTile(
-              icon: Icons.auto_awesome_rounded,
-              title: 'Match Research Idea',
-              subtitle: 'AI matches your idea to real problems.',
-              isPrimary: true,
-              isDark: isDark,
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => MatchIdeaPage(studentId: uid),
-              )),
-            ),
-            _ActionTile(
-              icon: Icons.explore_rounded,
-              title: 'Explore the Map',
-              subtitle: 'Browse validated community problems.',
-              isPrimary: false,
-              isDark: isDark,
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) =>
-                    IssueMapPage(showIdeaDock: true, studentId: uid),
-              )),
-            ),
-          ];
+    final actions = [
+      _ActionTile(
+        icon: Icons.add_location_alt_rounded,
+        title: 'Report a Problem',
+        subtitle: 'Pin a community issue on the map.',
+        isPrimary: true,
+        isDark: isDark,
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(
+              builder: (_) => IssueSubmitPage(reporterId: uid),
+            ))
+            .then((_) => _loadData()),
+      ),
+      _ActionTile(
+        icon: Icons.auto_awesome_rounded,
+        title: 'Match Research Idea',
+        subtitle: 'AI matches your idea to real problems.',
+        isPrimary: false,
+        isDark: isDark,
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => MatchIdeaPage(studentId: uid),
+        )),
+      ),
+      _ActionTile(
+        icon: Icons.map_rounded,
+        title: 'Community Map',
+        subtitle: 'Browse all reported problems.',
+        isPrimary: false,
+        isDark: isDark,
+        onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const IssueMapPage())),
+      ),
+      _ActionTile(
+        icon: Icons.explore_rounded,
+        title: 'Explore the Map',
+        subtitle: 'Browse validated community problems.',
+        isPrimary: false,
+        isDark: isDark,
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) =>
+              IssueMapPage(showIdeaDock: true, studentId: uid),
+        )),
+      ),
+    ];
 
     return actions.expand((w) => [w, const SizedBox(height: 12)]).toList()
       ..removeLast();
@@ -341,7 +310,6 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   String _roleGreeting() {
-    if (widget.role == AppRole.community) return 'Community Member';
     return 'Student / Researcher';
   }
 
