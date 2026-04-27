@@ -4,7 +4,8 @@ import axios from 'axios';
 import '../styles/home_feed.css';
 import '../styles/platform.css';
 
-const ALITAPTAP_API = import.meta.env.VITE_ALITAPTAP_API_URL || 'http://127.0.0.1:8000/api/v1';
+const hostname = window.location.hostname;
+const ALITAPTAP_API = import.meta.env.VITE_ALITAPTAP_API_URL || `http://${hostname}:8000/api/v1`;
 
 export default function Home({ user }) {
   const navigate = useNavigate();
@@ -21,8 +22,20 @@ export default function Home({ user }) {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${ALITAPTAP_API}/posts`);
-      setPosts(res.data);
+      // Disable withCredentials for FastAPI because it has allow_origins=['*']
+      const axiosConfig = { withCredentials: false };
+      const [postsRes, issuesRes] = await Promise.all([
+        axios.get(`${ALITAPTAP_API}/posts`, axiosConfig).catch(() => ({ data: [] })),
+        axios.get(`${ALITAPTAP_API}/issues?status=validated`, axiosConfig).catch(() => ({ data: [] }))
+      ]);
+      
+      const combined = [
+        ...postsRes.data.map(p => ({ ...p, type: 'post' })),
+        ...issuesRes.data.map(i => ({ ...i, type: 'issue' }))
+      ];
+      
+      combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setPosts(combined);
     } catch {
       setPosts([]);
     }
@@ -191,33 +204,43 @@ export default function Home({ user }) {
               </div>
             ) : (
               posts.map(post => (
-                <article key={post.post_id} className="hf-post-card">
+                <article key={post.type === 'post' ? post.post_id : post.issue_id} className="hf-post-card">
                   <div className="hf-post-header">
-                    <div className="hf-mini-avatar" style={{ backgroundColor: '#34495e', color: '#FFF' }}>
-                      {post.author_email?.[0]?.toUpperCase() || 'R'}
+                    <div className="hf-mini-avatar" style={{ backgroundColor: post.type === 'issue' ? '#ef5350' : '#34495e', color: '#FFF' }}>
+                      {post.type === 'issue' 
+                        ? (post.reporter_name?.[0]?.toUpperCase() || 'C') 
+                        : (post.author_email?.[0]?.toUpperCase() || 'R')}
                     </div>
                     <div className="hf-post-author">
-                      <span className="hf-post-name">{post.author_email?.split('@')[0]}</span>
-                      <span className="hf-post-time">Just now · 🌎</span>
+                      <span className="hf-post-name">
+                        {post.type === 'issue' ? (post.reporter_name || 'Community Member') : post.author_email?.split('@')[0]}
+                      </span>
+                      <span className="hf-post-time">{post.type === 'issue' ? 'Community Problem Report' : 'Research Post'} · 🌎</span>
                     </div>
                   </div>
 
                   <div className="hf-post-content">
                     <h3 className="hf-post-title">{post.title}</h3>
-                    <p className="hf-post-abstract">{post.abstract}</p>
+                    <p className="hf-post-abstract">{post.type === 'issue' ? post.description : post.abstract}</p>
                   </div>
 
-                  {post.sdg_tags?.length > 0 && (
+                  {(post.sdg_tags?.length > 0 || post.tags?.length > 0) && (
                     <div className="hf-post-tags">
-                      {post.sdg_tags.map(tag => (
+                      {(post.sdg_tags || post.tags).map(tag => (
                         <span key={tag} className="hf-tag">{tag}</span>
                       ))}
                     </div>
                   )}
+                  
+                  {post.image_url && (
+                    <div className="hf-post-image" style={{ marginTop: '12px' }}>
+                       <img src={post.image_url} alt="Attached" style={{ width: '100%', borderRadius: '8px', maxHeight: '400px', objectFit: 'cover' }} />
+                    </div>
+                  )}
 
                   <div className="hf-post-actions">
-                    <div className="hf-action">❤️ Like</div>
-                    <div className="hf-action">💬 Comment</div>
+                    <div className="hf-action">❤️ {post.type === 'issue' ? 'Upvote' : 'Like'}</div>
+                    <div className="hf-action">💬 {post.type === 'issue' ? 'Discuss' : 'Comment'}</div>
                     <div className="hf-action">🏹 Share</div>
                   </div>
                 </article>

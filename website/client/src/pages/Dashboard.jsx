@@ -3,7 +3,8 @@ import axios from 'axios';
 import { BACKEND_URL } from '../App';
 import '../styles/platform.css';
 
-const ALITAPTAP_API = import.meta.env.VITE_ALITAPTAP_API_URL || 'http://127.0.0.1:8000/api/v1';
+const hostname = window.location.hostname;
+const ALITAPTAP_API = import.meta.env.VITE_ALITAPTAP_API_URL || `http://${hostname}:8000/api/v1`;
 
 const AI_SYSTEM_PROMPT = `You are an AI project planner and executor for student researchers.
 
@@ -51,7 +52,7 @@ export default function Dashboard({ user }) {
   const fetchIssues = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${ALITAPTAP_API}/issues?status=validated`);
+      const res = await axios.get(`${ALITAPTAP_API}/issues?status=validated`, { withCredentials: false });
       setIssues(res.data);
     } catch {
       setIssues([]);

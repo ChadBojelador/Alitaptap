@@ -80,7 +80,7 @@ app.use(cors({
             APP_URL,
             process.env.FRONTEND_URL
         ].filter(Boolean);
-        if (allowed.includes(origin) || /^http:\/\/192\.168\./.test(origin)) {
+        if (allowed.includes(origin) || /^http:\/\/(192\.168\.|127\.0\.0\.1)/.test(origin) || /^http:\/\/localhost:\d+$/.test(origin)) {
             return callback(null, true);
         }
         callback(new Error('Not allowed by CORS'));
@@ -300,6 +300,12 @@ app.post('/api/chat', authMiddleware, apiLimiter,
 
     let output = '';
     let errorOutput = '';
+    
+    python.on('error', (err) => {
+        console.error('Failed to start python process:', err);
+        if (!res.headersSent) res.status(500).json({ error: 'Failed to start AI agent' });
+    });
+
     python.stdout.on('data', (data) => { output += data.toString(); });
     python.stderr.on('data', (data) => { errorOutput += data.toString(); });
 
@@ -307,6 +313,7 @@ app.post('/api/chat', authMiddleware, apiLimiter,
     python.stdin.end();
 
     python.on('close', () => {
+        if (res.headersSent) return;
         try {
             const jsonStart = output.indexOf('{');
             const jsonEnd = output.lastIndexOf('}') + 1;
@@ -315,7 +322,9 @@ app.post('/api/chat', authMiddleware, apiLimiter,
             res.json({ reply: data.reply });
         } catch (err) {
             console.error('chat_agent stderr:', errorOutput);
-            res.status(500).json({ error: 'Failed to parse chat response', raw: output.slice(0, 300) });
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Failed to parse chat response', raw: output.slice(0, 300) });
+            }
         }
     });
 });
@@ -337,6 +346,11 @@ app.post('/api/credibility', authMiddleware, apiLimiter,
         let output = '';
         let errorOutput = '';
 
+        python.on('error', (err) => {
+            console.error('Failed to start python process:', err);
+            if (!res.headersSent) res.status(500).json({ error: 'Failed to start AI agent' });
+        });
+
         python.stdout.on('data', (data) => {
             output += data.toString();
         });
@@ -350,13 +364,14 @@ app.post('/api/credibility', authMiddleware, apiLimiter,
 
         python.on('close', (code) => {
 
-            // 🔴 ADD THIS
             if (code !== 0) {
                 console.error('Python crashed:', errorOutput);
-                return res.status(500).json({
-                    error: 'Python process failed',
-                    details: errorOutput
-                });
+                if (!res.headersSent) {
+                    return res.status(500).json({
+                        error: 'Python process failed',
+                        details: errorOutput
+                    });
+                }
             }
 
             try {

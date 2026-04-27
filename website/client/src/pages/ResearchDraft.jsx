@@ -25,10 +25,13 @@ export default function ResearchDraft({ user }) {
   const [ideas, setIdeas] = useState([]);
   const [showIdeas, setShowIdeas] = useState(false);
   const [postForm, setPostForm] = useState({ abstract: '', problem_solved: '', sdg_tags: '', funding_goal: '' });
+  const [draftsList, setDraftsList] = useState([]);
+  const [view, setView] = useState('list');
 
   // Load draft if editing existing
   useEffect(() => {
     if (id) {
+      setView('editor');
       fetch(`${BACKEND_URL}/api/drafts/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       }).then(r => r.json()).then(d => {
@@ -41,6 +44,7 @@ export default function ResearchDraft({ user }) {
       // Check for generated research docs from Dashboard
       const generatedDocs = localStorage.getItem('generatedResearchDocs');
       if (generatedDocs) {
+        setView('editor');
         try {
           const docs = JSON.parse(generatedDocs);
           setTitle(docs.title);
@@ -76,6 +80,11 @@ export default function ResearchDraft({ user }) {
         } catch (e) {
           console.error('Failed to load generated docs:', e);
         }
+      } else {
+        setView('list');
+        fetch(`${BACKEND_URL}/api/drafts`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }).then(r => r.json()).then(d => setDraftsList(d)).catch(() => {});
       }
     }
   }, [id]);
@@ -190,12 +199,74 @@ export default function ResearchDraft({ user }) {
     setPosting(false);
   };
 
+  if (view === 'list') {
+    return (
+      <div className="rd-root">
+        <header className="rd-header">
+          <div className="rd-header-left">
+            <button className="rd-back" onClick={() => navigate('/home')}>← Home</button>
+            <h2 style={{ margin: 0, paddingLeft: 16 }}>My Saved Research Projects</h2>
+          </div>
+        </header>
+        <div style={{ padding: '40px', width: '100%', maxWidth: '1000px', margin: '0 auto', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
+            
+            {/* New Blank Draft Card */}
+            <div style={{
+              background: '#161616', borderRadius: '12px', padding: '20px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', border: '2px dashed rgba(255, 214, 10, 0.4)', minHeight: '280px', width: '220px', flexShrink: 0,
+              transition: 'transform 0.2s, border-color 0.2s, background 0.2s'
+            }}
+            onClick={() => {
+              setDraftId(null);
+              setTitle('');
+              setView('editor');
+              setTimeout(() => {
+                if (editorRef.current) editorRef.current.innerHTML = '';
+              }, 0);
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = '#ffd60a'; e.currentTarget.style.background = 'rgba(255,214,10,0.05)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255, 214, 10, 0.4)'; e.currentTarget.style.background = '#161616'; }}
+            >
+              <div style={{ fontSize: '2.5rem', color: '#ffd60a', marginBottom: 8 }}>+</div>
+              <h3 style={{ margin: 0, color: '#f0f0f0', fontSize: '1rem' }}>Blank Project</h3>
+            </div>
+
+            {/* Existing Drafts */}
+            {draftsList.map(draft => (
+              <div key={draft.id} style={{
+                background: '#161616', borderRadius: '12px', padding: '20px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)', cursor: 'pointer',
+                border: '1px solid rgba(255, 214, 10, 0.3)', transition: 'transform 0.2s, border-color 0.2s, background 0.2s',
+                minHeight: '280px', width: '220px', flexShrink: 0, display: 'flex', flexDirection: 'column'
+              }}
+              onClick={() => {
+                navigate(`/research/${draft.id}`);
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = '#ffd60a'; e.currentTarget.style.background = 'rgba(255,214,10,0.05)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255, 214, 10, 0.3)'; e.currentTarget.style.background = '#161616'; }}
+              >
+                <h3 style={{ margin: '0 0 12px', color: '#ffd60a', fontSize: '1.1rem', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{draft.title || 'Untitled Draft'}</h3>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                  <p style={{ margin: 0, color: '#9e9e9e', fontSize: '0.8rem' }}>
+                    Edited {new Date(draft.updatedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rd-root">
       {/* Top bar */}
       <header className="rd-header">
         <div className="rd-header-left">
-          <button className="rd-back" onClick={() => navigate('/home')}>
+          <button className="rd-back" onClick={() => { setView('list'); navigate('/research'); }}>
             ← Back
           </button>
           <input

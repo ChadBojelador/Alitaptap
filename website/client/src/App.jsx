@@ -19,11 +19,10 @@ import Expo from './pages/Expo';
 axios.defaults.withCredentials = true;
 
 // Dynamically resolve API URL based on current origin
-const { hostname, port } = window.location;
-const isViteDev = port === '5173';
+const { hostname } = window.location;
 export const BACKEND_URL = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
-  : isViteDev
+  : import.meta.env.DEV
     ? `http://${hostname}:3000`
     : window.location.origin;
 
