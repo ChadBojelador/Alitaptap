@@ -46,17 +46,33 @@ class ApiService {
     return 'http://localhost:8000/api/v1';
   }
 
-  /// Rewrites image URLs so they are reachable from the device.
-  /// FastAPI returns `http://127.0.0.1:8000/uploads/...` which is its own
-  /// loopback. On an Android emulator the host PC is `10.0.2.2`, so we
-  /// replace the host accordingly.  On web / desktop / physical device we
-  /// leave the URL untouched (caller may pass API_BASE_URL at build time).
+  /// Returns the host:port that images should use — derived from the same
+  /// source as the API base URL so emulators AND real phones both work.
+  ///
+  /// e.g.  base = "http://192.168.1.5:8000/api/v1"  → "192.168.1.5:8000"
+  ///        base = "http://10.0.2.2:8000/api/v1"     → "10.0.2.2:8000"
+  static String _resolveImageHost() {
+    final base = _resolveDefaultBaseUrl();
+    final uri = Uri.tryParse(base);
+    if (uri == null) return '10.0.2.2:8000';
+    final port = uri.hasPort ? uri.port : (uri.scheme == 'https' ? 443 : 80);
+    return '${uri.host}:$port';
+  }
+
+  /// Rewrites image URLs returned by FastAPI (`http://127.0.0.1:8000/uploads/…`)
+  /// so they point to the same host that the API base URL uses.
+  /// This makes images work on both Android emulators (10.0.2.2) and real
+  /// physical phones (LAN IP supplied via --dart-define=API_BASE_URL=…).
   static String fixImageUrl(String? url) {
     if (url == null || url.isEmpty) return url ?? '';
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    // Only rewrite loopback addresses; externally-hosted URLs are left alone.
+    if (url.contains('127.0.0.1') || url.contains('localhost')) {
+      final imageHost = _resolveImageHost();
       return url
-          .replaceFirst('http://127.0.0.1:', 'http://10.0.2.2:')
-          .replaceFirst('http://localhost:', 'http://10.0.2.2:');
+          .replaceFirst(RegExp(r'127\.0\.0\.1:\d+'), imageHost)
+          .replaceFirst(RegExp(r'localhost:\d+'), imageHost)
+          .replaceFirst('127.0.0.1', imageHost.split(':').first)
+          .replaceFirst('localhost', imageHost.split(':').first);
     }
     return url;
   }

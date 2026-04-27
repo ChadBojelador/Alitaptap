@@ -1,0 +1,14 @@
+[
+  {
+    "author_id": "community_user",
+    "author_email": "resident@community.local",
+    "title": "Recurring Snake Sightings Threatening Barangay Residents",
+    "abstract": "Multiple venomous and non-venomous snakes have been spotted in residential areas, posing a serious safety risk to children and elderly residents. Sightings are increasing due to nearby construction disturbing natural habitats.",
+    "problem_solved": "Lack of community snake awareness, no local wildlife response team, and absence of safe relocation protocols for displaced snakes in urban barangays.",
+    "caption": "Photos of snake sightings reported by local residents near the barangay.",
+    "sdg_tags": ["SDG 3", "SDG 11", "SDG 15"],
+    "funding_goal": 2500.0,
+    "_image_file": "scripts/images/2.jpg",
+    "_extra_images": ["scripts/images/2.1.jpg"]
+  }
+]
