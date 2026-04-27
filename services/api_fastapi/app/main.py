@@ -36,6 +36,11 @@ def create_app() -> FastAPI:
     if images_path.exists():
         application.mount("/images", StaticFiles(directory=str(images_path)), name="images")
 
+    # Serve user-uploaded images
+    uploads_path = Path(__file__).parent.parent / "uploads"
+    uploads_path.mkdir(parents=True, exist_ok=True)
+    application.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
+
     application.include_router(api_router)
     return application
 

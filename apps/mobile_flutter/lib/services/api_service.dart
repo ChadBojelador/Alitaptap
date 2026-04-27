@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -29,6 +30,21 @@ class ApiService {
     // Use 10.0.2.2 for emulator, override via API_BASE_URL env for physical device
     if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:8000/api/v1';
     return 'http://127.0.0.1:8000/api/v1';
+  }
+
+  /// Rewrites image URLs so they are reachable from the device.
+  /// FastAPI returns `http://127.0.0.1:8000/uploads/...` which is its own
+  /// loopback. On an Android emulator the host PC is `10.0.2.2`, so we
+  /// replace the host accordingly.  On web / desktop / physical device we
+  /// leave the URL untouched (caller may pass API_BASE_URL at build time).
+  static String fixImageUrl(String? url) {
+    if (url == null || url.isEmpty) return url ?? '';
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return url
+          .replaceFirst('http://127.0.0.1:', 'http://10.0.2.2:')
+          .replaceFirst('http://localhost:', 'http://10.0.2.2:');
+    }
+    return url;
   }
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
@@ -287,6 +303,25 @@ class ApiService {
   // Expo / Research Posts
   // -----------------------------------------------------------------------
 
+  /// Rewrites image_url / image_urls in a raw post JSON map so that URLs
+  /// like `http://127.0.0.1:8000/uploads/...` become reachable on the device.
+  /// Also filters out null / empty URLs so Image.network is never called
+  /// with an empty string (which causes silent failures on Android).
+  static Map<String, dynamic> _fixPostJson(Map<String, dynamic> json) {
+    final rawUrl = json['image_url'] as String?;
+    final fixedUrl = fixImageUrl(rawUrl);
+    final rawUrls = (json['image_urls'] as List<dynamic>?)
+        ?.map((e) => fixImageUrl(e as String?))
+        .where((u) => u.isNotEmpty)  // drop empty/null entries
+        .toList();
+    return <String, dynamic>{
+      ...json,
+      // Only set image_url if it's non-empty after fix
+      'image_url': fixedUrl.isNotEmpty ? fixedUrl : null,
+      if (rawUrls != null) 'image_urls': rawUrls,
+    };
+  }
+
   Future<List<ResearchPost>> getPosts() async {
     try {
       final response = await _sendWithTimeout(
@@ -294,7 +329,9 @@ class ApiService {
       );
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body) as List<dynamic>;
-        final results = list.map((e) => ResearchPost.fromJson(e as Map<String, dynamic>)).toList();
+        final results = list
+            .map((e) => ResearchPost.fromJson(_fixPostJson(e as Map<String, dynamic>)))
+            .toList();
         // Sort by "created_at" descending
         results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         return results;
@@ -314,6 +351,8 @@ class ApiService {
     required String problemSolved,
     required List<String> sdgTags,
     required double fundingGoal,
+    String? imageUrl,
+    List<String>? imageUrls,
   }) async {
     final response = await _sendWithTimeout(
       http.post(
@@ -327,6 +366,8 @@ class ApiService {
           'problem_solved': problemSolved,
           'sdg_tags': sdgTags,
           'funding_goal': fundingGoal,
+          if (imageUrl != null) 'image_url': imageUrl,
+          if (imageUrls != null) 'image_urls': imageUrls,
         }),
       ),
     );
@@ -334,7 +375,23 @@ class ApiService {
       throw Exception('Failed to create post: ${response.body}');
     }
     return ResearchPost.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>);
+        _fixPostJson(jsonDecode(response.body) as Map<String, dynamic>));
+  }
+
+  Future<String> uploadImage(File file) async {
+    final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/posts/upload'));
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 15));
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to upload image: ${response.body}');
+    }
+    
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    // Fix the URL so Android emulator can reach the host machine.
+    return fixImageUrl(data['image_url'] as String?);
   }
 
   Future<ResearchPost> toggleLike({
@@ -352,7 +409,7 @@ class ApiService {
       throw Exception('Failed to toggle like: ${response.body}');
     }
     return ResearchPost.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>);
+        _fixPostJson(jsonDecode(response.body) as Map<String, dynamic>));
   }
 
   Future<ResearchPost> fundPost({
@@ -371,7 +428,7 @@ class ApiService {
       throw Exception('Failed to fund post: ${response.body}');
     }
     return ResearchPost.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>);
+        _fixPostJson(jsonDecode(response.body) as Map<String, dynamic>));
   }
 
   /// Get a single research post by ID.
@@ -383,7 +440,7 @@ class ApiService {
       throw Exception('Failed to fetch post: ${response.body}');
     }
     return ResearchPost.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>);
+        _fixPostJson(jsonDecode(response.body) as Map<String, dynamic>));
   }
 
   /// Update a research post.
@@ -419,7 +476,7 @@ class ApiService {
       throw Exception('Failed to update post: ${response.body}');
     }
     return ResearchPost.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>);
+        _fixPostJson(jsonDecode(response.body) as Map<String, dynamic>));
   }
 
   /// Delete a research post.

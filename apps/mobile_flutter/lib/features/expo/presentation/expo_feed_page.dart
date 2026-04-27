@@ -1512,6 +1512,12 @@ class _CommunityImagePreviewState extends State<_CommunityImagePreview> {
   }
 
   Widget _buildImage(String src) {
+    if (src.isEmpty) {
+      return _CommunityPlaceholderImage(
+        label: 'Image Placeholder',
+        fit: BoxFit.cover,
+      );
+    }
     if (src.startsWith('placeholder://')) {
       return _CommunityPlaceholderImage(
         label: _placeholderLabel(src),
@@ -1537,6 +1543,19 @@ class _CommunityImagePreviewState extends State<_CommunityImagePreview> {
       width: double.infinity,
       height: 220,
       fit: BoxFit.cover,
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          height: 220,
+          color: const Color(0xFF1A1A1A),
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFFFD60A),
+              strokeWidth: 2,
+            ),
+          ),
+        );
+      },
       errorBuilder: (_, __, ___) => _CommunityPlaceholderImage(
         label: 'Image Placeholder',
         fit: BoxFit.cover,
@@ -1845,6 +1864,9 @@ class _ImagePeelGalleryState extends State<_ImagePeelGallery> {
   int _current = 0;
 
   Widget _buildImage(String src) {
+    if (src.isEmpty) {
+      return const _ResearchPlaceholderImage(label: 'Image Placeholder');
+    }
     if (src.startsWith('placeholder://')) {
       return _ResearchPlaceholderImage(label: _placeholderLabel(src));
     }
@@ -1858,12 +1880,27 @@ class _ImagePeelGalleryState extends State<_ImagePeelGallery> {
               const _ResearchPlaceholderImage(label: 'Image Placeholder'));
     }
 
-    return Image.network(src,
-        width: double.infinity,
-        height: 220,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) =>
-            const _ResearchPlaceholderImage(label: 'Image Placeholder'));
+    return Image.network(
+      src,
+      width: double.infinity,
+      height: 220,
+      fit: BoxFit.cover,
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          height: 220,
+          color: const Color(0xFF1A1A1A),
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFFFD60A),
+              strokeWidth: 2,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (_, __, ___) =>
+          const _ResearchPlaceholderImage(label: 'Image Placeholder'),
+    );
   }
 
   String _placeholderLabel(String source) {

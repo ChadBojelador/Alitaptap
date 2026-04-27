@@ -1,13 +1,43 @@
 """Research Posts API — Innovation Funding Expo."""
 
+import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request
 from pydantic import BaseModel
 from app.core.mongodb import get_db
+from app.core.config import settings
 
 router = APIRouter(prefix='/posts', tags=['posts'])
+
+_UPLOAD_DIR = Path(__file__).parent.parent.parent.parent / "uploads"
+_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@router.post('/upload')
+async def upload_image(request: Request, file: UploadFile = File(...)):
+    """Upload an image and return its URL."""
+    try:
+        ext = Path(file.filename).suffix if file.filename else '.jpg'
+        if ext.lower() not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+            ext = '.jpg'
+            
+        filename = f"{uuid.uuid4()}{ext}"
+        filepath = _UPLOAD_DIR / filename
+        
+        with open(filepath, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+            
+        # Construct full URL
+        base_url = str(request.base_url).rstrip('/')
+        image_url = f"{base_url}/uploads/{filename}"
+        
+        return {"image_url": image_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
 class PostCreate(BaseModel):

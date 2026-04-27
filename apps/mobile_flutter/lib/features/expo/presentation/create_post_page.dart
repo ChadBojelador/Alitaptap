@@ -64,6 +64,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     try {
+      String? imageUrl;
+      if (_pickedImage != null) {
+        imageUrl = await _api.uploadImage(_pickedImage!);
+      }
+      
       await _api.createPost(
         authorId: widget.authorId,
         authorEmail: widget.authorEmail,
@@ -72,6 +77,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         problemSolved: _problemCtrl.text.trim(),
         sdgTags: _sdgTags,
         fundingGoal: double.tryParse(_goalCtrl.text.trim()) ?? 0.0,
+        imageUrl: imageUrl,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -637,14 +637,46 @@ class _DetailImageGallery extends StatelessWidget {
   final List<String> images;
 
   Widget _buildImage(String src) {
+    if (src.isEmpty) return _buildPlaceholder();
     if (src.startsWith('assets/')) {
       return Image.asset(src,
           width: double.infinity, height: double.infinity, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink());
+          errorBuilder: (_, __, ___) => _buildPlaceholder());
     }
-    return Image.network(src,
-        width: double.infinity, height: double.infinity, fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink());
+    return Image.network(
+      src,
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          color: const Color(0xFF1A1A1A),
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFFFD60A),
+              strokeWidth: 2,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF263238), Color(0xFF111827)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.image_outlined, size: 44, color: Color(0xFFFFD60A)),
+      ),
+    );
   }
 
   @override
