@@ -9,6 +9,7 @@ class Issue {
     required this.lat,
     required this.lng,
     this.imageUrl,
+    this.imageUrls = const [],
     required this.status,
     this.tags = const [],
     this.aiSummary,
@@ -26,6 +27,7 @@ class Issue {
   final double lat;
   final double lng;
   final String? imageUrl;
+  final List<String> imageUrls;
   final String status;
   final List<String> tags;
   final String? aiSummary;
@@ -44,6 +46,10 @@ class Issue {
       lat: (json['lat'] as num?)?.toDouble() ?? 0.0,
       lng: (json['lng'] as num?)?.toDouble() ?? 0.0,
       imageUrl: json['image_url'] as String?,
+      imageUrls: (json['image_urls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       status: json['status'] as String? ?? 'pending',
       tags: (json['tags'] as List<dynamic>?)
               ?.map((e) => e as String)
@@ -67,6 +73,7 @@ class Issue {
       'lat': lat,
       'lng': lng,
       'image_url': imageUrl,
+      'image_urls': imageUrls,
       'status': status,
       'tags': tags,
       'ai_summary': aiSummary,

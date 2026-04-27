@@ -19,134 +19,93 @@ class ApiService {
       : _baseUrl = baseUrl ?? _resolveDefaultBaseUrl();
 
   final String _baseUrl;
+  static const _headers = {'Content-Type': 'application/json'};
   static const _requestTimeout = Duration(seconds: 12);
 
   static String _resolveDefaultBaseUrl() {
     const envBaseUrl = String.fromEnvironment('API_BASE_URL');
-    if (envBaseUrl.isNotEmpty) {
-      return envBaseUrl;
-    }
-
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api/v1';
-    }
-
-    // Android emulators map host localhost via 10.0.2.2.
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      // Physical device: use your PC's LAN IP. Emulator: use 10.0.2.2.
-      return 'http://192.168.0.139:8000/api/v1';
-    }
-
+    if (envBaseUrl.isNotEmpty) return envBaseUrl;
+    if (kIsWeb) return 'http://127.0.0.1:8000/api/v1';
+    // Use 10.0.2.2 for emulator, override via API_BASE_URL env for physical device
+    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:8000/api/v1';
     return 'http://127.0.0.1:8000/api/v1';
+  }
+
+  Uri _uri(String path) => Uri.parse('$_baseUrl$path');
+
+  /// Sends request, throws a clean user-facing message on error.
+  Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
+    try {
+      final res = await http.post(_uri(path), headers: _headers, body: jsonEncode(body))
+          .timeout(_requestTimeout);
+      final decoded = jsonDecode(res.body);
+      if (res.statusCode != 200) {
+        final detail = decoded is Map ? (decoded['detail'] ?? decoded['error'] ?? res.body) : res.body;
+        throw Exception(detail.toString());
+      }
+      return decoded as Map<String, dynamic>;
+    } on TimeoutException {
+      throw Exception('Request timed out. Is the backend running?');
+    } on http.ClientException catch (e) {
+      throw Exception('Cannot reach server: ${e.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>> _get(String path) async {
+    try {
+      final res = await http.get(_uri(path), headers: _headers).timeout(_requestTimeout);
+      if (res.statusCode != 200) throw Exception('Request failed: ${res.body}');
+      return jsonDecode(res.body) as Map<String, dynamic>;
+    } on TimeoutException {
+      throw Exception('Request timed out.');
+    } on http.ClientException catch (e) {
+      throw Exception('Cannot reach server: ${e.message}');
+    }
   }
 
   Future<http.Response> _sendWithTimeout(Future<http.Response> request) async {
     try {
       return await request.timeout(_requestTimeout);
     } on http.ClientException catch (e) {
-      throw Exception(
-        'Network request failed (${e.message}). Ensure the API is running and API_BASE_URL points to a reachable host: $_baseUrl',
-      );
+      throw Exception('Network request failed (${e.message}). $_baseUrl');
     } on TimeoutException {
-      throw Exception(
-        'Request timed out. Please check if the backend is running and reachable.',
-      );
+      throw Exception('Request timed out.');
     }
   }
-
-  // -----------------------------------------------------------------------
-  // Auth
-  // -----------------------------------------------------------------------
 
   /// Sign in with email and password.
-  Future<Map<String, dynamic>> signIn({
-    required String email,
-    required String password,
-  }) async {
-    final response = await _sendWithTimeout(
-      http.post(
-        Uri.parse('$_baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      ),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to sign in: ${response.body}');
-    }
-    return jsonDecode(response.body) as Map<String, dynamic>;
-  }
+  Future<Map<String, dynamic>> signIn({required String email, required String password}) =>
+      _post('/auth/login', {'email': email, 'password': password});
 
   /// Register a new user.
-  Future<Map<String, dynamic>> register({
-    required String email,
-    required String password,
-    required String role,
-  }) async {
-    final response = await _sendWithTimeout(
-      http.post(
-        Uri.parse('$_baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password, 'role': role}),
-      ),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to register: ${response.body}');
-    }
-    return jsonDecode(response.body) as Map<String, dynamic>;
-  }
+  Future<Map<String, dynamic>> register({required String email, required String password, required String role}) =>
+      _post('/auth/register', {'email': email, 'password': password, 'role': role});
 
-  /// Sign in or register via social provider (Google / Facebook).
+  /// Sign in or register via social provider.
   Future<Map<String, dynamic>> socialLogin({
     required String email,
     required String provider,
     required String providerId,
     String displayName = '',
     String role = 'student',
-  }) async {
-    final response = await _sendWithTimeout(
-      http.post(
-        Uri.parse('$_baseUrl/auth/social'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'provider': provider,
-          'provider_id': providerId,
-          'display_name': displayName,
-          'role': role,
-        }),
-      ),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Social login failed: ${response.body}');
-    }
-    return jsonDecode(response.body) as Map<String, dynamic>;
-  }
+  }) => _post('/auth/social', {
+    'email': email,
+    'provider': provider,
+    'provider_id': providerId,
+    'display_name': displayName,
+    'role': role,
+  });
 
   /// Save user role to backend.
-  Future<void> setUserRole({
-    required String userId,
-    required String role,
-  }) async {
-    final response = await _sendWithTimeout(
-      http.post(
-        Uri.parse('$_baseUrl/auth/role'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': userId, 'role': role}),
-      ),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to save role: ${response.body}');
-    }
-  }
+  Future<void> setUserRole({required String userId, required String role}) =>
+      _post('/auth/role', {'user_id': userId, 'role': role});
 
   /// Fetch user role from backend.
   Future<String?> getUserRole(String userId) async {
-    final response = await _sendWithTimeout(
-      http.get(Uri.parse('$_baseUrl/auth/role/$userId')),
-    );
-    if (response.statusCode != 200) return null;
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    return data['role'] as String?;
+    try {
+      final data = await _get('/auth/role/$userId');
+      return data['role'] as String?;
+    } catch (_) { return null; }
   }
 
   // -----------------------------------------------------------------------
@@ -529,16 +488,18 @@ class ApiService {
   // -----------------------------------------------------------------------
 
   Future<List<NewsArticle>> getNews() async {
-    final response = await _sendWithTimeout(
-      http.get(Uri.parse('$_baseUrl/news')),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to fetch news: ${response.body}');
+    try {
+      final response = await _sendWithTimeout(
+        http.get(Uri.parse('$_baseUrl/news')),
+      );
+      if (response.statusCode == 200) {
+        final list = jsonDecode(response.body) as List<dynamic>;
+        return list.map((e) => NewsArticle.fromJson(e as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      if (kDebugMode) print('ApiService.getNews failed: $e');
     }
-    final list = jsonDecode(response.body) as List<dynamic>;
-    return list
-        .map((e) => NewsArticle.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return [];
   }
 
   /// Match a student idea against validated issues.

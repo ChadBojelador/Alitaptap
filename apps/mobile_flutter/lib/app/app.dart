@@ -39,7 +39,6 @@ class AlitaptapApp extends StatefulWidget {
 class _AlitaptapAppState extends State<AlitaptapApp> {
   static const _themeModePrefKey = 'theme_mode';
   ThemeMode _themeMode = ThemeMode.dark;
-  final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -160,7 +159,6 @@ class _AlitaptapAppState extends State<AlitaptapApp> {
       themeMode: _themeMode,
       toggleTheme: toggleTheme,
       child: MaterialApp(
-        navigatorKey: _navigatorKey,
         title: 'ALITAPTAP',
         debugShowCheckedModeBanner: false,
         themeMode: _themeMode,

@@ -77,19 +77,6 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  Future<void> _facebookSignIn() async {
-    final role = _selectedRole ?? 'student';
-    setState(() { _loading = true; _error = null; });
-    try {
-      final result = await _authService.signInWithFacebook(defaultRole: role);
-      widget.onRoleSelected(result);
-    } catch (e) {
-      if (mounted) _setError(e);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -135,18 +122,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       Text('Join ALITAPTAP and make an impact.', style: GoogleFonts.poppins(color: subtleColor, fontSize: 13)),
                       const SizedBox(height: 24),
 
-                      // ── Social buttons ──────────────────────────────
+                      // ── Google button ──────────────────────────────
                       _SocialBtn(
                         onTap: _loading ? null : _googleSignIn,
                         icon: const Icon(Icons.g_mobiledata_rounded, color: Color(0xFF4285F4), size: 26),
                         label: 'Continue with Google',
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 10),
-                      _SocialBtn(
-                        onTap: _loading ? null : _facebookSignIn,
-                        icon: const Icon(Icons.facebook_rounded, color: Color(0xFF1877F2), size: 22),
-                        label: 'Continue with Facebook',
                         isDark: isDark,
                       ),
                       const SizedBox(height: 20),

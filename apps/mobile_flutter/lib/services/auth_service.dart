@@ -1,5 +1,4 @@
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 import 'api_service.dart';
 import 'session_service.dart';
@@ -7,7 +6,10 @@ import '../core/models/app_role.dart';
 
 class AuthService {
   final _api = ApiService();
-  final _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+  final _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    serverClientId: '350012830123-pg5tftq5iihe9q2qg3scqe7nv0be688f.apps.googleusercontent.com',
+  );
 
   Future<void> signIn({required String email, required String password}) async {
     final result = await _api.signIn(email: email, password: password);
@@ -49,33 +51,8 @@ class AuthService {
     return result['role'] as String;
   }
 
-  Future<String> signInWithFacebook({String defaultRole = 'student'}) async {
-    final loginResult = await FacebookAuth.instance.login(
-      permissions: ['email', 'public_profile'],
-    );
-    if (loginResult.status != LoginStatus.success) {
-      throw Exception('Facebook sign-in cancelled');
-    }
-    final userData = await FacebookAuth.instance.getUserData(fields: 'email,id,name');
-    final email = userData['email'] as String? ?? '${userData['id']}@facebook.com';
-    final result = await _api.socialLogin(
-      email: email,
-      provider: 'facebook',
-      providerId: userData['id'] as String,
-      displayName: userData['name'] as String? ?? '',
-      role: defaultRole,
-    );
-    await SessionService.save(
-      uid: result['user_id'] as String,
-      email: result['email'] as String,
-      role: result['role'] as String,
-    );
-    return result['role'] as String;
-  }
-
   Future<void> signOut() async {
     await _googleSignIn.signOut().catchError((_) {});
-    await FacebookAuth.instance.logOut().catchError((_) {});
     await SessionService.clear();
   }
 

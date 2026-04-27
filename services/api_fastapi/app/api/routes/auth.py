@@ -122,20 +122,14 @@ def register(payload: RegisterRequest) -> AuthResponse:
 def login(payload: LoginRequest) -> AuthResponse:
     """Login user."""
     db = get_db()
-    
-    # Find user
     user = db['users'].find_one({'email': payload.email})
     if not user:
         raise HTTPException(status_code=401, detail='Invalid email or password')
-    
-    # Verify password
-    if not verify_password(
-        payload.password,
-        user['password_hash'],
-        user['password_salt'],
-    ):
+    # Social-only accounts have no password
+    if not user.get('password_hash'):
+        raise HTTPException(status_code=401, detail='This account uses Google sign-in. Please use Continue with Google.')
+    if not verify_password(payload.password, user['password_hash'], user['password_salt']):
         raise HTTPException(status_code=401, detail='Invalid email or password')
-    
     return AuthResponse(
         user_id=user['user_id'],
         email=user['email'],

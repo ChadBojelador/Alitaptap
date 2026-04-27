@@ -63,18 +63,6 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
-  Future<void> _facebookSignIn() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final role = await _authService.signInWithFacebook();
-      widget.onRoleSelected(role);
-    } catch (e) {
-      if (mounted) _setError(e);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -125,19 +113,11 @@ class _SignInPageState extends State<SignInPage> {
                           style: GoogleFonts.poppins(color: subtleColor, fontSize: 14, height: 1.6)),
                       const SizedBox(height: 32),
 
-                      // ── Social buttons ──────────────────────────────
+                      // ── Google button ───────────────────────────────
                       _SocialButton(
                         onTap: _loading ? null : _googleSignIn,
                         icon: _GoogleIcon(),
                         label: 'Continue with Google',
-                        isDark: isDark,
-                        cardBg: cardBg,
-                      ),
-                      const SizedBox(height: 10),
-                      _SocialButton(
-                        onTap: _loading ? null : _facebookSignIn,
-                        icon: const Icon(Icons.facebook_rounded, color: Color(0xFF1877F2), size: 22),
-                        label: 'Continue with Facebook',
                         isDark: isDark,
                         cardBg: cardBg,
                       ),
