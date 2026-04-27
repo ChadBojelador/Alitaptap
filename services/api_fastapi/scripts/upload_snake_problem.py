@@ -79,7 +79,7 @@ def main() -> int:
             if primary_path.exists():
                 print(f"  Uploading primary image: {primary_path.name} …")
                 image_url = upload_image(primary_path)
-                print(f"  → {image_url}")
+                print(f"  -> {image_url}")
             else:
                 print(f"  [WARN] Primary image not found: {primary_path_str}")
 
@@ -94,7 +94,7 @@ def main() -> int:
                 print(f"  Uploading extra image:   {extra_path.name} …")
                 url = upload_image(extra_path)
                 extra_image_urls.append(url)
-                print(f"  → {url}")
+                print(f"  -> {url}")
             else:
                 print(f"  [WARN] Extra image not found: {extra_str}")
 
@@ -113,7 +113,7 @@ def main() -> int:
             print(f"  [ERROR] HTTP {e.code}: {body}")
             return 1
 
-    print("\n[SUCCESS] Snake problem post uploaded to MongoDB ✓")
+    print("\n[SUCCESS] Snake problem post uploaded to MongoDB! Done.")
     return 0
 
 
