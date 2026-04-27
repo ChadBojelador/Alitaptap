@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/research_post.dart';
 import '../../../core/models/community_problem_post.dart';
+import '../../../core/models/story_post.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import 'chat_inbox_page.dart';
@@ -22,6 +23,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   final _api = ApiService();
   List<ResearchPost> _posts = [];
   List<_FeedItem> _feedItems = [];
+  List<StoryPost> _stories = [];
   bool _loading = true;
 
   static const _yellow = Color(0xFFFFD60A);
@@ -35,12 +37,13 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     List<ResearchPost> posts = _posts;
-    try {
-      posts = await _api.getPosts();
-    } catch (_) {}
+    List<StoryPost> stories = _stories;
+    try { posts = await _api.getPosts(); } catch (_) {}
+    try { stories = await _api.getStories(); } catch (_) {}
     if (!mounted) return;
     setState(() {
       _posts = posts;
+      _stories = stories;
       _feedItems = _buildFeedItems(posts);
       _loading = false;
     });
@@ -173,6 +176,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                     // ── Stories row ────────────────────────────────────
                     _StoriesRow(
                       isDark: isDark,
+                      stories: _stories,
                     ),
 
                     const SizedBox(height: 14),
@@ -432,8 +436,9 @@ class _FeedItem {
 
 // ── Stories row ────────────────────────────────────────────────────────────────
 class _StoriesRow extends StatelessWidget {
-  const _StoriesRow({required this.isDark});
+  const _StoriesRow({required this.isDark, required this.stories});
   final bool isDark;
+  final List<StoryPost> stories;
 
   static const _yellow = Color(0xFFFFD60A);
 
@@ -488,20 +493,23 @@ class _StoriesRow extends StatelessWidget {
                 );
               },
             ),
-            ...List.generate(4, (index) {
-              final sdgLabels = ['SDG 3', 'SDG 12', 'SDG 11', 'SDG 11'];
-              final bubbleLabels = ['Health', 'Recycling', 'Cities', 'Safety'];
-              final sdgLabel = sdgLabels[index];
-              final color = _storyColor(sdgLabel);
+            ...List.generate(stories.length, (index) {
+              final story = stories[index];
+              final color = _storyColor(story.sdgLabel);
               return _StoryBubble(
-                label: bubbleLabels[index],
-                subtitle: sdgLabel,
-                icon: _storyIcon(sdgLabel),
+                label: story.bubbleLabel,
+                subtitle: story.sdgLabel,
+                icon: _storyIcon(story.sdgLabel),
                 color: color,
                 isDark: isDark,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Stories coming soon.')),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SdgStoryViewer(
+                        stories: stories,
+                        initialIndex: index,
+                      ),
+                    ),
                   );
                 },
               );

@@ -9,6 +9,7 @@ import 'package:alitaptap_mobile/core/models/match_result.dart';
 import 'package:alitaptap_mobile/core/models/news_article.dart';
 import 'package:alitaptap_mobile/core/models/research_backbone.dart';
 import 'package:alitaptap_mobile/core/models/research_post.dart';
+import 'package:alitaptap_mobile/core/models/story_post.dart';
 import 'package:alitaptap_mobile/core/models/title_suggestions.dart';
 
 
@@ -475,6 +476,25 @@ class ApiService {
     }
     final list = jsonDecode(response.body) as List<dynamic>;
     return list.map((e) => e as Map<String, dynamic>).toList();
+  }
+
+  // -----------------------------------------------------------------------
+  // Stories
+  // -----------------------------------------------------------------------
+
+  Future<List<StoryPost>> getStories() async {
+    try {
+      final response = await _sendWithTimeout(
+        http.get(Uri.parse('$_baseUrl/stories')),
+      );
+      if (response.statusCode == 200) {
+        final list = jsonDecode(response.body) as List<dynamic>;
+        return list.map((e) => StoryPost.fromJson(e as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      if (kDebugMode) print('ApiService.getStories failed: $e');
+    }
+    return [];
   }
 
   // -----------------------------------------------------------------------
