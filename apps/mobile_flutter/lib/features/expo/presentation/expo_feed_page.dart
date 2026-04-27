@@ -1163,8 +1163,6 @@ class _CommunityProblemCard extends StatelessWidget {
   final CommunityProblemPost problem;
   final bool isDark;
 
-  static const _yellow = Color(0xFFFFD60A);
-
   @override
   Widget build(BuildContext context) {
     final bg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
