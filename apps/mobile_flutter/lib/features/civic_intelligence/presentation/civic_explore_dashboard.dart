@@ -76,6 +76,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
     final bg = isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF7F8FA);
     final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
+    final headerColor = _amber;
     final subtle = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
 
     return Scaffold(
@@ -93,7 +94,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
               title: Text(
                 'Explore Intelligence',
                 style: GoogleFonts.poppins(
-                  color: textColor,
+                  color: headerColor,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -145,13 +146,51 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
                       children: [
-                        // Map Representation: Static Snapshot (Lighter)
-                        Image.network(
-                          'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1200',
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0D0D0D)),
+                        // Real Live Map Preview
+                        IgnorePointer(
+                          child: FlutterMap(
+                            options: MapOptions(
+                              initialCenter: const latlng.LatLng(12.8797, 121.7740),
+                              initialZoom: 5.0,
+                              minZoom: 3.0,
+                              maxZoom: 18.0,
+                              cameraConstraint: CameraConstraint.contain(
+                                bounds: LatLngBounds(
+                                  const latlng.LatLng(-85.0, -180.0),
+                                  const latlng.LatLng(85.0, 180.0),
+                                ),
+                              ),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                                subdomains: const ['a', 'b', 'c', 'd'],
+                                userAgentPackageName: 'com.alitaptap.mobile',
+                              ),
+                              MarkerLayer(
+                                markers: _liveIssues.where((i) => i.lat != 0 && i.lng != 0).map((issue) {
+                                  return Marker(
+                                    point: latlng.LatLng(issue.lat, issue.lng),
+                                    width: 12,
+                                    height: 12,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: _amber,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: _amber.withValues(alpha: 0.5),
+                                            blurRadius: 4,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
                         ),
                         // Dark Overlay
                         Container(
@@ -190,7 +229,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                                     Text(
                                       'Live Intelligence Map',
                                       style: GoogleFonts.poppins(
-                                        color: Colors.white,
+                                        color: headerColor,
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -238,7 +277,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                           Text(
                             'Opportunity Heatmap',
                             style: GoogleFonts.poppins(
-                              color: textColor,
+                              color: headerColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),
@@ -325,14 +364,14 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Top Research Projects',
-                    style: GoogleFonts.poppins(
-                      color: textColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                    Text(
+                      'Top Research Projects',
+                      style: GoogleFonts.poppins(
+                        color: headerColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
                   Text(
                     'View Expo',
                     style: GoogleFonts.poppins(
