@@ -6,36 +6,6 @@ import '../styles/platform.css';
 
 const ALITAPTAP_API = import.meta.env.VITE_ALITAPTAP_API_URL || 'http://127.0.0.1:8000/api/v1';
 
-const MOCK_RESEARCH = [
-  {
-    post_id: 'mock_post_001',
-    author_email: 'river.guard@up.edu.ph',
-    title: 'River Plastic Recovery Through Community Sorting Stations',
-    abstract: 'This project evaluates low-cost sorting stations near waterways to reduce plastic runoff. We implement physical barriers and community-led sorting to prevent trash from reaching the ocean.',
-    sdg_tags: ['SDG 6', 'SDG 11', 'SDG 14'],
-    likes: 42,
-    reactions: { like: 30, love: 12 }
-  },
-  {
-    post_id: 'mock_post_002',
-    author_email: 'metro.safety@dlsu.edu.ph',
-    title: 'Barangay Flood Early Warning with Low-Cost IoT Sensors',
-    abstract: 'An affordable early-warning concept designed to alert residents before floodwaters become dangerous. Uses ultrasonic sensors and SMS gateways.',
-    sdg_tags: ['SDG 9', 'SDG 11', 'SDG 13'],
-    likes: 89,
-    reactions: { love: 50, wow: 39 }
-  },
-  {
-    post_id: 'mock_post_003',
-    author_email: 'green.mind@dlsu.edu.ph',
-    title: 'Mangrove Reforestation with Bio-Composite Seed Pods',
-    abstract: 'Developing biodegradable pods that protect mangrove seeds from strong tides during the critical early growth phase.',
-    sdg_tags: ['SDG 13', 'SDG 14'],
-    likes: 215,
-    reactions: { love: 150, like: 65 }
-  }
-];
-
 export default function Home({ user }) {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
@@ -52,9 +22,9 @@ export default function Home({ user }) {
     setLoading(true);
     try {
       const res = await axios.get(`${ALITAPTAP_API}/posts`);
-      setPosts(res.data.length > 0 ? res.data : MOCK_RESEARCH);
+      setPosts(res.data);
     } catch {
-      setPosts(MOCK_RESEARCH);
+      setPosts([]);
     }
     setLoading(false);
   };
