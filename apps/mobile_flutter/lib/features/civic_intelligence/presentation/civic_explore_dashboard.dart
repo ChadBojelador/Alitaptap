@@ -174,19 +174,20 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                                 markers: _liveIssues.where((i) => i.lat != 0 && i.lng != 0).map((issue) {
                                   return Marker(
                                     point: latlng.LatLng(issue.lat, issue.lng),
-                                    width: 12,
-                                    height: 12,
+                                    width: 14,
+                                    height: 14,
                                     child: Container(
                                       decoration: BoxDecoration(
                                         color: _amber,
                                         shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: _amber.withValues(alpha: 0.5),
-                                            blurRadius: 4,
-                                            spreadRadius: 2,
-                                          ),
-                                        ],
+                                        border: Border.all(color: Colors.black, width: 0.5),
+                                      ),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.priority_high_rounded,
+                                          color: Colors.black,
+                                          size: 10,
+                                        ),
                                       ),
                                     ),
                                   );

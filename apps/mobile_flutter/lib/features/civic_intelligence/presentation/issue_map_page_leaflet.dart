@@ -422,11 +422,11 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
         .map(
           (issue) => Marker(
             point: latlng.LatLng(issue.lat, issue.lng),
-            width: 38,
-            height: 38,
+            width: 120, // Wider for the bubble
+            height: 60, // Taller for the bubble
             child: GestureDetector(
               onTap: () => _openIssue(issue),
-              child: const _IssuePinMarker(),
+              child: _IssuePinMarker(issue: issue),
             ),
           ),
         )
@@ -760,26 +760,67 @@ class _LeafletIdeaDock extends StatelessWidget {
 }
 
 class _IssuePinMarker extends StatelessWidget {
-  const _IssuePinMarker();
+  const _IssuePinMarker({required this.issue});
+  final Issue issue;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: _leafletYellow.withValues(alpha: 0.93),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.85)),
-        boxShadow: [
-          BoxShadow(
-            color: _leafletYellow.withValues(alpha: 0.45),
-            blurRadius: 12,
-            spreadRadius: 1.6,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Title Bubble
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: _leafletBg.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _leafletYellow.withValues(alpha: 0.4)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: const Center(
-        child: Icon(Icons.location_on_rounded, color: Color(0xFF171100), size: 20),
-      ),
+          child: Text(
+            issue.aiSdgTag ?? issue.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.robotoMono(
+              color: _leafletYellow,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        // The Pin
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _leafletYellow.withValues(alpha: 0.93),
+            border: Border.all(color: Colors.white, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: _leafletYellow.withValues(alpha: 0.45),
+                blurRadius: 10,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.priority_high_rounded,
+              color: Color(0xFF171100),
+              size: 18,
+              weight: 800,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
