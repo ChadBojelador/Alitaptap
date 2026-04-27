@@ -139,13 +139,14 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                         ),
                       ],
                       border: Border.all(
-                        color: _amber.withValues(alpha: 0.3),
-                        width: 2,
+                        color: _amber.withValues(alpha: 0.5),
+                        width: 1.5,
                       ),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      children: [
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(22.5),
+                      child: Stack(
+                        children: [
                         // Real Live Map Preview
                         IgnorePointer(
                           child: FlutterMap(
@@ -262,6 +263,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
               ),
             ),
           ),
+        ),
 
           // ── Opportunity Heatmap ─────────────────────────────────────
           SliverToBoxAdapter(
