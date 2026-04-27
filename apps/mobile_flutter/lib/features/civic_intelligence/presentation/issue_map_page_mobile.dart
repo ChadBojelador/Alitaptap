@@ -377,6 +377,7 @@ class _IssueMapPageState extends State<IssueMapPage>
       return;
     }
 
+    try {
       final futures = _issues.map((issue) async {
         try {
           final point = await controller.toScreenLocation(LatLng(issue.lat, issue.lng));
@@ -387,7 +388,7 @@ class _IssueMapPageState extends State<IssueMapPage>
         } catch (_) {}
         return null;
       });
-      
+
       final results = await Future.wait(futures);
       final positions = <String, Offset>{};
       for (final res in results) {

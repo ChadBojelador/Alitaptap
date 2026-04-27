@@ -1,9 +1,11 @@
-/// Match result returned by POST /mapper/match.
+/// Match result returned by POST /mapper/match and POST /mapper/nearest.
 class MatchResult {
   const MatchResult({
     required this.issueId,
     required this.score,
     required this.reason,
+    this.lat,
+    this.lng,
   });
 
   factory MatchResult.fromJson(Map<String, dynamic> json) {
@@ -11,6 +13,8 @@ class MatchResult {
       issueId: json['issue_id'] as String,
       score: (json['score'] as num).toDouble(),
       reason: json['reason'] as String,
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
     );
   }
 
@@ -23,10 +27,16 @@ class MatchResult {
   /// Human-readable explanation of why this issue matches.
   final String reason;
 
+  /// Geographic coordinates of the issue (populated by /mapper/nearest).
+  final double? lat;
+  final double? lng;
+
   Map<String, dynamic> toJson() => {
         'issue_id': issueId,
         'score': score,
         'reason': reason,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
       };
 }
 

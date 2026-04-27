@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/models/app_role.dart';
 import '../../../core/models/issue.dart';
 import '../../../features/civic_intelligence/presentation/issue_detail_page.dart';
 import '../../../features/civic_intelligence/presentation/issue_map_page.dart';
