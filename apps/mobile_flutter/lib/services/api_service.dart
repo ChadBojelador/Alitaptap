@@ -146,8 +146,8 @@ class ApiService {
   }
 
   /// Get issues, optionally filtered by status.
+  /// Returns only real user-submitted issues from the API.
   Future<List<Issue>> getIssues({String? status}) async {
-    List<Issue> results = [];
     try {
       final uri = Uri.parse('$_baseUrl/issues').replace(
         queryParameters: status != null ? {'status': status} : null,
@@ -157,13 +157,14 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body) as List<dynamic>;
-        results = list.map((e) => Issue.fromJson(e as Map<String, dynamic>)).toList();
+        return list.map((e) => Issue.fromJson(e as Map<String, dynamic>)).toList();
       }
     } catch (e) {
-      if (kDebugMode) print('ApiService.getIssues failed: $e. Returning fallback mocks.');
+      if (kDebugMode) print('ApiService.getIssues failed: $e');
     }
 
-    return results;
+    // Return empty list if backend is unreachable — no mock fallback.
+    return [];
   }
 
   /// Get all AI-validated issues for the expo page.
@@ -287,21 +288,22 @@ class ApiService {
   // -----------------------------------------------------------------------
 
   Future<List<ResearchPost>> getPosts() async {
-    List<ResearchPost> results = [];
     try {
       final response = await _sendWithTimeout(
         http.get(Uri.parse('$_baseUrl/posts')),
       );
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body) as List<dynamic>;
-        results = list.map((e) => ResearchPost.fromJson(e as Map<String, dynamic>)).toList();
+        final results = list.map((e) => ResearchPost.fromJson(e as Map<String, dynamic>)).toList();
+        // Sort by "created_at" descending
+        results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return results;
       }
     } catch (e) {
-      if (kDebugMode) print('ApiService.getPosts failed: $e. Using local mocks.');
+      if (kDebugMode) print('ApiService.getPosts failed: $e');
     }
 
-    results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return results;
+    return [];
   }
 
   Future<ResearchPost> createPost({
