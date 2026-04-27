@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../features/auth/presentation/sign_in_page.dart';
 import '../features/home/presentation/onboarding_carousel_page.dart';
 import '../features/home/presentation/welcome_page.dart';
+import '../services/session_service.dart';
 import 'main_shell.dart';
 
 /// Provides [themeMode] and [toggleTheme] to the entire widget tree so any
@@ -180,10 +182,46 @@ class _RootRouter extends StatefulWidget {
 }
 
 class _RootRouterState extends State<_RootRouter> {
-  static const _defaultRole = 'student';
+  bool _sessionLoaded = false;
+  bool _isLoggedIn = false;
+  String _role = 'student';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSession();
+  }
+
+  Future<void> _loadSession() async {
+    await SessionService.load();
+    if (!mounted) return;
+    setState(() {
+      _isLoggedIn = SessionService.isLoggedIn;
+      _role = SessionService.role.isNotEmpty ? SessionService.role : 'student';
+      _sessionLoaded = true;
+    });
+  }
+
+  void _onRoleSelected(String role) {
+    setState(() {
+      _isLoggedIn = true;
+      _role = role;
+    });
+  }
+
+  void _onSignOut() {
+    setState(() {
+      _isLoggedIn = false;
+      _role = 'student';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (!_sessionLoaded) {
+      return const Scaffold(backgroundColor: Color(0xFF141414));
+    }
+
     return FutureBuilder<SharedPreferences>(
       future: SharedPreferences.getInstance(),
       builder: (context, snap) {
@@ -200,9 +238,15 @@ class _RootRouterState extends State<_RootRouter> {
         if (!seenOnboarding) {
           return OnboardingCarouselPage(onToggleTheme: widget.toggleTheme);
         }
+
+        if (!_isLoggedIn) {
+          return SignInPage(onRoleSelected: _onRoleSelected);
+        }
+
         return MainShell(
-          role: _defaultRole,
+          role: _role,
           onToggleTheme: widget.toggleTheme,
+          onSignOut: _onSignOut,
         );
       },
     );

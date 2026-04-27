@@ -32,9 +32,9 @@ export default function Sidebar() {
 
   const close = () => setOpen(false);
 
-  const handleSignOut = async () => {
-    await axios.get(`${BACKEND_URL}/logout`, { withCredentials: true });
+  const handleSignOut = () => {
     localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
     window.location.href = '/';
   };
 

@@ -86,24 +86,10 @@ function OAuthCallback({ setUser }) {
 }
 
 function App() {
-  // --- AUTH BYPASS FOR DEVELOPMENT ---
-  // Set to true to skip the login screen and use a mock user
-  const BYPASS_AUTH = true; 
-  
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(!BYPASS_AUTH);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (BYPASS_AUTH) {
-      setUser({
-        name: 'dev_alitaptap',
-        email: 'dev@alitaptap.io',
-        role: 'student',
-        agreedToTerms: true
-      });
-      return;
-    }
-    
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -112,7 +98,11 @@ function App() {
         const res = await axios.get(`${BACKEND_URL}/profile`);
         setUser(res.data.user);
       } catch (err) {
-        localStorage.removeItem('token');
+        // Only wipe token on 401 (invalid/expired), not on network errors
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+        }
         setUser(null);
       } finally {
         setLoading(false);
@@ -144,18 +134,18 @@ function App() {
           <TermsRequired user={user} setUser={setUser} />
         } />
 
-        {/* 3. Protected Home Dashboard */}
-        <Route path="/home" element={<Home user={user} />} />
-        <Route path="/dashboard" element={<Dashboard user={user} />} />
-        <Route path="/draft" element={<Draft user={user} />} />
-        <Route path="/draft/:id" element={<Draft user={user} />} />
-        <Route path="/dashboard/trash" element={<Trash user={user} />} />
-        <Route path="/dashboard/account" element={<Account user={user} setUser={setUser} />} />
-        <Route path="/dashboard/persona" element={<Persona user={user} setUser={setUser} />} />
-        <Route path="/dashboard/chat" element={<Chat user={user} />} />
-        <Route path="/research" element={<ResearchDraft user={user} />} />
-        <Route path="/research/:id" element={<ResearchDraft user={user} />} />
-        <Route path="/expo" element={<Expo user={user} />} />
+        {/* 3. Protected Routes */}
+        <Route path="/home" element={user ? <Home user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/dashboard" element={user ? <Dashboard user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/draft" element={user ? <Draft user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/draft/:id" element={user ? <Draft user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/dashboard/trash" element={user ? <Trash user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/dashboard/account" element={user ? <Account user={user} setUser={setUser} /> : <Navigate to="/login" replace />} />
+        <Route path="/dashboard/persona" element={user ? <Persona user={user} setUser={setUser} /> : <Navigate to="/login" replace />} />
+        <Route path="/dashboard/chat" element={user ? <Chat user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/research" element={user ? <ResearchDraft user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/research/:id" element={user ? <ResearchDraft user={user} /> : <Navigate to="/login" replace />} />
+        <Route path="/expo" element={user ? <Expo user={user} /> : <Navigate to="/login" replace />} />
         {/* 4. Catch-all: Redirect unknown URLs to login or dashboard */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

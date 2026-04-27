@@ -1,11 +1,9 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:alitaptap_mobile/core/mock_data.dart';
 import '../../../core/models/research_post.dart';
 import '../../../core/models/community_problem_post.dart';
+import '../../../core/models/story_post.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import 'chat_inbox_page.dart';
@@ -23,9 +21,9 @@ class ExpoFeedPage extends StatefulWidget {
 
 class _ExpoFeedPageState extends State<ExpoFeedPage> {
   final _api = ApiService();
-  final _random = Random();
   List<ResearchPost> _posts = [];
   List<_FeedItem> _feedItems = [];
+  List<StoryPost> _stories = [];
   bool _loading = true;
 
   static const _yellow = Color(0xFFFFD60A);
@@ -39,36 +37,20 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     List<ResearchPost> posts = _posts;
-    try {
-      posts = await _api.getPosts();
-    } catch (_) {}
+    List<StoryPost> stories = _stories;
+    try { posts = await _api.getPosts(); } catch (_) {}
+    try { stories = await _api.getStories(); } catch (_) {}
     if (!mounted) return;
     setState(() {
       _posts = posts;
+      _stories = stories;
       _feedItems = _buildFeedItems(posts);
       _loading = false;
     });
   }
 
   List<_FeedItem> _buildFeedItems(List<ResearchPost> posts) {
-    final items = <_FeedItem>[
-      ...posts.map(_FeedItem.research),
-      ...MockData.communityProblems.map(_FeedItem.community),
-    ];
-
-    items.shuffle(_random);
-    final pinnedIndex = items.indexWhere(_isPinnedSmartBin);
-    if (pinnedIndex > 0) {
-      final pinned = items.removeAt(pinnedIndex);
-      items.insert(0, pinned);
-    }
-
-    return items;
-  }
-
-  bool _isPinnedSmartBin(_FeedItem item) {
-    final title = item.researchPost?.title.toLowerCase() ?? '';
-    return title.startsWith('smartbin connect');
+    return posts.map(_FeedItem.research).toList();
   }
 
   Future<void> _toggleLike(ResearchPost post) async {
@@ -194,6 +176,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                     // ── Stories row ────────────────────────────────────
                     _StoriesRow(
                       isDark: isDark,
+                      stories: _stories,
                     ),
 
                     const SizedBox(height: 14),
@@ -453,8 +436,9 @@ class _FeedItem {
 
 // ── Stories row ────────────────────────────────────────────────────────────────
 class _StoriesRow extends StatelessWidget {
-  const _StoriesRow({required this.isDark});
+  const _StoriesRow({required this.isDark, required this.stories});
   final bool isDark;
+  final List<StoryPost> stories;
 
   static const _yellow = Color(0xFFFFD60A);
 
@@ -509,21 +493,20 @@ class _StoriesRow extends StatelessWidget {
                 );
               },
             ),
-            ...List.generate(MockData.storyPosts.length, (index) {
-              final story = MockData.storyPosts[index];
+            ...List.generate(stories.length, (index) {
+              final story = stories[index];
               final color = _storyColor(story.sdgLabel);
               return _StoryBubble(
                 label: story.bubbleLabel,
                 subtitle: story.sdgLabel,
                 icon: _storyIcon(story.sdgLabel),
                 color: color,
-                imagePath: story.imagePath,
                 isDark: isDark,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => SdgStoryViewer(
-                        stories: MockData.storyPosts,
+                        stories: stories,
                         initialIndex: index,
                       ),
                     ),
@@ -846,6 +829,49 @@ class _PostCardState extends State<_PostCard> {
 
   bool get _liked => widget.post.likedBy.contains(widget.currentUid);
 
+  void _showPostMenu(BuildContext context) {
+    final isDark = widget.isDark;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF444444) : const Color(0xFFDDDDDD),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.share_rounded, color: _yellow),
+              title: Text('Share', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              onTap: () { Navigator.pop(context); widget.onShare(); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.send_rounded, color: _yellow),
+              title: Text('Message Author', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              onTap: () { Navigator.pop(context); widget.onMessage(); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_rounded, color: Color(0xFFEF5350)),
+              title: Text('Report Post', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFFEF5350))),
+              onTap: () { Navigator.pop(context); },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
@@ -917,7 +943,10 @@ class _PostCardState extends State<_PostCard> {
                         )),
                   ),
                 const SizedBox(width: 8),
-                Icon(Icons.more_horiz_rounded, color: subtle, size: 22),
+                GestureDetector(
+                  onTap: () => _showPostMenu(context),
+                  child: Icon(Icons.more_horiz_rounded, color: subtle, size: 22),
+                ),
               ],
             ),
           ),
@@ -1162,8 +1191,6 @@ class _CommunityProblemCard extends StatelessWidget {
 
   final CommunityProblemPost problem;
   final bool isDark;
-
-  static const _yellow = Color(0xFFFFD60A);
 
   @override
   Widget build(BuildContext context) {
@@ -1780,54 +1807,9 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Try to find mock user data
-    Map<String, String>? userData;
-    if (uid != null && MockData.mockUsers.containsKey(uid)) {
-      userData = MockData.mockUsers[uid];
-    } else {
-      // Try finding by email or name
-      final lookupEmail = email.trim().toLowerCase();
-      final lookupName = (name ?? '').trim().toLowerCase();
-      try {
-        final entry = MockData.mockUsers.entries.firstWhere(
-          (e) {
-            final mockEmail = (e.value['email'] ?? '').trim().toLowerCase();
-            final mockName = (e.value['name'] ?? '').trim().toLowerCase();
-            final emailMatch = lookupEmail.isNotEmpty &&
-                (mockEmail == lookupEmail || mockName == lookupEmail);
-            final nameMatch = lookupName.isNotEmpty && mockName == lookupName;
-            return emailMatch || nameMatch;
-          },
-          orElse: () => MapEntry('', <String, String>{}),
-        );
-        if (entry.key.isNotEmpty) userData = entry.value;
-      } catch (_) {}
-    }
-
-    final imageUrl = userData?['avatar'];
-
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      final ImageProvider avatarProvider = imageUrl.startsWith('assets/')
-          ? AssetImage(imageUrl)
-          : NetworkImage(imageUrl);
-
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          image: DecorationImage(
-            image: avatarProvider,
-            fit: BoxFit.cover,
-          ),
-          border: Border.all(color: _yellow.withValues(alpha: 0.4), width: 1.5),
-        ),
-      );
-    }
-
     final label = name?.trim().isNotEmpty == true
         ? name!.trim()
-        : (email.trim().isNotEmpty ? email.trim() : (userData?['name'] ?? ''));
+        : (email.trim().isNotEmpty ? email.trim() : '');
     final initials = label.isNotEmpty ? label[0].toUpperCase() : '?';
 
     return Container(

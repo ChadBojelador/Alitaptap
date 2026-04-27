@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { BACKEND_URL } from '../App';
 import '../styles/expo.css';
@@ -19,8 +19,22 @@ export default function Expo({ user }) {
     title: '', abstract: '', problem_solved: '',
     sdg_tags: '', funding_goal: '',
   });
+  const [menuOpenId, setMenuOpenId] = useState(null);
+  const [editPost, setEditPost] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const menuRef = useRef({});
 
   useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => {
+    const handler = (e) => {
+      const openMenu = menuRef.current[menuOpenId];
+      if (openMenu && !openMenu.contains(e.target)) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpenId]);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -87,6 +101,46 @@ export default function Expo({ user }) {
     setSubmitting(false);
   };
 
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm('Delete this post?')) return;
+    try {
+      await axios.delete(`${ALITAPTAP_API}/posts/${postId}`);
+      setPosts(prev => prev.filter(p => p.post_id !== postId));
+      if (selectedPost?.post_id === postId) setSelectedPost(null);
+    } catch {}
+    setMenuOpenId(null);
+  };
+
+  const openEditPost = (post) => {
+    setEditPost(post);
+    setEditForm({
+      title: post.title,
+      abstract: post.abstract,
+      problem_solved: post.problem_solved,
+      sdg_tags: post.sdg_tags?.join(', ') || '',
+      funding_goal: post.funding_goal || '',
+    });
+    setMenuOpenId(null);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await axios.put(`${ALITAPTAP_API}/posts/${editPost.post_id}`, {
+        title: editForm.title,
+        abstract: editForm.abstract,
+        problem_solved: editForm.problem_solved,
+        sdg_tags: editForm.sdg_tags.split(',').map(s => s.trim()).filter(Boolean),
+        funding_goal: parseFloat(editForm.funding_goal) || 0,
+      });
+      setPosts(prev => prev.map(p => p.post_id === editPost.post_id ? res.data : p));
+      if (selectedPost?.post_id === editPost.post_id) setSelectedPost(res.data);
+      setEditPost(null);
+    } catch {}
+    setSubmitting(false);
+  };
+
   const handleSubmitPost = async (e) => {
     e.preventDefault();
     if (!user) return;
@@ -123,8 +177,9 @@ export default function Expo({ user }) {
           <a href="/research" className="expo-nav-item">✍️ Research</a>
           <a href="/expo" className="expo-nav-item expo-nav-item--active">🚀 Expo</a>
         </nav>
-        <button className="expo-signout" onClick={async () => {
+        <button className="expo-signout" onClick={() => {
           localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
           window.location.href = '/';
         }}>Sign Out</button>
       </aside>
@@ -212,7 +267,7 @@ export default function Expo({ user }) {
         ) : (
           <div className="expo-feed">
             {posts.map(post => (
-              <div key={post.post_id} className="expo-card" onClick={() => openPost(post)}>
+              <div key={post.post_id} className="expo-card">
                 <div className="expo-card-header">
                   <div className="expo-card-avatar">
                     {post.author_email?.[0]?.toUpperCase() || 'R'}
@@ -221,8 +276,18 @@ export default function Expo({ user }) {
                     <span className="expo-card-author">{post.author_email?.split('@')[0]}</span>
                     <span className="expo-card-date">{post.created_at?.split('T')[0]}</span>
                   </div>
+                  <div className="expo-post-menu" ref={el => menuRef.current[post.post_id] = el} onClick={e => e.stopPropagation()}>
+                    <button className="expo-menu-btn" onClick={() => setMenuOpenId(menuOpenId === post.post_id ? null : post.post_id)}>⋯</button>
+                    {menuOpenId === post.post_id && (
+                      <div className="expo-menu-dropdown">
+                        <button onClick={() => openEditPost(post)}>✏️ Edit Post</button>
+                        <button className="expo-menu-delete" onClick={() => handleDeletePost(post.post_id)}>🗑️ Delete Post</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
+                <div className="expo-card-body" onClick={() => openPost(post)}>
                 <h3 className="expo-card-title">{post.title}</h3>
                 <p className="expo-card-abstract">{post.abstract}</p>
 
@@ -247,6 +312,7 @@ export default function Expo({ user }) {
                   </div>
                 )}
 
+                </div>
                 <div className="expo-card-actions" onClick={e => e.stopPropagation()}>
                   <button className="expo-action-btn" onClick={() => handleLike(post.post_id)}>
                     ❤️ {post.likes || 0}
@@ -263,6 +329,46 @@ export default function Expo({ user }) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Edit Post Modal */}
+        {editPost && (
+          <div className="expo-modal-overlay" onClick={() => setEditPost(null)}>
+            <div className="expo-modal" onClick={e => e.stopPropagation()}>
+              <div className="expo-modal-header">
+                <h2>Edit Post</h2>
+                <button className="expo-modal-close" onClick={() => setEditPost(null)}>✕</button>
+              </div>
+              <form onSubmit={handleEditSubmit} className="expo-form">
+                <div className="expo-form-group">
+                  <label>Research Title *</label>
+                  <input required value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} />
+                </div>
+                <div className="expo-form-group">
+                  <label>Abstract *</label>
+                  <textarea required rows={4} value={editForm.abstract} onChange={e => setEditForm(p => ({ ...p, abstract: e.target.value }))} />
+                </div>
+                <div className="expo-form-group">
+                  <label>Problem Solved *</label>
+                  <textarea required rows={2} value={editForm.problem_solved} onChange={e => setEditForm(p => ({ ...p, problem_solved: e.target.value }))} />
+                </div>
+                <div className="expo-form-row">
+                  <div className="expo-form-group">
+                    <label>SDG Tags (comma separated)</label>
+                    <input value={editForm.sdg_tags} onChange={e => setEditForm(p => ({ ...p, sdg_tags: e.target.value }))} />
+                  </div>
+                  <div className="expo-form-group">
+                    <label>Funding Goal (₱)</label>
+                    <input type="number" min="0" value={editForm.funding_goal} onChange={e => setEditForm(p => ({ ...p, funding_goal: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="expo-form-actions">
+                  <button type="button" className="expo-btn-cancel" onClick={() => setEditPost(null)}>Cancel</button>
+                  <button type="submit" className="expo-btn-submit" disabled={submitting}>{submitting ? 'Saving...' : 'Save Changes'}</button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 
