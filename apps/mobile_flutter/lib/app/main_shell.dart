@@ -39,7 +39,7 @@ class _MainShellState extends State<MainShell> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
-        final canCreate = widget.role != 'community';
+        final canCreate = widget.role != 'admin';
         final canReport = widget.role != 'admin';
 
         return SafeArea(
@@ -396,7 +396,7 @@ class _NavItem extends StatelessWidget {
 String _roleDisplayName(String role) {
   switch (role) {
     case 'student': return 'Student / Researcher';
-    case 'community': return 'Community Member';
+    case 'community': return 'Student / Researcher'; // legacy
     case 'admin': return 'Administrator';
     default: return role;
   }

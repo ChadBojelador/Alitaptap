@@ -13,7 +13,6 @@ router = APIRouter(prefix='/auth', tags=['auth'])
 
 
 class Role(str, Enum):
-    community = 'community'
     student = 'student'
     admin = 'admin'
 
@@ -68,10 +67,13 @@ def social_login(payload: SocialLoginRequest) -> AuthResponse:
     db = get_db()
     user = db['users'].find_one({'email': payload.email})
     if user:
+        stored_role = user.get('role', 'student')
+        if stored_role == 'community':
+            stored_role = 'student'
         return AuthResponse(
             user_id=user['user_id'],
             email=user['email'],
-            role=user.get('role', 'student'),
+            role=stored_role,
         )
     user_id = secrets.token_urlsafe(16)
     db['users'].insert_one({
@@ -130,10 +132,13 @@ def login(payload: LoginRequest) -> AuthResponse:
         raise HTTPException(status_code=401, detail='This account uses Google sign-in. Please use Continue with Google.')
     if not verify_password(payload.password, user['password_hash'], user['password_salt']):
         raise HTTPException(status_code=401, detail='Invalid email or password')
+    role = user.get('role', 'student')
+    if role == 'community':
+        role = 'student'
     return AuthResponse(
         user_id=user['user_id'],
         email=user['email'],
-        role=user.get('role', 'student'),
+        role=role,
     )
 
 
@@ -156,4 +161,7 @@ def get_user_role(user_id: str) -> dict:
     doc = db['users'].find_one({'user_id': user_id})
     if not doc:
         return {'user_id': user_id, 'role': 'student'}
-    return {'user_id': user_id, 'role': doc.get('role', 'student')}
+    role = doc.get('role', 'student')
+    if role == 'community':
+        role = 'student'
+    return {'user_id': user_id, 'role': role}

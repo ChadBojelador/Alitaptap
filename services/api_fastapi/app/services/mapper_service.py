@@ -10,16 +10,12 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
-from app.core.firebase import get_db
-
-if TYPE_CHECKING:
-    from google.cloud.firestore_v1.client import Client
+from app.core.mongodb import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -77,20 +73,12 @@ class MapperService:
             ValueError:  If there are no validated issues to match against.
             RuntimeError: If Firebase is not initialised.
         """
-        db: Client = get_db()
+        db = get_db()
 
         # 1. Fetch validated issues ----------------------------------------
-        docs = (
-            db.collection('issues')
-            .where('status', '==', 'validated')
-            .stream()
-        )
-
-        issues: list[dict] = []
-        for doc in docs:
-            data = doc.to_dict()
-            data['_id'] = doc.id
-            issues.append(data)
+        issues = list(db['issues'].find({'status': 'validated'}))
+        for issue in issues:
+            issue['_id'] = str(issue['_id'])
 
         if not issues:
             raise ValueError(
@@ -143,22 +131,18 @@ class MapperService:
                 reason=reason,
             ))
 
-        # 6. Persist mapper run to Firestore --------------------------------
+        # 6. Persist mapper run to MongoDB --------------------------------
         run_doc = {
             'student_id': student_id,
             'idea_text': idea_text,
             'matches': [
-                {
-                    'issue_id': m.issue_id,
-                    'score': m.score,
-                    'reason': m.reason,
-                }
+                {'issue_id': m.issue_id, 'score': m.score, 'reason': m.reason}
                 for m in matches
             ],
             'created_at': datetime.now(timezone.utc),
         }
-        _, ref = db.collection('mapper_runs').add(run_doc)
-        run_id = ref.id
+        result = db['mapper_runs'].insert_one(run_doc)
+        run_id = str(result.inserted_id)
 
         logger.info(
             'Mapper run %s: matched %d issues for student %s',
@@ -180,20 +164,12 @@ class MapperService:
         Returns:
             List of MatchItem sorted by distance (nearest first).
         """
-        db: Client = get_db()
+        db = get_db()
 
         # Fetch all validated issues
-        docs = (
-            db.collection('issues')
-            .where('status', '==', 'validated')
-            .stream()
-        )
-
-        issues: list[dict] = []
-        for doc in docs:
-            data = doc.to_dict()
-            data['_id'] = doc.id
-            issues.append(data)
+        issues = list(db['issues'].find({'status': 'validated'}))
+        for issue in issues:
+            issue['_id'] = str(issue['_id'])
 
         if not issues:
             return []

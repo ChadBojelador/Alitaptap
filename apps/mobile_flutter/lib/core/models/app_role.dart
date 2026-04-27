@@ -1,5 +1,4 @@
 enum AppRole {
-  community,
   student,
   admin,
 }
@@ -7,10 +6,9 @@ enum AppRole {
 extension AppRoleX on AppRole {
   static AppRole fromString(String? value) {
     switch (value) {
-      case 'community':
-        return AppRole.community;
       case 'admin':
         return AppRole.admin;
+      case 'community': // legacy — treat as student
       case 'student':
       default:
         return AppRole.student;
@@ -19,8 +17,6 @@ extension AppRoleX on AppRole {
 
   String get value {
     switch (this) {
-      case AppRole.community:
-        return 'community';
       case AppRole.student:
         return 'student';
       case AppRole.admin:

@@ -20,7 +20,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
-  String? _selectedRole;
+  String? _selectedRole = 'student'; // always student, kept for Google sign-in defaultRole
   bool _loading = false;
   bool _obscurePass = true;
   bool _obscureConfirm = true;
@@ -44,8 +44,8 @@ class _RegisterPageState extends State<RegisterPage> {
     final pass = _passCtrl.text.trim();
     final confirm = _confirmCtrl.text.trim();
 
-    if (email.isEmpty || pass.isEmpty || confirm.isEmpty || _selectedRole == null) {
-      setState(() => _error = 'Please fill in all fields and select a role.');
+    if (email.isEmpty || pass.isEmpty || confirm.isEmpty) {
+      setState(() => _error = 'Please fill in all fields.');
       return;
     }
     if (pass != confirm) {
@@ -55,8 +55,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() { _loading = true; _error = null; });
     try {
-      await _authService.register(email: email, password: pass, role: _selectedRole!);
-      widget.onRoleSelected(_selectedRole!);
+      await _authService.register(email: email, password: pass, role: 'student');
+      widget.onRoleSelected('student');
     } catch (e) {
       if (mounted) _setError(e);
     } finally {
@@ -188,9 +188,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 24),
                       _label('I am a...', textColor),
                       const SizedBox(height: 12),
-                      _RoleCard(icon: Icons.people_alt_rounded, title: 'Community Member', subtitle: 'I want to report local problems.', selected: _selectedRole == 'community', isDark: isDark, onTap: () => setState(() => _selectedRole = 'community')),
-                      const SizedBox(height: 12),
-                      _RoleCard(icon: Icons.school_rounded, title: 'Student / Researcher', subtitle: 'I want to find research opportunities.', selected: _selectedRole == 'student', isDark: isDark, onTap: () => setState(() => _selectedRole = 'student')),
+                      _RoleCard(icon: Icons.people_alt_rounded, title: 'Student / Researcher', subtitle: 'Report problems and find research opportunities.', selected: true, isDark: isDark, onTap: () {}),
                       const SizedBox(height: 32),
                       if (_error != null) ...[  
                         Container(
@@ -209,9 +207,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
-                            color: _selectedRole == null ? _amber.withValues(alpha: 0.3) : _amber,
+                            color: _amber,
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: _selectedRole == null ? [] : [BoxShadow(color: _amber.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 6))],
+                            boxShadow: [BoxShadow(color: _amber.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 6))],
                           ),
                           child: Center(
                             child: _loading

@@ -614,10 +614,4 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-/// Community member home — kept for backward compat.
-class CommunityHomePage extends StatelessWidget {
-  const CommunityHomePage({super.key});
 
-  @override
-  Widget build(BuildContext context) => const StudentHomePage();
-}
