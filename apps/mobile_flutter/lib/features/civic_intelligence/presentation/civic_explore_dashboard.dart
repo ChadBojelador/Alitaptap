@@ -1,10 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:latlong2/latlong.dart' as latlng;
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:alitaptap_mobile/core/models/research_post.dart';
+import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/core/mock_data.dart';
-import 'package:alitaptap_mobile/features/civic_intelligence/presentation/issue_map_page.dart';
+import 'package:alitaptap_mobile/features/civic_intelligence/application/map_engine_rollout.dart';
+import 'package:alitaptap_mobile/features/civic_intelligence/presentation/issue_map_page_leaflet.dart';
 import 'package:alitaptap_mobile/features/expo/presentation/expo_post_detail_page.dart';
+import 'package:alitaptap_mobile/services/api_service.dart';
 
 class CivicExploreDashboard extends StatefulWidget {
   const CivicExploreDashboard({super.key, required this.uid});
@@ -16,9 +22,56 @@ class CivicExploreDashboard extends StatefulWidget {
 
 class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
   static const _amber = Color(0xFFFFC700);
+  final _apiService = ApiService();
+  List<Issue> _liveIssues = [];
+  List<ResearchPost> _livePosts = [];
+  bool _loadingIssues = true;
+  bool _loadingPosts = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLiveData();
+  }
+
+  Future<void> _loadLiveData() async {
+    _loadLiveIssues();
+    _loadLivePosts();
+  }
+
+  Future<void> _loadLiveIssues() async {
+    try {
+      final issues = await _apiService.getIssues(status: 'validated');
+      if (mounted) {
+        setState(() {
+          _liveIssues = issues;
+          _loadingIssues = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingIssues = false);
+    }
+  }
+
+  Future<void> _loadLivePosts() async {
+    try {
+      final posts = await _apiService.getPosts();
+      if (mounted) {
+        setState(() {
+          _livePosts = posts;
+          _loadingPosts = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingPosts = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final mapEngine = MapEngineRollout.resolveForUser(widget.uid);
+    final effectiveMapEngine =
+        (kIsWeb && MapEngineRollout.isAutoMode) ? MapEngine.leaflet : mapEngine;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF7F8FA);
     final cardBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
@@ -66,7 +119,9 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
               padding: const EdgeInsets.all(20),
               child: GestureDetector(
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const IssueMapPage()),
+                  MaterialPageRoute(
+                    builder: (_) => LeafletIssueMapPage(studentId: widget.uid),
+                  ),
                 ),
                 child: Hero(
                   tag: 'mini_map',
@@ -92,13 +147,37 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                       children: [
                         // Map Representation: Live Snapshot
                         AbsorbPointer(
-                          child: MapLibreMap(
-                            styleString: '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}',
-                            initialCameraPosition: const CameraPosition(
-                              target: LatLng(12.8797, 121.7740),
-                              zoom: 4.5,
-                            ),
-                          ),
+                          child: effectiveMapEngine == MapEngine.leaflet
+                              ? FlutterMap(
+                                  options: const MapOptions(
+                                    initialCenter:
+                                        latlng.LatLng(12.8797, 121.7740),
+                                    initialZoom: 4.5,
+                                    interactionOptions:
+                                        InteractionOptions(flags: 0),
+                                  ),
+                                  children: [
+                                    TileLayer(
+                                      urlTemplate:
+                                          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                                      subdomains: const ['a', 'b', 'c', 'd'],
+                                      userAgentPackageName:
+                                          'com.alitaptap.mobile',
+                                    ),
+                                  ],
+                                )
+                              : MapLibreMap(
+                                  styleString:
+                                      '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}',
+                                  initialCameraPosition: const CameraPosition(
+                                    target: LatLng(12.8797, 121.7740),
+                                    zoom: 4.5,
+                                  ),
+                                  annotationOrder: const [],
+                                  annotationConsumeTapEvents: const [
+                                    AnnotationType.circle
+                                  ],
+                                ),
                         ),
                         // Dark Overlay
                         Container(
@@ -126,7 +205,8 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                                   color: _amber,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(Icons.map_rounded, color: Color(0xFF1A1A1A)),
+                                child: const Icon(Icons.map_rounded,
+                                    color: Color(0xFF1A1A1A)),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -168,7 +248,6 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
             ),
           ),
 
-
           // ── Opportunity Heatmap ─────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -200,7 +279,8 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: _amber.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
@@ -217,7 +297,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _SDGGridMatrix(isDark: isDark),
+                  _SDGGridMatrix(isDark: isDark, issues: _liveIssues),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -296,7 +376,18 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final post = MockData.researchPosts[index % MockData.researchPosts.length];
+                if (_livePosts.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Center(
+                      child: Text(
+                        _loadingPosts ? 'Loading projects...' : 'No research projects found.',
+                        style: GoogleFonts.poppins(color: subtle),
+                      ),
+                    ),
+                  );
+                }
+                final post = _livePosts[index % _livePosts.length];
                 return _ResearchListItem(
                   post: post,
                   isDark: isDark,
@@ -311,7 +402,7 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                   ),
                 );
               },
-              childCount: MockData.researchPosts.length,
+              childCount: _livePosts.isEmpty ? 1 : _livePosts.length,
             ),
           ),
 
@@ -321,7 +412,6 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
     );
   }
 }
-
 
 class _ResearchListItem extends StatelessWidget {
   const _ResearchListItem({
@@ -353,11 +443,11 @@ class _ResearchListItem extends StatelessWidget {
             border: Border.all(color: amber.withValues(alpha: 0.1)),
             boxShadow: [
               if (!isDark)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
             ],
           ),
           child: Column(
@@ -373,13 +463,15 @@ class _ResearchListItem extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: amber.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(14),
-                      image: post.imageUrl != null 
-                        ? DecorationImage(image: NetworkImage(post.imageUrl!), fit: BoxFit.cover)
-                        : null,
+                      image: post.imageUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(post.imageUrl!),
+                              fit: BoxFit.cover)
+                          : null,
                     ),
-                    child: post.imageUrl == null 
-                      ? Icon(Icons.science_rounded, color: amber, size: 28)
-                      : null,
+                    child: post.imageUrl == null
+                        ? Icon(Icons.science_rounded, color: amber, size: 28)
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   // Title and Tags
@@ -392,7 +484,8 @@ class _ResearchListItem extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF1A1A1A),
                             height: 1.3,
                           ),
                           maxLines: 2,
@@ -401,21 +494,25 @@ class _ResearchListItem extends StatelessWidget {
                         const SizedBox(height: 6),
                         Wrap(
                           spacing: 6,
-                          children: post.sdgTags.take(3).map((sdg) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: amber.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              sdg,
-                              style: GoogleFonts.robotoMono(
-                                color: amber,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          )).toList(),
+                          children: post.sdgTags
+                              .take(3)
+                              .map((sdg) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: amber.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      sdg,
+                                      style: GoogleFonts.robotoMono(
+                                        color: amber,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
                         ),
                       ],
                     ),
@@ -470,7 +567,8 @@ class _LivePulse extends StatefulWidget {
   State<_LivePulse> createState() => _LivePulseState();
 }
 
-class _LivePulseState extends State<_LivePulse> with SingleTickerProviderStateMixin {
+class _LivePulseState extends State<_LivePulse>
+    with SingleTickerProviderStateMixin {
   late AnimationController _anim;
 
   @override
@@ -529,8 +627,9 @@ class _LivePulseState extends State<_LivePulse> with SingleTickerProviderStateMi
 }
 
 class _SDGGridMatrix extends StatelessWidget {
-  const _SDGGridMatrix({required this.isDark});
+  const _SDGGridMatrix({required this.isDark, required this.issues});
   final bool isDark;
+  final List<Issue> issues;
 
   @override
   Widget build(BuildContext context) {
@@ -554,13 +653,13 @@ class _SDGGridMatrix extends StatelessWidget {
       17: 'Partnerships',
     };
 
-    // Calculate SDG counts from MockData issues
+    // Calculate SDG counts from live issues
     final Map<int, int> counts = {};
     for (var i = 1; i <= 17; i++) {
       counts[i] = 0;
     }
 
-    for (final issue in MockData.issues) {
+    for (final issue in issues) {
       final tag = issue.aiSdgTag ?? '';
       if (tag.startsWith('SDG ')) {
         final numStr = tag.replaceAll('SDG ', '');
@@ -573,7 +672,9 @@ class _SDGGridMatrix extends StatelessWidget {
 
     final activeSdgs = List.generate(17, (i) => i + 1);
     final values = counts.values.toList();
-    final maxCount = values.isEmpty ? 1 : values.reduce((a, b) => a > b ? a : b).clamp(1, 100);
+    final maxCount = values.isEmpty
+        ? 1
+        : values.reduce((a, b) => a > b ? a : b).clamp(1, 100);
 
     return GridView.builder(
       shrinkWrap: true,
@@ -589,16 +690,16 @@ class _SDGGridMatrix extends StatelessWidget {
         final sdgNum = activeSdgs[index];
         final count = counts[sdgNum] ?? 0;
         final intensity = (count / maxCount).clamp(0.05, 1.0);
-        
+
         final Color color;
         if (count == 0) {
-           color = isDark ? const Color(0xFF222222) : Colors.blueGrey.shade50;
+          color = isDark ? const Color(0xFF222222) : Colors.blueGrey.shade50;
         } else {
-           color = Color.lerp(
-             const Color(0xFFFFC700).withValues(alpha: 0.15),
-             const Color(0xFFFFC700),
-             intensity,
-           )!;
+          color = Color.lerp(
+            const Color(0xFFFFC700).withValues(alpha: 0.15),
+            const Color(0xFFFFC700),
+            intensity,
+          )!;
         }
 
         return Container(
@@ -606,7 +707,9 @@ class _SDGGridMatrix extends StatelessWidget {
             color: color,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.05),
               width: 0.5,
             ),
           ),
@@ -619,7 +722,9 @@ class _SDGGridMatrix extends StatelessWidget {
                 style: GoogleFonts.robotoMono(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  color: intensity > 0.6 ? Colors.black : (isDark ? Colors.white : Colors.black87),
+                  color: intensity > 0.6
+                      ? Colors.black
+                      : (isDark ? Colors.white : Colors.black87),
                 ),
               ),
               const SizedBox(height: 2),
@@ -629,8 +734,8 @@ class _SDGGridMatrix extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 8,
                   fontWeight: FontWeight.w700,
-                  color: intensity > 0.6 
-                      ? Colors.black.withValues(alpha: 0.6) 
+                  color: intensity > 0.6
+                      ? Colors.black.withValues(alpha: 0.6)
                       : (isDark ? Colors.white38 : Colors.black45),
                   height: 1.0,
                 ),
@@ -644,4 +749,3 @@ class _SDGGridMatrix extends StatelessWidget {
     );
   }
 }
-

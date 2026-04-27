@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:alitaptap_mobile/core/mock_data.dart';
 import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/core/models/match_result.dart';
 import 'package:alitaptap_mobile/core/models/news_article.dart';
@@ -160,8 +159,8 @@ class ApiService {
   }
 
   /// Get issues, optionally filtered by status.
+  /// Returns only real user-submitted issues from the API.
   Future<List<Issue>> getIssues({String? status}) async {
-    List<Issue> results = [];
     try {
       final uri = Uri.parse('$_baseUrl/issues').replace(
         queryParameters: status != null ? {'status': status} : null,
@@ -171,21 +170,14 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body) as List<dynamic>;
-        results = list.map((e) => Issue.fromJson(e as Map<String, dynamic>)).toList();
+        return list.map((e) => Issue.fromJson(e as Map<String, dynamic>)).toList();
       }
     } catch (e) {
-      if (kDebugMode) print('ApiService.getIssues failed: $e. Returning fallback mocks.');
+      if (kDebugMode) print('ApiService.getIssues failed: $e');
     }
 
-    // Always include mock data if not already present in results to ensure app looks alive
-    final mocks = MockData.issues.where((m) => status == null || m.status == status);
-    for (final m in mocks) {
-      if (!results.any((r) => r.issueId == m.issueId)) {
-        results.add(m);
-      }
-    }
-
-    return results;
+    // Return empty list if backend is unreachable — no mock fallback.
+    return [];
   }
 
   /// Get all AI-validated issues for the expo page.
@@ -309,29 +301,22 @@ class ApiService {
   // -----------------------------------------------------------------------
 
   Future<List<ResearchPost>> getPosts() async {
-    List<ResearchPost> results = [];
     try {
       final response = await _sendWithTimeout(
         http.get(Uri.parse('$_baseUrl/posts')),
       );
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body) as List<dynamic>;
-        results = list.map((e) => ResearchPost.fromJson(e as Map<String, dynamic>)).toList();
+        final results = list.map((e) => ResearchPost.fromJson(e as Map<String, dynamic>)).toList();
+        // Sort by "created_at" descending
+        results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return results;
       }
     } catch (e) {
-      if (kDebugMode) print('ApiService.getPosts failed: $e. Using local mocks.');
+      if (kDebugMode) print('ApiService.getPosts failed: $e');
     }
 
-    // Merge with mock data, avoiding duplicates by title or ID
-    for (final m in MockData.researchPosts) {
-      if (!results.any((r) => r.postId == m.postId || r.title == m.title)) {
-        results.add(m);
-      }
-    }
-    
-    // Sort by "created_at" descending if possible
-    results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return results;
+    return [];
   }
 
   Future<ResearchPost> createPost({

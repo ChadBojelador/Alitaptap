@@ -23,6 +23,7 @@
 | T-13  | Add CI workflows for app and API                   | Platform           | M5        | Team  | P1       | Done        | 2026-04-21 | 2026-04-21 | T-12                               | PR/push triggers run Flutter analyze/tests and FastAPI pytest                                                                                 | .github/workflows/                                                                      |
 | T-14  | Auto-connect idea to best problem match            | Neural Mapper      | M5        | Team  | P1       | Done        | 2026-04-21 | 2026-04-21 | T-05                               | After idea matching, app connects user to top-ranked problem detail automatically                                                             | apps/mobile_flutter/lib/features/neural_mapper/presentation/idea_match_page.dart        |
 | T-15  | Restore visible current-location pin on map        | Civic Intelligence | M5        | Team  | P1       | Done        | 2026-04-21 | 2026-04-21 | T-03                               | The map shows a visible pulsing "you are here" marker that follows projected user coordinates instead of relying on the native location layer | docs/01-tracking/2026-04-21-user-location-blip-fix.md                                   |
+| T-16  | Add Leaflet parallel map rollout gate              | Civic Intelligence | M5        | Team  | P1       | Done        | 2026-04-27 | 2026-04-27 | T-03                               | Map provider can be switched via compile-time flag and percentage rollout while preserving existing IssueMapPage entry points                 | apps/mobile_flutter/lib/features/civic_intelligence/presentation/issue_map_page.dart    |
 
 ## Kanban
 
@@ -65,3 +66,4 @@
 - T-13 (.github/workflows/)
 - T-14 (apps/mobile_flutter/lib/features/neural_mapper/presentation/idea_match_page.dart)
 - T-15 (docs/01-tracking/2026-04-21-user-location-blip-fix.md)
+- T-16 (apps/mobile_flutter/lib/features/civic_intelligence/presentation/issue_map_page_leaflet.dart)
