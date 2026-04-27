@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart' as latlng;
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:maplibre_gl/maplibre_gl.dart' hide LatLng, LatLngBounds;
 import 'package:alitaptap_mobile/core/models/research_post.dart';
 import 'package:alitaptap_mobile/core/models/issue.dart';
 import 'package:alitaptap_mobile/core/mock_data.dart';
