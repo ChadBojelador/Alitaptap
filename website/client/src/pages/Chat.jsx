@@ -146,12 +146,10 @@ export default function Chat({ user }) {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await axios.get(`${API}/logout`, { withCredentials: true });
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    } catch { setToast({ message: 'Failed to log out. Please try again.', type: 'error' }); }
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
+    window.location.href = '/login';
   };
 
   return (

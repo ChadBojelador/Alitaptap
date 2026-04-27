@@ -101,6 +101,7 @@ export default function Account({ user, setUser }) {
         </nav>
         <button className="acc-signout" onClick={() => {
           localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
           window.location.href = '/';
         }}>Sign Out</button>
       </aside>

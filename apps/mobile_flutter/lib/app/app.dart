@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../features/auth/presentation/sign_in_page.dart';
 import '../features/home/presentation/onboarding_carousel_page.dart';
 import '../features/home/presentation/welcome_page.dart';
+import '../services/session_service.dart';
 import 'main_shell.dart';
 
 /// Provides [themeMode] and [toggleTheme] to the entire widget tree so any

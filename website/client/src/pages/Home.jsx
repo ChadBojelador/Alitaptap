@@ -62,6 +62,22 @@ export default function Home({ user }) {
             <span>🚀</span> Expo
           </div>
         </nav>
+        <div className="plat-sidebar-user" style={{ cursor: 'pointer' }} onClick={() => navigate('/dashboard/account')}>
+          <div className="plat-user-avatar">
+            {user?.avatarUrl
+              ? <img src={user.avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              : (user?.displayName || user?.email || 'U')[0].toUpperCase()}
+          </div>
+          <div className="plat-user-info">
+            <span className="plat-user-name">{user?.displayName || user?.email?.split('@')[0] || 'User'}</span>
+            <span className="plat-user-role" style={{ color: '#ef5350', cursor: 'pointer' }} onClick={e => {
+              e.stopPropagation();
+              localStorage.removeItem('token');
+              delete axios.defaults.headers.common['Authorization'];
+              window.location.href = '/';
+            }}>Sign Out</span>
+          </div>
+        </div>
       </aside>
 
       <main className="hf-main">

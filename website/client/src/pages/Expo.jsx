@@ -177,8 +177,9 @@ export default function Expo({ user }) {
           <a href="/research" className="expo-nav-item">✍️ Research</a>
           <a href="/expo" className="expo-nav-item expo-nav-item--active">🚀 Expo</a>
         </nav>
-        <button className="expo-signout" onClick={async () => {
+        <button className="expo-signout" onClick={() => {
           localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
           window.location.href = '/';
         }}>Sign Out</button>
       </aside>

@@ -19,6 +19,7 @@ export default function LoginRegister({ setUser }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -31,6 +32,11 @@ export default function LoginRegister({ setUser }) {
     setError('');
     setSuccessMsg('');
 
+    if (!isLogin && !displayName.trim()) {
+      setError('Display name is required.');
+      setLoading(false);
+      return;
+    }
     if (!isLogin && !agreed) {
       setError('You must agree to the Terms to sign up.');
       setLoading(false);
@@ -48,7 +54,7 @@ export default function LoginRegister({ setUser }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, displayName }),
       });
 
       if (response.ok) {
@@ -57,20 +63,20 @@ export default function LoginRegister({ setUser }) {
           localStorage.setItem('token', data.token);
           axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
           setUser(data.user);
-          navigate('/dashboard');
+          navigate('/home');
         } else {
           const loginRes = await fetch(`${BACKEND_URL}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, displayName }),
           });
           if (loginRes.ok) {
             const data = await loginRes.json();
             localStorage.setItem('token', data.token);
             axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             setSuccessMsg('Account created! Redirecting...');
-            setTimeout(() => { setUser(data.user); navigate('/dashboard'); }, 1200);
+            setTimeout(() => { setUser(data.user); navigate('/home'); }, 1200);
           }
         }
       } else {
@@ -117,6 +123,16 @@ export default function LoginRegister({ setUser }) {
           </p>
 
           <form className="login-form" onSubmit={handleSubmit} autoComplete="off">
+            {!isLogin && (
+              <input
+                type="text"
+                placeholder="Display name"
+                className="input-field"
+                value={displayName}
+                onChange={e => setDisplayName(e.target.value)}
+                required={!isLogin}
+              />
+            )}
             <input
               type="email"
               placeholder="Email address"
@@ -159,7 +175,7 @@ export default function LoginRegister({ setUser }) {
           <div className="auth-switch">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button type="button" className="switch-btn"
-              onClick={() => { setIsLogin(!isLogin); setAgreed(false); setError(''); }}>
+              onClick={() => { setIsLogin(!isLogin); setAgreed(false); setError(''); setDisplayName(''); }}>
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </div>
