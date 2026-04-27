@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 
 import '../../../services/api_service.dart';
@@ -80,10 +82,26 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
               'issueId': m.issueId,
               'score': m.score,
               'reason': m.reason,
+              'address': 'Resolving address...',
+              'lat': m.lat,
+              'lng': m.lng,
             })
             .toList();
         _searchingNearest = false;
       });
+
+      // Resolve addresses in background
+      for (int i = 0; i < _nearestMatches.length; i++) {
+        final addr = await _getAddressFromLatLng(
+          _nearestMatches[i]['lat'] as double,
+          _nearestMatches[i]['lng'] as double,
+        );
+        if (mounted) {
+          setState(() {
+            _nearestMatches[i]['address'] = addr;
+          });
+        }
+      }
     } catch (e) {
       if (!mounted) return;
       // Show sample problems on error or if no real data
@@ -92,6 +110,27 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
         _searchingNearest = false;
       });
     }
+  }
+
+  Future<String> _getAddressFromLatLng(double lat, double lng) async {
+    try {
+      final url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&zoom=16';
+      final response = await http.get(Uri.parse(url), headers: {
+        'User-Agent': 'AlitaptapApp/1.0',
+      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final address = data['display_name'] ?? '';
+        final parts = address.split(', ');
+        if (parts.length > 2) {
+          return '${parts[0]}, ${parts[1]}';
+        }
+        return address;
+      }
+    } catch (e) {
+      debugPrint('Geocoding error: $e');
+    }
+    return 'Coordinates: ${lat.toStringAsFixed(3)}, ${lng.toStringAsFixed(3)}';
   }
 
   Future<void> _toggleLocationSearch() async {
@@ -409,22 +448,39 @@ class _MatchIdeaPageState extends State<MatchIdeaPage> {
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: accentYellowBright.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${((match['score'] as double) * 100).toStringAsFixed(0)}% proximity',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: accentYellowBright,
-                                  ),
-                                ),
-                              ),
+                               Row(
+                                 children: [
+                                   Container(
+                                     padding: const EdgeInsets.symmetric(
+                                         horizontal: 10, vertical: 6),
+                                     decoration: BoxDecoration(
+                                       color: accentYellowBright.withValues(alpha: 0.15),
+                                       borderRadius: BorderRadius.circular(8),
+                                     ),
+                                     child: Text(
+                                       '${((match['score'] as double) * 100).toStringAsFixed(0)}% proximity',
+                                       style: GoogleFonts.poppins(
+                                         fontSize: 11,
+                                         fontWeight: FontWeight.w600,
+                                         color: accentYellowBright,
+                                       ),
+                                     ),
+                                   ),
+                                   const SizedBox(width: 8),
+                                   if (match['address'] != null)
+                                     Expanded(
+                                       child: Text(
+                                         match['address'] as String,
+                                         style: GoogleFonts.poppins(
+                                           fontSize: 11,
+                                           color: subtleColor,
+                                         ),
+                                         maxLines: 1,
+                                         overflow: TextOverflow.ellipsis,
+                                       ),
+                                     ),
+                                 ],
+                               ),
                             ],
                           ),
                         ),

@@ -145,39 +145,13 @@ class _CivicExploreDashboardState extends State<CivicExploreDashboard> {
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
                       children: [
-                        // Map Representation: Live Snapshot
-                        AbsorbPointer(
-                          child: effectiveMapEngine == MapEngine.leaflet
-                              ? FlutterMap(
-                                  options: const MapOptions(
-                                    initialCenter:
-                                        latlng.LatLng(12.8797, 121.7740),
-                                    initialZoom: 4.5,
-                                    interactionOptions:
-                                        InteractionOptions(flags: 0),
-                                  ),
-                                  children: [
-                                    TileLayer(
-                                      urlTemplate:
-                                          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                                      subdomains: const ['a', 'b', 'c', 'd'],
-                                      userAgentPackageName:
-                                          'com.alitaptap.mobile',
-                                    ),
-                                  ],
-                                )
-                              : MapLibreMap(
-                                  styleString:
-                                      '{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}',
-                                  initialCameraPosition: const CameraPosition(
-                                    target: LatLng(12.8797, 121.7740),
-                                    zoom: 4.5,
-                                  ),
-                                  annotationOrder: const [],
-                                  annotationConsumeTapEvents: const [
-                                    AnnotationType.circle
-                                  ],
-                                ),
+                        // Map Representation: Static Snapshot (Lighter)
+                        Image.network(
+                          'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1200',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0D0D0D)),
                         ),
                         // Dark Overlay
                         Container(

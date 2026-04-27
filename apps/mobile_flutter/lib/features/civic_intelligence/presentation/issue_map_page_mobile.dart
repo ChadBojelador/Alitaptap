@@ -345,18 +345,20 @@ class _IssueMapPageState extends State<IssueMapPage>
 
   void _onCameraMove() {
     _projectionTimer?.cancel();
-    _projectionTimer = Timer(const Duration(milliseconds: 16), () {
+    _projectionTimer = Timer(const Duration(milliseconds: 32), () {
       if (mounted) {
-        _updateScreenPositions();
-        _updateUserScreenPosition();
+        unawaited(_updateScreenPositions());
+        unawaited(_updateUserScreenPosition());
       }
     });
 
     final pos = _mapController?.cameraPosition;
-    if (mounted) {
-      setState(() {
-        _zoom    = pos?.zoom    ?? _zoom;
-      });
+    if (pos != null && (pos.zoom - _zoom).abs() > 0.05) {
+      if (mounted) {
+        setState(() {
+          _zoom = pos.zoom;
+        });
+      }
     }
   }
 
@@ -375,16 +377,21 @@ class _IssueMapPageState extends State<IssueMapPage>
       return;
     }
 
-    try {
-      final futures = _issues.map((issue) => 
-        controller.toScreenLocation(LatLng(issue.lat, issue.lng))
-          .then((point) => MapEntry(issue.issueId, Offset(point.x.toDouble(), point.y.toDouble())))
-      );
+      final futures = _issues.map((issue) async {
+        try {
+          final point = await controller.toScreenLocation(LatLng(issue.lat, issue.lng));
+          final offset = Offset(point.x.toDouble(), point.y.toDouble());
+          if (offset.dx > 1 || offset.dy > 1) {
+            return MapEntry(issue.issueId, offset);
+          }
+        } catch (_) {}
+        return null;
+      });
       
       final results = await Future.wait(futures);
       final positions = <String, Offset>{};
       for (final res in results) {
-        if (res.value.dx > 1 || res.value.dy > 1) {
+        if (res != null) {
           positions[res.key] = res.value;
         }
       }
@@ -668,7 +675,7 @@ class _UserLocationBlip extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: _userLocBlue.withValues(alpha: 0.5 * (1 - t)),
+                    color: _cyberGreen.withValues(alpha: 0.5 * (1 - t)),
                     width: 1.5,
                   ),
                 ),
@@ -679,7 +686,7 @@ class _UserLocationBlip extends StatelessWidget {
                 height: 22,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _userLocBlue.withValues(alpha: 0.15),
+                  color: _cyberGreen.withValues(alpha: 0.15),
                 ),
               ),
               // Core dot
@@ -688,11 +695,11 @@ class _UserLocationBlip extends StatelessWidget {
                 height: 12,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _userLocBlue,
+                  color: _cyberGreen,
                   border: Border.all(color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color:       _userLocBlue.withValues(alpha: 0.6),
+                      color:       _cyberGreen.withValues(alpha: 0.6),
                       blurRadius:  10,
                       spreadRadius: 2,
                     ),
@@ -709,13 +716,13 @@ class _UserLocationBlip extends StatelessWidget {
                     color: _darkPanel.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                      color: _userLocBlue.withValues(alpha: 0.5),
+                      color: _cyberGreen.withValues(alpha: 0.5),
                     ),
                   ),
                   child: Text(
                     "YOU'RE HERE",
                     style: GoogleFonts.robotoMono(
-                      color: _userLocBlue,
+                      color: _cyberGreen,
                       fontSize: 5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
@@ -1281,15 +1288,15 @@ class _SidebarIssueRowState extends State<_SidebarIssueRow> {
               height: 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color:        _cyberRed.withValues(alpha: 0.12),
+                color:        _cyberGreen.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                    color: _cyberRed.withValues(alpha: 0.35)),
+                    color: _cyberGreen.withValues(alpha: 0.35)),
               ),
               child: Text(
                 (widget.index + 1).toString().padLeft(2, '0'),
                 style: GoogleFonts.robotoMono(
-                  color:      _cyberRed,
+                  color:      _cyberGreen,
                   fontSize:   9,
                   fontWeight: FontWeight.w700,
                 ),

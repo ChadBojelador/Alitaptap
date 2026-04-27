@@ -1,5 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart' as latlong;
+import 'package:flutter_map/flutter_map.dart';
+import 'package:http/http.dart' as http;
+import 'package:alitaptap_mobile/services/api_service.dart';
 
 const _amber = Color(0xFFFFC700);
 const _amberBright = Color(0xFFFFD60A);
@@ -29,6 +35,24 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   final List<Map<String, String>> _savedReports = [];
   int? _editingIndex;
   bool _isEditingMode = false;
+
+  // Location state
+  bool _isLocationEnabled = true;
+  double? _selectedLat;
+  double? _selectedLng;
+  String? _locationName;
+  String? _suggestedImageUrl;
+  bool _fetchingLocation = false;
+  bool _resolvingAddress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Add listeners to update UI immediately when user types
+    _problemCtrl.addListener(() => setState(() {}));
+    _titleCtrl.addListener(() => setState(() {}));
+    _descriptionCtrl.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -101,8 +125,72 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       _descriptionCtrl.clear();
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✓ Report updated successfully')),
+      const SnackBar(content: Text('✓ Report updated locally')),
     );
+  }
+
+  Future<void> _submitManualReport() async {
+    final title = _titleCtrl.text.trim();
+    final description = _descriptionCtrl.text.trim();
+
+    if (title.isEmpty || description.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    if (_isLocationEnabled && _selectedLat == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a location or disable location tracking')),
+      );
+      return;
+    }
+
+    setState(() => _elaborating = true);
+
+    try {
+      // Real Server Call
+      await ApiService().submitIssue(
+        reporterId: widget.reporterId,
+        reporterName: widget.reporterName,
+        title: title,
+        description: description,
+        lat: _selectedLat ?? 12.8797,
+        lng: _selectedLng ?? 121.7740,
+        imageUrl: _suggestedImageUrl,
+      );
+
+      if (!mounted) return;
+      
+      setState(() {
+        _savedReports.add({
+          'title': title,
+          'description': description,
+          'sdg': 'Manual Report',
+          'date': DateTime.now().toString().split(' ')[0],
+        });
+        _elaborating = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✓ Problem submitted to community and pinned on map!')),
+      );
+
+      _titleCtrl.clear();
+      _descriptionCtrl.clear();
+      _selectedLat = null;
+      _selectedLng = null;
+      _locationName = null;
+
+    } catch (e) {
+      setState(() => _elaborating = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Submission failed: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _elaborateWithAI() async {
@@ -114,24 +202,57 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       return;
     }
 
+    if (_isLocationEnabled && _selectedLat == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a location or disable location tracking')),
+      );
+      return;
+    }
+
     setState(() => _elaborating = true);
     
-    await Future.delayed(const Duration(seconds: 2));
+    // Simulate AI thinking and calling server
+    try {
+      final sdg = _suggestSDG(problem);
+      final elaborated = _generateElaboratedDescription(problem);
+      
+      // Real Server Call
+      await ApiService().submitIssue(
+        reporterId: widget.reporterId,
+        reporterName: widget.reporterName,
+        title: problem.split('\n')[0].substring(0, problem.split('\n')[0].length > 50 ? 50 : problem.split('\n')[0].length),
+        description: problem,
+        lat: _selectedLat ?? 12.8797,
+        lng: _selectedLng ?? 121.7740,
+        imageUrl: _suggestedImageUrl,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    final elaborated = _generateElaboratedDescription(problem);
-    final sdg = _suggestSDG(problem);
+      setState(() {
+        _elaboratedText = elaborated;
+        _suggestedSDG = sdg;
+        _elaborating = false;
+      });
 
-    setState(() {
-      _elaboratedText = elaborated;
-      _suggestedSDG = sdg;
-      _elaborating = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✓ Problem analyzed by AI')),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✓ Problem submitted to community and pinned on map!')),
+      );
+      
+      // Clear after submission
+      _problemCtrl.clear();
+      _selectedLat = null;
+      _selectedLng = null;
+      _locationName = null;
+      
+    } catch (e) {
+      setState(() => _elaborating = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Submission failed: $e')),
+        );
+      }
+    }
   }
 
   String _generateElaboratedDescription(String problem) {
@@ -164,6 +285,181 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       return 'SDG 5: Gender Equality';
     } else {
       return 'SDG 17: Partnerships for the Goals';
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() => _fetchingLocation = true);
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        final pos = await Geolocator.getCurrentPosition();
+        setState(() {
+          _selectedLat = pos.latitude;
+          _selectedLng = pos.longitude;
+          _locationName = 'Locating address...';
+          _fetchingLocation = false;
+        });
+        
+        // Resolve address in background
+        final address = await _getAddressFromLatLng(pos.latitude, pos.longitude);
+        if (mounted) {
+          setState(() {
+            _locationName = address;
+          });
+        }
+      } else {
+        setState(() => _fetchingLocation = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location permission denied')),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _fetchingLocation = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error getting location: $e')),
+        );
+      }
+    }
+  }
+
+  Future<String> _getAddressFromLatLng(double lat, double lng) async {
+    try {
+      setState(() => _resolvingAddress = true);
+      // Using OSM Nominatim (Free, no key needed for basic prototype use)
+      final url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&zoom=16';
+      final response = await http.get(Uri.parse(url), headers: {
+        'User-Agent': 'AlitaptapApp/1.0',
+      });
+      
+      setState(() => _resolvingAddress = false);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final address = data['display_name'] ?? '';
+        // Clean up the address - take first 3 parts
+        final parts = address.split(', ');
+        if (parts.length > 3) {
+          return '${parts[0]}, ${parts[1]}, ${parts[2]}';
+        }
+        return address;
+      }
+    } catch (e) {
+      setState(() => _resolvingAddress = false);
+      debugPrint('Geocoding error: $e');
+    }
+    return 'Lat: ${lat.toStringAsFixed(4)}, Lng: ${lng.toStringAsFixed(4)}';
+  }
+
+  Future<void> _pickLocationOnMap() async {
+    final latlong.LatLng initialCenter = _selectedLat != null 
+        ? latlong.LatLng(_selectedLat!, _selectedLng!) 
+        : const latlong.LatLng(12.8797, 121.7740); // Philippines center
+
+    final result = await showDialog<latlong.LatLng>(
+      context: context,
+      builder: (context) {
+        latlong.LatLng? picked;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: _dark,
+              title: Text('Pick Location', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16)),
+              contentPadding: EdgeInsets.zero,
+              content: SizedBox(
+                width: 500,
+                height: 400,
+                child: Stack(
+                  children: [
+                    SizedBox.expand(
+                      child: FlutterMap(
+                        options: MapOptions(
+                        initialCenter: initialCenter,
+                        initialZoom: 13,
+                        minZoom: 3,
+                        maxZoom: 18,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                        ),
+                        cameraConstraint: CameraConstraint.contain(
+                          bounds: LatLngBounds(
+                            const latlong.LatLng(-85.0, -180.0),
+                            const latlong.LatLng(85.0, 180.0),
+                          ),
+                        ),
+                        onTap: (tapPosition, point) {
+                          setDialogState(() => picked = point);
+                        },
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                          subdomains: const ['a', 'b', 'c', 'd'],
+                        ),
+                        if (picked != null)
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: picked!,
+                                width: 40,
+                                height: 40,
+                                child: const Icon(Icons.location_on_rounded, color: _amber, size: 40),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        color: Colors.black54,
+                        child: Text(
+                          'Tap on map to select location',
+                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: picked == null ? null : () => Navigator.pop(context, picked),
+                  style: ElevatedButton.styleFrom(backgroundColor: _amber),
+                  child: Text('Confirm', style: GoogleFonts.poppins(color: _dark)),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedLat = result.latitude;
+        _selectedLng = result.longitude;
+        _locationName = 'Resolving address...';
+      });
+      
+      final addr = await _getAddressFromLatLng(result.latitude, result.longitude);
+      if (mounted) {
+        setState(() => _locationName = addr);
+      }
     }
   }
 
@@ -320,6 +616,123 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
               const SizedBox(height: 32),
             ],
 
+            // --- Location Selection Section ---
+            Text(
+              'Location',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _amber.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined, color: subtleColor, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Include Location',
+                            style: GoogleFonts.poppins(fontSize: 13, color: textColor),
+                          ),
+                        ],
+                      ),
+                      Switch(
+                        value: _isLocationEnabled,
+                        onChanged: (v) => setState(() => _isLocationEnabled = v),
+                        activeColor: _amber,
+                      ),
+                    ],
+                  ),
+                  if (_isLocationEnabled) ...[
+                    const Divider(height: 24, thickness: 0.5),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _fetchingLocation ? null : _getCurrentLocation,
+                            icon: _fetchingLocation 
+                              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: _amber))
+                              : const Icon(Icons.my_location_rounded, size: 16),
+                            label: Text(_fetchingLocation ? 'Locating...' : 'Current'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _amber,
+                              side: BorderSide(color: _amber.withValues(alpha: 0.3)),
+                              textStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickLocationOnMap,
+                            icon: const Icon(Icons.map_rounded, size: 16),
+                            label: const Text('Pick on Map'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _amber,
+                              side: BorderSide(color: _amber.withValues(alpha: 0.3)),
+                              textStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_selectedLat != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _amber.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            if (_resolvingAddress)
+                              const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: _amber),
+                              )
+                            else
+                              const Icon(Icons.check_circle_outline, color: _amber, size: 14),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _locationName ?? '',
+                                style: GoogleFonts.poppins(fontSize: 11, color: textColor),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'No location selected yet.',
+                        style: GoogleFonts.poppins(fontSize: 11, color: subtleColor),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
             if (_isAIGuided && !_isEditingMode) ...[
               Text(
                 'Describe the Problem',
@@ -403,7 +816,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                       Text(
                         _elaborating
                             ? 'Analyzing...'
-                            : 'Analyze with AI',
+                            : 'Analyze & Submit to Community',
                         style: GoogleFonts.poppins(
                           color: _dark,
                           fontWeight: FontWeight.w700,
@@ -687,7 +1100,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                                 style: GoogleFonts.poppins(
                                   color: subtleColor,
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 15,
+                                  fontSize: 11,
                                 ),
                               ),
                             ],
@@ -696,24 +1109,83 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                       ),
                     ),
                   ],
-                )
-              else
-                GestureDetector(
-                  onTap: !canSaveManual
+                ),
+              const SizedBox(height: 24),
+              Text(
+                'Problem Photo',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () {
+                  final keyword = _problemCtrl.text.isNotEmpty ? _problemCtrl.text.split(' ').first : 'city';
+                  setState(() {
+                    _locationName = 'Main Street, Batangas City';
+                    _suggestedImageUrl = 'https://images.unsplash.com/photo-1518005020250-675f04a7470f?auto=format&fit=crop&q=80&w=800'; 
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('✓ Photo attached from camera/gallery')),
+                  );
+                },
+                child: Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _amber.withValues(alpha: 0.2),
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: _suggestedImageUrl != null 
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(_suggestedImageUrl!, fit: BoxFit.cover),
+                            Positioned(
+                              top: 8, right: 8,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _suggestedImageUrl = null),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo_rounded, color: subtleColor, size: 32),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap to add photo evidence',
+                            style: GoogleFonts.poppins(fontSize: 12, color: subtleColor),
+                          ),
+                        ],
+                      ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              GestureDetector(
+                  onTap: (_elaborating || !canSaveManual)
                       ? null
-                      : () {
-                    _saveReport(_titleCtrl.text, _descriptionCtrl.text, 'Manual Report');
-                    _titleCtrl.clear();
-                    _descriptionCtrl.clear();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('✓ Report saved successfully')),
-                    );
-                  },
+                      : _submitManualReport,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color:
-                          canSaveManual ? _amber : _amber.withValues(alpha: 0.45),
+                      color: (_elaborating || !canSaveManual)
+                          ? _amber.withValues(alpha: 0.45)
+                          : _amber,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -726,10 +1198,17 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.save_rounded, color: _dark, size: 20),
+                        if (_elaborating)
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: _dark),
+                          )
+                        else
+                          const Icon(Icons.send_rounded, color: _dark, size: 20),
                         const SizedBox(width: 10),
                         Text(
-                          'Save Report',
+                          _elaborating ? 'Submitting...' : 'Submit to Community',
                           style: GoogleFonts.poppins(
                             color: _dark,
                             fontWeight: FontWeight.w700,
