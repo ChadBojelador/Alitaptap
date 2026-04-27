@@ -252,8 +252,8 @@ class _LeafletIssueMapPageState extends State<LeafletIssueMapPage> {
                         _userPosition!.latitude,
                         _userPosition!.longitude,
                       ),
-                      width: 44,
-                      height: 44,
+                      width: 140,
+                      height: 80,
                       child: const _UserLocationMarker(),
                     ),
                   ],
@@ -671,21 +671,158 @@ class _LeafletFabCluster extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FloatingActionButton.small(
+        _LeafletFabWithTooltip(
           heroTag: 'leaflet-report',
-          backgroundColor: _leafletYellow,
-          foregroundColor: const Color(0xFF171100),
+          icon: Icons.add_location_alt_rounded,
+          tooltip: 'Report a local problem',
+          isFilled: true,
           onPressed: onReport,
-          child: const Icon(Icons.add_location_alt_rounded),
+          delay: const Duration(milliseconds: 800),
         ),
         const SizedBox(height: 10),
-        FloatingActionButton.small(
+        _LeafletFabWithTooltip(
           heroTag: 'leaflet-research',
-          backgroundColor: _leafletPanel,
-          foregroundColor: _leafletYellow,
+          icon: Icons.psychology_alt_rounded,
+          tooltip: 'Match idea to problems',
+          isFilled: false,
           onPressed: onResearch,
-          child: const Icon(Icons.psychology_alt_rounded),
+          delay: const Duration(milliseconds: 1400),
         ),
+      ],
+    );
+  }
+}
+
+class _LeafletFabWithTooltip extends StatefulWidget {
+  const _LeafletFabWithTooltip({
+    required this.heroTag,
+    required this.icon,
+    required this.tooltip,
+    required this.isFilled,
+    required this.onPressed,
+    this.delay = Duration.zero,
+  });
+
+  final String heroTag;
+  final IconData icon;
+  final String tooltip;
+  final bool isFilled;
+  final VoidCallback onPressed;
+  final Duration delay;
+
+  @override
+  State<_LeafletFabWithTooltip> createState() => _LeafletFabWithTooltipState();
+}
+
+class _LeafletFabWithTooltipState extends State<_LeafletFabWithTooltip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+  bool _visible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _anim = CurvedAnimation(
+      parent: _ctrl,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeIn,
+    );
+
+    Future.delayed(widget.delay, () {
+      if (!mounted) return;
+      setState(() => _visible = true);
+      _ctrl.forward();
+      Future.delayed(const Duration(seconds: 4), () {
+        if (!mounted) return;
+        _ctrl.reverse().then((_) {
+          if (mounted) setState(() => _visible = false);
+        });
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        FloatingActionButton.small(
+          heroTag: widget.heroTag,
+          backgroundColor:
+              widget.isFilled ? _leafletYellow : _leafletPanel,
+          foregroundColor:
+              widget.isFilled ? const Color(0xFF171100) : _leafletYellow,
+          onPressed: widget.onPressed,
+          child: Icon(widget.icon),
+        ),
+        if (_visible)
+          AnimatedBuilder(
+            animation: _anim,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _anim.value.clamp(0.0, 1.0),
+                child: Transform.translate(
+                  offset: Offset(6 * (1 - _anim.value), 0),
+                  child: child,
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(left: 10),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: _leafletPanel.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _leafletYellow.withValues(alpha: 0.30),
+                  width: 0.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(2, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: _leafletYellow,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    widget.tooltip,
+                    style: GoogleFonts.robotoMono(
+                      color: _leafletYellow.withValues(alpha: 0.9),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -825,30 +962,183 @@ class _IssuePinMarker extends StatelessWidget {
   }
 }
 
-class _UserLocationMarker extends StatelessWidget {
+class _UserLocationMarker extends StatefulWidget {
   const _UserLocationMarker();
 
   @override
+  State<_UserLocationMarker> createState() => _UserLocationMarkerState();
+}
+
+class _UserLocationMarkerState extends State<_UserLocationMarker>
+    with TickerProviderStateMixin {
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulseAnim;
+  late final AnimationController _bubbleCtrl;
+  late final Animation<double> _bubbleAnim;
+  bool _showBubble = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Continuous pulse
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+    _pulseAnim = CurvedAnimation(
+      parent: _pulseCtrl,
+      curve: Curves.easeOut,
+    );
+
+    // "You're here" bubble
+    _bubbleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _bubbleAnim = CurvedAnimation(
+      parent: _bubbleCtrl,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeIn,
+    );
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      setState(() => _showBubble = true);
+      _bubbleCtrl.forward();
+      Future.delayed(const Duration(seconds: 5), () {
+        if (!mounted) return;
+        _bubbleCtrl.reverse().then((_) {
+          if (mounted) setState(() => _showBubble = false);
+        });
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    _bubbleCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _leafletYellow.withValues(alpha: 0.23),
-          ),
-        ),
-        Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _leafletYellow,
-            border: Border.all(color: Colors.white, width: 1.8),
-          ),
+        // "You're here" bubble
+        if (_showBubble)
+          AnimatedBuilder(
+            animation: _bubbleAnim,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _bubbleAnim.value.clamp(0.0, 1.0),
+                child: Transform.translate(
+                  offset: Offset(0, 4 * (1 - _bubbleAnim.value)),
+                  child: child,
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: _leafletPanel.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _leafletYellow.withValues(alpha: 0.45),
+                  width: 0.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _leafletYellow.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.near_me_rounded,
+                    color: _leafletYellow,
+                    size: 10,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "You're here",
+                    style: GoogleFonts.robotoMono(
+                      color: _leafletYellow,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          const SizedBox(height: 26),
+
+        // Animated pin
+        AnimatedBuilder(
+          animation: _pulseAnim,
+          builder: (context, _) {
+            final t = _pulseAnim.value;
+            return SizedBox(
+              width: 52,
+              height: 52,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outer pulse ring
+                  Container(
+                    width: 22 + (30 * t),
+                    height: 22 + (30 * t),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _leafletYellow
+                            .withValues(alpha: 0.45 * (1 - t)),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  // Glow halo
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _leafletYellow.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  // Core dot
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _leafletYellow,
+                      border:
+                          Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _leafletYellow
+                              .withValues(alpha: 0.6),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );

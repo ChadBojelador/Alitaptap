@@ -131,6 +131,183 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
     }
   }
 
+  Widget _buildImpactSection(ImpactPrediction impact, bool isDark) {
+    Color _overallColor() {
+      if (impact.overall >= 75) return const Color(0xFF30D158);
+      if (impact.overall >= 50) return const Color(0xFFFFD60A);
+      return const Color(0xFFFF9F0A);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF000000).withValues(alpha: 0.4)
+            : const Color(0xFFF2F2F7),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with overall score
+          Row(
+            children: [
+              Icon(
+                Icons.insights_rounded,
+                size: 16,
+                color: _overallColor(),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Impact Prediction',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? const Color(0xFFE5E5EA)
+                      : const Color(0xFF3C3C43),
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _overallColor().withValues(alpha: 0.2),
+                      _overallColor().withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${impact.overall.toStringAsFixed(0)}%',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _overallColor(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Impact bars
+          _buildImpactBar(
+            label: 'Social',
+            value: impact.social,
+            icon: Icons.people_rounded,
+            color: const Color(0xFF5E5CE6),
+            isDark: isDark,
+          ),
+          const SizedBox(height: 10),
+          _buildImpactBar(
+            label: 'Environmental',
+            value: impact.environmental,
+            icon: Icons.eco_rounded,
+            color: const Color(0xFF30D158),
+            isDark: isDark,
+          ),
+          const SizedBox(height: 10),
+          _buildImpactBar(
+            label: 'Economic',
+            value: impact.economic,
+            icon: Icons.trending_up_rounded,
+            color: const Color(0xFFFF9F0A),
+            isDark: isDark,
+          ),
+
+          // Summary
+          if (impact.summary.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              impact.summary,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: isDark
+                    ? const Color(0xFF8E8E93)
+                    : const Color(0xFF6C6C70),
+                height: 1.4,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImpactBar({
+    required String label,
+    required double value,
+    required IconData icon,
+    required Color color,
+    required bool isDark,
+  }) {
+    final fraction = (value / 100).clamp(0.0, 1.0);
+
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color.withValues(alpha: 0.8)),
+        const SizedBox(width: 6),
+        SizedBox(
+          width: 88,
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isDark
+                  ? const Color(0xFFAEAEB2)
+                  : const Color(0xFF48484A),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 8,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF2C2C2E)
+                  : const Color(0xFFE5E5EA),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: fraction,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withValues(alpha: 0.7),
+                      color,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 36,
+          child: Text(
+            '${value.toStringAsFixed(0)}%',
+            textAlign: TextAlign.right,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -482,49 +659,70 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
                               i < _titleSuggestions!.suggestions.length;
                               i++)
                             Container(
-                              margin: const EdgeInsets.only(bottom: 12),
+                              margin: const EdgeInsets.only(bottom: 16),
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? const Color(0xFF1C1C1E)
                                     : const Color(0xFFFFFFFF),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF2C2C2E)
+                                      : const Color(0xFFE5E5EA),
+                                  width: 0.5,
+                                ),
                               ),
-                              child: Row(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFD60A)
-                                          .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      '${i + 1}',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFFFFD60A),
+                                  // Title row
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFD60A)
+                                              .withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '${i + 1}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFFFFD60A),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      _titleSuggestions!.suggestions[i],
-                                      style: GoogleFonts.inter(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark
-                                            ? const Color(0xFFFFFFFF)
-                                            : const Color(0xFF000000),
-                                        height: 1.4,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _titleSuggestions!.suggestions[i],
+                                          style: GoogleFonts.inter(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDark
+                                                ? const Color(0xFFFFFFFF)
+                                                : const Color(0xFF000000),
+                                            height: 1.4,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
+
+                                  // Impact prediction section
+                                  if (i < _titleSuggestions!.suggestionDetails.length) ...[
+                                    const SizedBox(height: 16),
+                                    _buildImpactSection(
+                                      _titleSuggestions!.suggestionDetails[i].impact,
+                                      isDark,
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

@@ -29,6 +29,16 @@ class FeasibilityScore(BaseModel):
     data_availability: str
 
 
+class CommunityImpact(BaseModel):
+    """Community impact assessment."""
+    
+    social: float
+    environmental: float
+    economic: float
+    overall: float
+    summary: str
+
+
 class ResearchBackboneResponse(BaseModel):
     """Generated research backbone."""
 
@@ -36,7 +46,7 @@ class ResearchBackboneResponse(BaseModel):
     methodology: str
     sdg_alignment: list[str]
     feasibility_score: FeasibilityScore
-    community_impact_level: str
+    community_impact_level: CommunityImpact
 
 
 _service = ResearchBackboneService()

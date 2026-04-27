@@ -27,7 +27,7 @@ class ResearchBackbone:
     methodology: str
     sdg_alignment: list[str]
     feasibility_score: dict[str, str]  # cost, time, data_availability
-    community_impact_level: str  # low, medium, high
+    community_impact_level: dict  # {social, environmental, economic, overall, summary}
 
 
 class ResearchBackboneService:
@@ -61,7 +61,7 @@ class ResearchBackboneService:
         methodology = self._generate_methodology(approach)
         sdg_tags = self._extract_sdg_tags(sdg_or_idea, problem)
         feasibility = self._assess_feasibility(approach)
-        impact = self._estimate_impact(problem, approach)
+        impact = self._estimate_impact(problem, approach, sdg_or_idea)
 
         return ResearchBackbone(
             research_title=title,
@@ -144,31 +144,71 @@ class ResearchBackboneService:
             "data_availability": data_availability,
         }
 
-    def _estimate_impact(self, problem: str, approach: str) -> str:
-        """Estimate expected community impact level."""
-        # Heuristic: assess based on problem severity and approach scope
-        problem_lower = problem.lower()
-        approach_lower = approach.lower()
+    def _estimate_impact(
+        self, problem: str, approach: str, sdg_or_idea: str
+    ) -> dict:
+        """Estimate multi-dimensional community impact with percentages.
 
-        # Check for high-impact indicators
-        high_impact_keywords = [
-            "scalable",
-            "sustainable",
-            "systemic",
-            "community-wide",
-            "policy",
-            "infrastructure",
-        ]
-        medium_impact_keywords = [
-            "pilot",
-            "local",
-            "targeted",
-            "intervention",
-        ]
+        Returns a dict with social, environmental, economic scores (0-100),
+        an overall score, and a human-readable summary.
+        """
+        combined = f"{problem} {approach} {sdg_or_idea}".lower()
 
-        if any(word in approach_lower for word in high_impact_keywords):
-            return "High"
-        elif any(word in approach_lower for word in medium_impact_keywords):
-            return "Medium"
-        else:
-            return "Medium"
+        # ── Social impact keywords ──────────────────────────────────
+        social_keywords = {
+            "community": 12, "people": 10, "health": 14, "education": 13,
+            "poverty": 15, "welfare": 12, "equity": 11, "access": 10,
+            "inclusion": 13, "vulnerable": 14, "youth": 11, "women": 12,
+            "children": 13, "safety": 10, "rights": 11, "hunger": 14,
+            "well-being": 12, "social": 10, "livelihood": 13, "housing": 11,
+        }
+
+        # ── Environmental impact keywords ───────────────────────────
+        env_keywords = {
+            "climate": 14, "water": 13, "pollution": 15, "waste": 14,
+            "biodiversity": 12, "ecosystem": 13, "deforestation": 15,
+            "sustainability": 12, "emission": 14, "renewable": 13,
+            "conservation": 12, "flood": 13, "drought": 12, "soil": 10,
+            "ocean": 11, "energy": 10, "green": 10, "carbon": 13,
+            "recycle": 12, "environment": 11,
+        }
+
+        # ── Economic impact keywords ────────────────────────────────
+        econ_keywords = {
+            "economic": 12, "income": 13, "employment": 14, "business": 12,
+            "market": 11, "productivity": 13, "growth": 12, "trade": 10,
+            "cost": 10, "investment": 13, "infrastructure": 14,
+            "agriculture": 12, "industry": 11, "tourism": 12,
+            "innovation": 13, "technology": 12, "scalable": 14,
+            "funding": 11, "revenue": 12, "supply": 10,
+        }
+
+        def _score(keywords: dict[str, int]) -> float:
+            base = 35.0
+            for kw, weight in keywords.items():
+                if kw in combined:
+                    base += weight
+            return min(base, 98.0)
+
+        social = round(_score(social_keywords), 1)
+        environmental = round(_score(env_keywords), 1)
+        economic = round(_score(econ_keywords), 1)
+        overall = round(social * 0.40 + environmental * 0.30 + economic * 0.30, 1)
+
+        # Determine dominant dimension
+        dims = {"Social": social, "Environmental": environmental, "Economic": economic}
+        dominant = max(dims, key=dims.get)
+
+        summary = (
+            f"Strongest impact in {dominant.lower()} dimension ({dims[dominant]:.0f}%). "
+            f"Overall projected community impact: {overall:.0f}%."
+        )
+
+        return {
+            "social": social,
+            "environmental": environmental,
+            "economic": economic,
+            "overall": overall,
+            "summary": summary,
+        }
+

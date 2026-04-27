@@ -1359,75 +1359,196 @@ class _MapFabCluster extends StatelessWidget {
         _FabButton(
           icon: Icons.add_location_alt_rounded,
           label: 'REPORT PROBLEM',
+          tooltip: 'Submit a local community issue',
           onTap: onReport,
+          tooltipDelay: const Duration(milliseconds: 600),
         ),
         const SizedBox(height: 10),
         _FabButton(
           icon: Icons.auto_awesome_rounded,
           label: 'RESEARCH IDEA',
+          tooltip: 'Match your idea to problems',
           onTap: onResearch,
+          tooltipDelay: const Duration(milliseconds: 1200),
         ),
       ],
     );
   }
 }
 
-class _FabButton extends StatelessWidget {
+class _FabButton extends StatefulWidget {
   const _FabButton({
     required this.icon,
     required this.label,
+    required this.tooltip,
     required this.onTap,
+    this.tooltipDelay = Duration.zero,
   });
 
   final IconData icon;
   final String label;
+  final String tooltip;
   final VoidCallback onTap;
+  final Duration tooltipDelay;
+
+  @override
+  State<_FabButton> createState() => _FabButtonState();
+}
+
+class _FabButtonState extends State<_FabButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _tooltipCtrl;
+  late final Animation<double> _tooltipAnim;
+  bool _showTooltip = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tooltipCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _tooltipAnim = CurvedAnimation(
+      parent: _tooltipCtrl,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeIn,
+    );
+
+    // Show tooltip after a staggered delay, then auto-hide
+    Future.delayed(widget.tooltipDelay, () {
+      if (!mounted) return;
+      setState(() => _showTooltip = true);
+      _tooltipCtrl.forward();
+      Future.delayed(const Duration(seconds: 4), () {
+        if (!mounted) return;
+        _tooltipCtrl.reverse().then((_) {
+          if (mounted) setState(() => _showTooltip = false);
+        });
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _tooltipCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _barBg.withValues(alpha: 0.55),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _barIcon.withValues(alpha: 0.50),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _barIcon.withValues(alpha: 0.15),
-                  blurRadius: 16,
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: _barIcon, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: GoogleFonts.robotoMono(
-                    color: _barIcon,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.4,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // The button
+        GestureDetector(
+          onTap: widget.onTap,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _barBg.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _barIcon.withValues(alpha: 0.50),
+                    width: 1,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _barIcon.withValues(alpha: 0.15),
+                      blurRadius: 16,
+                    ),
+                  ],
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(widget.icon, color: _barIcon, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.label,
+                      style: GoogleFonts.robotoMono(
+                        color: _barIcon,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-      ),
+
+        // Tooltip bubble
+        if (_showTooltip)
+          AnimatedBuilder(
+            animation: _tooltipAnim,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _tooltipAnim.value.clamp(0.0, 1.0),
+                child: Transform.translate(
+                  offset: Offset(4 * (1 - _tooltipAnim.value), 0),
+                  child: child,
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: CustomPaint(
+                painter: _BubbleTailPainter(color: _barBg.withValues(alpha: 0.85)),
+                child: Container(
+                  padding:
+                      const EdgeInsets.only(left: 12, right: 10, top: 6, bottom: 6),
+                  decoration: BoxDecoration(
+                    color: _barBg.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _barIcon.withValues(alpha: 0.25),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Text(
+                    widget.tooltip,
+                    style: GoogleFonts.robotoMono(
+                      color: _barIcon.withValues(alpha: 0.9),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
+}
+
+/// Paints a small left-pointing triangle tail for the tooltip bubble.
+class _BubbleTailPainter extends CustomPainter {
+  const _BubbleTailPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final path = Path()
+      ..moveTo(-6, size.height / 2 - 5)
+      ..lineTo(0, size.height / 2)
+      ..lineTo(-6, size.height / 2 + 5)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _BubbleTailPainter old) => old.color != color;
 }
 
 /// Cyber-styled idea matching input dock with collapsible nav behavior.
