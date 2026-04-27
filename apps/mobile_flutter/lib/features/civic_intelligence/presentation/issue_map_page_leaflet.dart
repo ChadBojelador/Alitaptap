@@ -488,7 +488,7 @@ class _LeafletTopBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'CIVIC INTELLIGENCE MAP',
+                  'CIVIC MAP',
                   style: GoogleFonts.robotoMono(
                     fontSize: 11,
                     letterSpacing: 1.8,
