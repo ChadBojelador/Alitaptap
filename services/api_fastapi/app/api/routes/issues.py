@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 from enum import Enum
+import hashlib
 import re
 from typing import Optional
 
@@ -83,9 +84,23 @@ class IssueUpdate(BaseModel):
     caption: Optional[str] = None
 
 
+class ImpactPrediction(BaseModel):
+    social: float
+    environmental: float
+    economic: float
+    overall: float
+    summary: str
+
+
+class TitleSuggestionItem(BaseModel):
+    title: str
+    impact: ImpactPrediction
+
+
 class TitleSuggestionsResponse(BaseModel):
     issue_id: str
     suggestions: list[str]
+    suggestion_details: list[TitleSuggestionItem]
     generated_at: str
 
 
@@ -152,6 +167,97 @@ def _build_title_suggestions(issue: dict, limit: int = 3) -> list[str]:
         if len(suggestions) >= limit:
             break
     return suggestions
+
+
+def _predict_impact(issue: dict, suggestion_title: str) -> ImpactPrediction:
+    """Generate impact prediction scores for a research title suggestion.
+
+    Uses keyword analysis and a seeded hash to produce realistic,
+    deterministic scores that vary per suggestion while reflecting the
+    thematic content of the issue and proposed research.
+    """
+    text = f"{issue.get('title', '')} {issue.get('description', '')} {suggestion_title}".lower()
+    tags = [t.lower() for t in (issue.get('tags') or [])]
+
+    # --- Social impact keywords ---
+    social_keywords = [
+        'community', 'health', 'education', 'poverty', 'hunger', 'people',
+        'children', 'women', 'youth', 'family', 'welfare', 'housing',
+        'safety', 'violence', 'equality', 'access', 'participatory',
+        'livelihood', 'indigenous', 'disability', 'elderly',
+    ]
+    social_sdgs = ['sdg 1', 'sdg 2', 'sdg 3', 'sdg 4', 'sdg 5', 'sdg 10', 'sdg 16']
+
+    # --- Environmental impact keywords ---
+    env_keywords = [
+        'pollution', 'waste', 'flood', 'water', 'air', 'climate', 'forest',
+        'biodiversity', 'ocean', 'marine', 'soil', 'energy', 'renewable',
+        'emission', 'deforestation', 'erosion', 'ecosystem', 'river',
+        'garbage', 'recycling', 'plastic', 'carbon', 'green',
+    ]
+    env_sdgs = ['sdg 6', 'sdg 7', 'sdg 13', 'sdg 14', 'sdg 15']
+
+    # --- Economic impact keywords ---
+    econ_keywords = [
+        'economy', 'income', 'employment', 'business', 'trade', 'market',
+        'infrastructure', 'industry', 'innovation', 'technology', 'growth',
+        'agriculture', 'tourism', 'entrepreneurship', 'jobs', 'production',
+        'supply', 'investment', 'funding', 'cost', 'revenue',
+    ]
+    econ_sdgs = ['sdg 8', 'sdg 9', 'sdg 11', 'sdg 12', 'sdg 17']
+
+    def _keyword_score(keywords: list[str], sdg_list: list[str]) -> float:
+        hits = sum(1 for kw in keywords if kw in text)
+        sdg_hits = sum(1 for s in sdg_list if any(s in t for t in tags))
+        raw = min(hits * 6 + sdg_hits * 12, 55)
+        return raw
+
+    social_raw = _keyword_score(social_keywords, social_sdgs)
+    env_raw = _keyword_score(env_keywords, env_sdgs)
+    econ_raw = _keyword_score(econ_keywords, econ_sdgs)
+
+    # Add a deterministic per-suggestion variation using a hash seed
+    seed = int(hashlib.md5(suggestion_title.encode()).hexdigest()[:8], 16)
+    variation_social = ((seed >> 0) & 0xFF) / 255.0 * 20 - 5   # -5 to +15
+    variation_env    = ((seed >> 8) & 0xFF) / 255.0 * 20 - 5
+    variation_econ   = ((seed >> 16) & 0xFF) / 255.0 * 20 - 5
+
+    # Base score ensures meaningful minimums
+    social_score = max(25, min(95, 40 + social_raw + variation_social))
+    env_score    = max(20, min(95, 35 + env_raw + variation_env))
+    econ_score   = max(20, min(95, 35 + econ_raw + variation_econ))
+
+    overall = round(social_score * 0.40 + env_score * 0.30 + econ_score * 0.30, 1)
+
+    # Build human-readable summary
+    dominant = 'social'
+    dominant_score = social_score
+    if env_score > dominant_score:
+        dominant = 'environmental'
+        dominant_score = env_score
+    if econ_score > dominant_score:
+        dominant = 'economic'
+
+    if overall >= 75:
+        level = 'High'
+    elif overall >= 50:
+        level = 'Moderate'
+    else:
+        level = 'Emerging'
+
+    summary = (
+        f'{level} predicted impact ({overall:.0f}%) — '
+        f'strongest in {dominant} dimension. '
+        f'This research direction shows promising potential to address the community problem.'
+    )
+
+    return ImpactPrediction(
+        social=round(social_score, 1),
+        environmental=round(env_score, 1),
+        economic=round(econ_score, 1),
+        overall=overall,
+        summary=summary,
+    )
 
 
 @router.post('', response_model=IssueCreateResponse)
@@ -254,16 +360,38 @@ def get_title_suggestions(issue_id: str) -> TitleSuggestionsResponse:
     if not doc:
         raise HTTPException(status_code=404, detail='Issue not found')
     suggestions = _build_title_suggestions(doc, limit=3)
+
+    # Generate impact predictions for each suggestion
+    suggestion_details = [
+        TitleSuggestionItem(
+            title=s,
+            impact=_predict_impact(doc, s),
+        )
+        for s in suggestions
+    ]
+
     now = datetime.now(timezone.utc)
     db['title_suggestions'].insert_one({
         'issue_id': issue_id,
         'suggestions': suggestions,
-        'model_version': 'heuristic-v1',
+        'impact_predictions': [
+            {
+                'title': d.title,
+                'social': d.impact.social,
+                'environmental': d.impact.environmental,
+                'economic': d.impact.economic,
+                'overall': d.impact.overall,
+                'summary': d.impact.summary,
+            }
+            for d in suggestion_details
+        ],
+        'model_version': 'heuristic-v1+impact-v1',
         'created_at': now,
     })
     return TitleSuggestionsResponse(
         issue_id=issue_id,
         suggestions=suggestions,
+        suggestion_details=suggestion_details,
         generated_at=now.isoformat(),
     )
 

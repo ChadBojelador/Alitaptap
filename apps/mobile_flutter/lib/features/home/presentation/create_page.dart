@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'package:alitaptap_mobile/core/models/research_backbone.dart';
 import 'package:alitaptap_mobile/services/api_service.dart';
@@ -40,7 +41,6 @@ class _CreatePageState extends State<CreatePage> {
   // Editable backbone fields
   late TextEditingController _titleEditCtrl;
   late TextEditingController _methodologyEditCtrl;
-  late TextEditingController _impactEditCtrl;
   late List<TextEditingController> _sdgEditCtrls;
   
   // Saved projects list
@@ -52,7 +52,6 @@ class _CreatePageState extends State<CreatePage> {
     super.initState();
     _titleEditCtrl = TextEditingController();
     _methodologyEditCtrl = TextEditingController();
-    _impactEditCtrl = TextEditingController();
     _sdgEditCtrls = [];
   }
 
@@ -66,7 +65,6 @@ class _CreatePageState extends State<CreatePage> {
     _approachCtrl.dispose();
     _titleEditCtrl.dispose();
     _methodologyEditCtrl.dispose();
-    _impactEditCtrl.dispose();
     _aiDescriptionCtrl.dispose();
     for (var ctrl in _sdgEditCtrls) {
       ctrl.dispose();
@@ -76,6 +74,7 @@ class _CreatePageState extends State<CreatePage> {
 
   void _saveProject(String title, String description, String sdg, {bool isAIGuided = false, ResearchBackbone? backbone}) {
     setState(() {
+      final impactJson = backbone != null ? jsonEncode(backbone.communityImpact.toJson()) : '';
       if (_editingProjectIndex != null) {
         _savedProjects[_editingProjectIndex!] = {
           'title': title,
@@ -84,7 +83,7 @@ class _CreatePageState extends State<CreatePage> {
           'date': _savedProjects[_editingProjectIndex!]['date']!,
           'mode': isAIGuided ? 'ai' : 'manual',
           'methodology': backbone?.methodology ?? '',
-          'impact': backbone?.communityImpactLevel ?? '',
+          'impact': impactJson,
           'feasibility': backbone != null ? 'Cost: ${backbone.feasibilityScore.cost} | Time: ${backbone.feasibilityScore.time} | Data: ${backbone.feasibilityScore.dataAvailability}' : '',
         };
         _editingProjectIndex = null;
@@ -96,7 +95,7 @@ class _CreatePageState extends State<CreatePage> {
           'date': DateTime.now().toString().split(' ')[0],
           'mode': isAIGuided ? 'ai' : 'manual',
           'methodology': backbone?.methodology ?? '',
-          'impact': backbone?.communityImpactLevel ?? '',
+          'impact': impactJson,
           'feasibility': backbone != null ? 'Cost: ${backbone.feasibilityScore.cost} | Time: ${backbone.feasibilityScore.time} | Data: ${backbone.feasibilityScore.dataAvailability}' : '',
         });
       }
@@ -114,7 +113,15 @@ class _CreatePageState extends State<CreatePage> {
       if (isAI) {
         _titleEditCtrl.text = project['title']!;
         _methodologyEditCtrl.text = project['methodology'] ?? '';
-        _impactEditCtrl.text = project['impact'] ?? '';
+        
+        CommunityImpact impact;
+        try {
+          final decoded = jsonDecode(project['impact'] ?? '{}');
+          impact = CommunityImpact.fromJson(decoded);
+        } catch (_) {
+          impact = CommunityImpact.fromLegacy(project['impact'] ?? 'Medium');
+        }
+
         _generatedBackbone = ResearchBackbone(
           researchTitle: project['title']!,
           methodology: project['methodology'] ?? '',
@@ -124,7 +131,7 @@ class _CreatePageState extends State<CreatePage> {
             time: '6-12 months',
             dataAvailability: 'Moderate',
           ),
-          communityImpactLevel: project['impact'] ?? 'Medium',
+          communityImpact: impact,
         );
       }
       
@@ -349,7 +356,6 @@ ${project['feasibility'] ?? 'N/A'}
         _generatedBackbone = backbone;
         _titleEditCtrl.text = backbone.researchTitle;
         _methodologyEditCtrl.text = backbone.methodology;
-        _impactEditCtrl.text = backbone.communityImpactLevel;
         _sdgEditCtrls = backbone.sdgAlignment
             .map((sdg) => TextEditingController(text: sdg))
             .toList();
@@ -441,13 +447,23 @@ ${project['feasibility'] ?? 'N/A'}
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Create',
-            style: GoogleFonts.poppins(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: textColor,
-            ),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: const Icon(Icons.arrow_back_ios_rounded,
+                    color: _amber, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Create',
+                style: GoogleFonts.poppins(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: textColor,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
@@ -1309,7 +1325,7 @@ ${project['feasibility'] ?? 'N/A'}
           ),
           const SizedBox(height: 16),
           Text(
-            'Community Impact Level',
+            'Community Impact Analysis',
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -1317,33 +1333,12 @@ ${project['feasibility'] ?? 'N/A'}
             ),
           ),
           const SizedBox(height: 8),
-          TextField(
-            controller: _impactEditCtrl,
-            maxLines: 2,
-            style: GoogleFonts.poppins(fontSize: 14, color: textColor),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: cardBg,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: _amberBright.withValues(alpha: 0.3),
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: _amberBright.withValues(alpha: 0.3),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: _amberBright,
-                  width: 1.5,
-                ),
-              ),
-            ),
+          _buildImpactCard(
+            _generatedBackbone!.communityImpact,
+            isDark,
+            textColor,
+            subtleColor,
+            cardBg,
           ),
           const SizedBox(height: 24),
           Row(
@@ -1355,7 +1350,6 @@ ${project['feasibility'] ?? 'N/A'}
                     _aiDescriptionCtrl.clear();
                     _titleEditCtrl.clear();
                     _methodologyEditCtrl.clear();
-                    _impactEditCtrl.clear();
                     setState(() {
                       _generatedBackbone = null;
                       _editingProjectIndex = null;
@@ -1395,7 +1389,6 @@ ${project['feasibility'] ?? 'N/A'}
                     _aiDescriptionCtrl.clear();
                     _titleEditCtrl.clear();
                     _methodologyEditCtrl.clear();
-                    _impactEditCtrl.clear();
                     setState(() {
                       _generatedBackbone = null;
                       _editingProjectIndex = null;
@@ -1446,6 +1439,125 @@ ${project['feasibility'] ?? 'N/A'}
           ),
         ],
         const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildImpactCard(CommunityImpact impact, bool isDark, Color textColor, Color subtleColor, Color cardBg) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _amberBright.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  impact.summary,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: subtleColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _amberBright.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _amberBright.withValues(alpha: 0.5)),
+                ),
+                child: Text(
+                  '${impact.overall.toInt()}% OVERALL',
+                  style: GoogleFonts.robotoMono(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: _amberBright,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildAnimatedImpactBar('Social', impact.social, Colors.blueAccent, textColor),
+          const SizedBox(height: 12),
+          _buildAnimatedImpactBar('Environmental', impact.environmental, Colors.greenAccent, textColor),
+          const SizedBox(height: 12),
+          _buildAnimatedImpactBar('Economic', impact.economic, Colors.orangeAccent, textColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedImpactBar(String label, double value, Color color, Color textColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: textColor.withValues(alpha: 0.8),
+              ),
+            ),
+            Text(
+              '${value.toInt()}%',
+              style: GoogleFonts.robotoMono(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          height: 6,
+          decoration: BoxDecoration(
+            color: textColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: value / 100),
+            duration: const Duration(milliseconds: 1200),
+            curve: Curves.easeOutCubic,
+            builder: (context, val, _) {
+              return FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: val,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(3),
+                    gradient: LinearGradient(
+                      colors: [
+                        color.withValues(alpha: 0.5),
+                        color,
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.4),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ],
     );
   }
