@@ -829,6 +829,49 @@ class _PostCardState extends State<_PostCard> {
 
   bool get _liked => widget.post.likedBy.contains(widget.currentUid);
 
+  void _showPostMenu(BuildContext context) {
+    final isDark = widget.isDark;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF444444) : const Color(0xFFDDDDDD),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.share_rounded, color: _yellow),
+              title: Text('Share', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              onTap: () { Navigator.pop(context); widget.onShare(); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.send_rounded, color: _yellow),
+              title: Text('Message Author', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              onTap: () { Navigator.pop(context); widget.onMessage(); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_rounded, color: Color(0xFFEF5350)),
+              title: Text('Report Post', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFFEF5350))),
+              onTap: () { Navigator.pop(context); },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
@@ -900,7 +943,10 @@ class _PostCardState extends State<_PostCard> {
                         )),
                   ),
                 const SizedBox(width: 8),
-                Icon(Icons.more_horiz_rounded, color: subtle, size: 22),
+                GestureDetector(
+                  onTap: () => _showPostMenu(context),
+                  child: Icon(Icons.more_horiz_rounded, color: subtle, size: 22),
+                ),
               ],
             ),
           ),
