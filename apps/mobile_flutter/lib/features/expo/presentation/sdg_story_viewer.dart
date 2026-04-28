@@ -71,7 +71,9 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
       });
       _startTimer();
     } else {
-      Navigator.of(context).pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).pop();
+      });
     }
   }
 
@@ -329,7 +331,9 @@ class _SdgStoryViewerState extends State<SdgStoryViewer> {
                             setState(() {
                               _stories.removeAt(_currentIndex);
                               if (_stories.isEmpty) {
-                                Navigator.of(context).pop(true);
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted) Navigator.of(context).pop(true);
+                                });
                                 return;
                               }
                               _currentIndex = _currentIndex.clamp(

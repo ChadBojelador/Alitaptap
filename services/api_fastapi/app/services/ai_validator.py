@@ -137,22 +137,42 @@ Respond with ONLY the JSON object, no additional text."""
             logger.error(f"Failed to parse AI response: {response_text}")
             return self._fallback_validation("", "")
 
+    def _heuristic_sdg_tag(self, text: str) -> str:
+        """Assign an SDG tag based on keywords in the text."""
+        text = text.lower()
+        if any(kw in text for kw in ['water', 'flood', 'sanitation', 'sewer', 'pipe', 'drain']):
+            return "SDG-6: Clean Water and Sanitation"
+        if any(kw in text for kw in ['health', 'disease', 'medical', 'hospital', 'doctor', 'clinic', 'medicine']):
+            return "SDG-3: Good Health and Well-being"
+        if any(kw in text for kw in ['education', 'school', 'learning', 'student', 'teacher', 'classroom']):
+            return "SDG-4: Quality Education"
+        if any(kw in text for kw in ['poverty', 'poor', 'income', 'money', 'financial', 'hungry', 'food']):
+            return "SDG-1: No Poverty"
+        if any(kw in text for kw in ['waste', 'garbage', 'trash', 'recycle', 'pollution', 'plastic']):
+            return "SDG-12: Responsible Consumption and Production"
+        if any(kw in text for kw in ['climate', 'environment', 'nature', 'warming', 'weather']):
+            return "SDG-13: Climate Action"
+        if any(kw in text for kw in ['road', 'bridge', 'traffic', 'transport', 'building', 'internet', 'electricity']):
+            return "SDG-9: Industry, Innovation and Infrastructure"
+        return "SDG-11: Sustainable Cities and Communities"
+
     def _fallback_validation(self, title: str, description: str) -> AIValidationResult:
         """Fallback heuristic validation when AI is unavailable."""
         is_valid = self._heuristic_check(title, description)
+        combined_text = f"{title} {description}"
         return AIValidationResult(
             is_valid=is_valid,
             reason="Heuristic validation (AI unavailable)" if is_valid else "Failed heuristic checks",
             ai_summary=description[:200] if description else "Community problem report",
-            auto_sdg_tag="SDG-11: Sustainable Cities and Communities",
+            auto_sdg_tag=self._heuristic_sdg_tag(combined_text),
             standardized_title=title,
         )
 
     def _heuristic_check(self, title: str, description: str) -> bool:
         """Basic heuristic validation."""
-        if not title or len(title.strip()) < 5:
+        if not title or len(title.strip()) < 1:
             return False
-        if not description or len(description.strip()) < 10:
+        if not description or len(description.strip()) < 1:
             return False
         if len(title) > 200 or len(description) > 5000:
             return False

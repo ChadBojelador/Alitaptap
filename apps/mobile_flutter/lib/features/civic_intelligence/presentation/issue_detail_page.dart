@@ -7,6 +7,7 @@ import '../../../core/models/issue.dart';
 import '../../../core/models/title_suggestions.dart';
 import '../application/usecases/get_issue_by_id_use_case.dart';
 import '../application/usecases/get_title_suggestions_use_case.dart';
+import '../../../services/api_service.dart';
 import '../data/repositories/api_issue_repository.dart';
 
 /// Detail page for a single community issue.
@@ -116,6 +117,47 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
           _loadingSuggestions = false;
           _suggestionError = e.toString();
         });
+      }
+    }
+  }
+
+  Future<void> _deleteIssue() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Problem?', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+        content: const Text('This will permanently remove this problem from the map and community feed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Delete', style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Deleting...'), duration: Duration(seconds: 1)),
+        );
+        await ApiService().deleteIssue(widget.issueId);
+        if (mounted) {
+          Navigator.pop(context, true); // Return true to indicate it was deleted
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✓ Problem deleted')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete: $e')),
+          );
+        }
       }
     }
   }
@@ -325,6 +367,27 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          if (_issue != null)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (value) {
+                if (value == 'delete') _deleteIssue();
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                      SizedBox(width: 12),
+                      Text('Delete Problem', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

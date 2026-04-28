@@ -23,9 +23,9 @@ class IssueSubmitPage extends StatefulWidget {
 }
 
 class _IssueSubmitPageState extends State<IssueSubmitPage> {
-  static const int _minManualTitleChars = 8;
-  static const int _minManualDescriptionChars = 30;
-  static const int _minAiProblemChars = 20;
+  static const int _minManualTitleChars = 1;
+  static const int _minManualDescriptionChars = 1;
+  static const int _minAiProblemChars = 1;
 
   bool _isAIGuided = false;
   final _problemCtrl = TextEditingController();
@@ -34,9 +34,10 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   bool _elaborating = false;
   String? _elaboratedText;
   String? _suggestedSDG;
-  final List<Map<String, String>> _savedReports = [];
+  final List<Map<String, dynamic>> _savedReports = [];
   int? _editingIndex;
   bool _isEditingMode = false;
+  String? _lastSubmittedId;
 
   // Location state
   bool _isLocationEnabled = true;
@@ -65,9 +66,10 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     super.dispose();
   }
 
-  void _saveReport(String title, String description, String sdg) {
+  void _saveReport(String title, String description, String sdg, [String? id]) {
     setState(() {
       _savedReports.add({
+        'id': id,
         'title': title,
         'description': description,
         'sdg': sdg,
@@ -76,13 +78,34 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     });
   }
 
-  void _deleteReport(int index) {
+  Future<void> _deleteReport(int index) async {
+    final report = _savedReports[index];
+    final issueId = report['id'];
+
+    // Show loading snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Deleting report...'), duration: Duration(seconds: 1)),
+    );
+
+    if (issueId != null) {
+      try {
+        await ApiService().deleteIssue(issueId);
+      } catch (e) {
+        debugPrint('Failed to delete from server: $e');
+        // We still remove it from local list to keep UI snappy, 
+        // but it might reappear on refresh if server call failed.
+      }
+    }
+
     setState(() {
       _savedReports.removeAt(index);
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✓ Report deleted')),
-    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✓ Report deleted successfully')),
+      );
+    }
   }
 
   void _loadReportForEdit(int index) {
@@ -160,7 +183,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       }
 
       // Real Server Call
-      await api.submitIssue(
+      final res = await api.submitIssue(
         reporterId: widget.reporterId,
         reporterName: widget.reporterName,
         title: title,
@@ -172,27 +195,31 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
 
       if (!mounted) return;
       
-      setState(() {
-        _savedReports.add({
-          'title': title,
-          'description': description,
-          'sdg': 'Manual Report',
-          'date': DateTime.now().toString().split(' ')[0],
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _savedReports.add({
+            'id': res['issue_id'],
+            'title': title,
+            'description': description,
+            'sdg': 'Manual Report',
+            'date': DateTime.now().toString().split(' ')[0],
+          });
+          _elaborating = false;
         });
-        _elaborating = false;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✓ Problem submitted to community and pinned on map!')),
+        );
+
+        _titleCtrl.clear();
+        _descriptionCtrl.clear();
+        _selectedLat = null;
+        _selectedLng = null;
+        _locationName = null;
+        _pickedImage = null;
+        _suggestedImageUrl = null;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✓ Problem submitted to community and pinned on map!')),
-      );
-
-      _titleCtrl.clear();
-      _descriptionCtrl.clear();
-      _selectedLat = null;
-      _selectedLng = null;
-      _locationName = null;
-      _pickedImage = null;
-      _suggestedImageUrl = null;
 
     } catch (e) {
       setState(() => _elaborating = false);
@@ -234,7 +261,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
       }
       
       // Real Server Call
-      await api.submitIssue(
+      final res = await api.submitIssue(
         reporterId: widget.reporterId,
         reporterName: widget.reporterName,
         title: problem.split('\n')[0].substring(0, problem.split('\n')[0].length > 50 ? 50 : problem.split('\n')[0].length),
@@ -246,23 +273,26 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
 
       if (!mounted) return;
 
-      setState(() {
-        _elaboratedText = elaborated;
-        _suggestedSDG = sdg;
-        _elaborating = false;
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _elaboratedText = elaborated;
+          _suggestedSDG = sdg;
+          _elaborating = false;
+          _lastSubmittedId = res['issue_id'];
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✓ Problem submitted to community and pinned on map!')),
-      );
-      
-      // Clear after submission
-      _problemCtrl.clear();
-      _selectedLat = null;
-      _selectedLng = null;
-      _locationName = null;
-      _pickedImage = null;
-      _suggestedImageUrl = null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✓ Problem submitted to community and pinned on map!')),
+        );
+        
+        // Clear location after submission, but keep text for Save Report button
+        _selectedLat = null;
+        _selectedLng = null;
+        _locationName = null;
+        _pickedImage = null;
+        _suggestedImageUrl = null;
+      });
       
     } catch (e) {
       setState(() => _elaborating = false);
@@ -378,9 +408,22 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
   }
 
   Future<void> _pickLocationOnMap() async {
-    final latlong.LatLng initialCenter = _selectedLat != null 
-        ? latlong.LatLng(_selectedLat!, _selectedLng!) 
-        : const latlong.LatLng(12.8797, 121.7740); // Philippines center
+    latlong.LatLng initialCenter;
+    
+    if (_selectedLat != null) {
+      initialCenter = latlong.LatLng(_selectedLat!, _selectedLng!);
+    } else {
+      // Try to get current position for better UX so map doesn't start in the ocean
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low,
+          timeLimit: const Duration(seconds: 2),
+        );
+        initialCenter = latlong.LatLng(pos.latitude, pos.longitude);
+      } catch (_) {
+        initialCenter = const latlong.LatLng(12.8797, 121.7740); // Fallback to Philippines center
+      }
+    }
 
     final result = await showDialog<latlong.LatLng>(
       context: context,
@@ -493,7 +536,10 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
     final canSaveManual = _titleCtrl.text.trim().length >= _minManualTitleChars &&
         _descriptionCtrl.text.trim().length >= _minManualDescriptionChars;
     final canAnalyzeAi = _problemCtrl.text.trim().length >= _minAiProblemChars;
-    final canSaveAi = _elaboratedText != null && canAnalyzeAi;
+    // The bug was that canSaveAi required canAnalyzeAi to be true, 
+    // but the text was cleared after submission. 
+    // Now it only requires the analysis result to exist.
+    final canSaveAi = _elaboratedText != null;
 
     return Scaffold(
       backgroundColor: bg,
@@ -846,13 +892,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   ),
                 ),
               ),
-              if (!canAnalyzeAi) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Add at least $_minAiProblemChars characters to analyze.',
-                  style: GoogleFonts.poppins(fontSize: 11, color: subtleColor),
-                ),
-              ],
+
 
               if (_elaboratedText != null) ...[
                 const SizedBox(height: 24),
@@ -919,7 +959,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                   onTap: !canSaveAi
                       ? null
                       : () {
-                    _saveReport(_problemCtrl.text, _elaboratedText!, _suggestedSDG ?? 'SDG 17');
+                    _saveReport(_problemCtrl.text, _elaboratedText!, _suggestedSDG ?? 'SDG 17', _lastSubmittedId);
                     _problemCtrl.clear();
                     setState(() {
                       _elaboratedText = null;
@@ -1235,13 +1275,7 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                     ),
                   ),
                 ),
-              if (!_isEditingMode && !canSaveManual) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Title: $_minManualTitleChars+ chars, Description: $_minManualDescriptionChars+ chars.',
-                  style: GoogleFonts.poppins(fontSize: 11, color: subtleColor),
-                ),
-              ],
+
             ],
 
             if (_savedReports.isNotEmpty) ...[
@@ -1287,18 +1321,37 @@ class _IssueSubmitPageState extends State<IssueSubmitPage> {
                                 ),
                               ),
                             ),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () => _loadReportForEdit(index),
-                                  child: Icon(Icons.edit_rounded,
-                                      color: _amber, size: 18),
+                            PopupMenuButton<String>(
+                              icon: Icon(Icons.more_vert_rounded, color: subtleColor, size: 20),
+                              padding: EdgeInsets.zero,
+                              color: cardBg,
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _loadReportForEdit(index);
+                                } else if (value == 'delete') {
+                                  _deleteReport(index);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit_rounded, color: _amber, size: 16),
+                                      const SizedBox(width: 8),
+                                      Text('Edit', style: GoogleFonts.poppins(fontSize: 12, color: textColor)),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(width: 12),
-                                GestureDetector(
-                                  onTap: () => _deleteReport(index),
-                                  child: Icon(Icons.delete_rounded,
-                                      color: subtleColor, size: 18),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete_rounded, color: Colors.redAccent, size: 16),
+                                      const SizedBox(width: 8),
+                                      Text('Delete', style: GoogleFonts.poppins(fontSize: 12, color: textColor)),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

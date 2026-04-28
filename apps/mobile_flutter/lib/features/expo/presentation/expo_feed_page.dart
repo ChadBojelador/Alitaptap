@@ -155,11 +155,12 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                   imageUrl: imageUrl,
                 );
                 // Defer pop to next frame to avoid InheritedWidget dependency conflict.
-                // Direct pop causes _dependents.isEmpty assertion because MediaQuery
-                // is still registered as a dependency of this StatefulBuilder.
                 if (ctx.mounted) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (ctx.mounted) Navigator.of(ctx).pop(true);
+                    if (ctx.mounted) {
+                      // Using the sheet's own context for pop, but ensuring it's the next frame
+                      Navigator.pop(ctx, true);
+                    }
                   });
                 }
               } catch (e) {
@@ -175,7 +176,7 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
             return Padding(
               padding: EdgeInsets.only(
                 left: 20, right: 20, top: 20,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                bottom: MediaQuery.viewInsetsOf(ctx).bottom + 24,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -448,14 +449,18 @@ class _ExpoFeedPageState extends State<ExpoFeedPage> {
                             builder: (_) => CreatePostPage(
                                 authorId: uid, authorEmail: email),
                           ))
-                          .then((_) => _load()),
+                          .then((_) => WidgetsBinding.instance.addPostFrameCallback((_) => _load())),
                     ),
 
                     // ── Stories row ────────────────────────────────────
                     _StoriesRow(
                       isDark: isDark,
                       stories: _stories,
-                      onAddStory: _showAddStorySheet,
+                      onAddStory: () async {
+                        await _showAddStorySheet();
+                        // Defer refresh to avoid assertion issues during sheet disposal
+                        WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+                      },
                       onRefresh: _load,
                     ),
 

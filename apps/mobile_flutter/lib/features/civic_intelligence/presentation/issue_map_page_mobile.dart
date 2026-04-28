@@ -872,7 +872,36 @@ class _RadarBlip extends StatelessWidget {
     final outerSize = 36.0 * scale;
     final coreSize  = 12.0 * scale;
 
-    final coreColor = const Color(0xFFFFC700);
+    // Parse SDG number (e.g. "SDG-6" -> "6")
+    String displayNum = '!';
+    Color coreColor = const Color(0xFFFFC700); // Default Yellow (SDG 11)
+
+    if (sdg != null) {
+      final match = RegExp(r'SDG[- ]?(\d+)').firstMatch(sdg);
+      if (match != null) {
+        displayNum = match.group(1)!;
+        // Basic SDG color mapping
+        switch (displayNum) {
+          case '1': coreColor = const Color(0xFFE5243B); break; // Red
+          case '2': coreColor = const Color(0xFFDDA63A); break; // Mustard
+          case '3': coreColor = const Color(0xFF4C9F38); break; // Green
+          case '4': coreColor = const Color(0xFFC5192D); break; // Dark Red
+          case '5': coreColor = const Color(0xFFFF3A21); break; // Orange-Red
+          case '6': coreColor = const Color(0xFF26BDE2); break; // Blue
+          case '7': coreColor = const Color(0xFFFCC30B); break; // Yellow
+          case '8': coreColor = const Color(0xFFA21942); break; // Burgundy
+          case '9': coreColor = const Color(0xFFFD6925); break; // Orange
+          case '10': coreColor = const Color(0xFFDD1367); break; // Pink
+          case '11': coreColor = const Color(0xFFFD9D24); break; // Orange-Yellow
+          case '12': coreColor = const Color(0xFFBF8B2E); break; // Brown
+          case '13': coreColor = const Color(0xFF3F7E44); break; // Dark Green
+          case '14': coreColor = const Color(0xFF0A97D9); break; // Sea Blue
+          case '15': coreColor = const Color(0xFF56C02B); break; // Bright Green
+          case '16': coreColor = const Color(0xFF00689D); break; // Dark Blue
+          case '17': coreColor = const Color(0xFF19486A); break; // Navy
+        }
+      }
+    }
 
     return AnimatedBuilder(
       animation: animation,
@@ -920,9 +949,9 @@ class _RadarBlip extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    sdg?.replaceAll('SDG ', '') ?? '!',
+                    displayNum,
                     style: GoogleFonts.robotoMono(
-                      color: Colors.black,
+                      color: Colors.white,
                       fontSize: 6 * scale,
                       fontWeight: FontWeight.w900,
                     ),
