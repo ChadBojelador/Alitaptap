@@ -25,6 +25,8 @@ if (process.env.DATABASE_URL) {
       logging: false
     }
   );
+} else if (process.env.VERCEL) {
+  throw new Error('DATABASE_URL must be configured for a Vercel deployment');
 } else {
   // Fallback: SQLite
   sequelize = new Sequelize({

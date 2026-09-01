@@ -7,6 +7,9 @@
     "dev:backend": "npm --prefix server run dev",
     "install:all": "npm --prefix client install && npm --prefix server install"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "devDependencies": {
     "concurrently": "^9.2.1"
   },

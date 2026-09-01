@@ -1,136 +1,102 @@
+import { createElement } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BACKEND_URL } from '../App';
+import {
+  FiArrowRight,
+  FiArrowUpRight,
+  FiCode,
+  FiCompass,
+  FiFileText,
+  FiLayers,
+  FiMap,
+  FiSmartphone,
+  FiZap,
+} from 'react-icons/fi';
 import '../styles/landing.css';
+
+const steps = [
+  { number: '01', icon: FiSmartphone, title: 'Notice what matters', description: 'Save a community challenge from the Alitaptap mobile app when the idea is still fresh.' },
+  { number: '02', icon: FiCompass, title: 'Bring it into focus', description: 'Open your saved ideas on desktop and choose the one you are ready to explore.' },
+  { number: '03', icon: FiZap, title: 'Make a way forward', description: 'Turn a promising thought into a structured project plan with clear next steps.' },
+];
+
+const features = [
+  { icon: FiLayers, title: 'Project framing', description: 'Scope your idea into clear goals, deliverables, and a practical starting point.' },
+  { icon: FiCode, title: 'Build-ready stack', description: 'See recommended tools and technologies shaped around the problem you chose.' },
+  { icon: FiMap, title: 'Guided roadmap', description: 'Move through a thoughtful sequence from research and validation to launch.' },
+  { icon: FiFileText, title: 'Structured output', description: 'Keep project details, starter code, and documentation together in one place.' },
+];
+
+function CubeField() {
+  return <div className="land-cube-field" aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <span key={index} />)}</div>;
+}
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="land-root">
-      {/* Nav */}
-      <nav className="land-nav">
-        <div className="land-nav-logo">
-          <span className="land-logo-dot">●</span> ALITAPTAP
-        </div>
-        <div className="land-nav-links">
-          <a href="#how">How it works</a>
-          <a href="#features">Features</a>
-        </div>
-        <button className="land-nav-cta" onClick={() => navigate('/login')}>
-          Get Started
-        </button>
+    <main className="land-root">
+      <div className="land-grid-overlay" aria-hidden="true" />
+      <div className="land-aurora land-aurora-one" aria-hidden="true" />
+      <div className="land-aurora land-aurora-two" aria-hidden="true" />
+
+      <nav className="land-nav" aria-label="Main navigation">
+        <a className="land-brand" href="#top" aria-label="Alitaptap home"><span className="land-brand-mark"><i /><i /><i /></span><span>ALITAPTAP</span></a>
+        <div className="land-nav-links"><a href="#how">How it works</a><a href="#toolkit">Toolkit</a></div>
+        <button className="land-nav-cta" onClick={() => navigate('/login')}>Start a project <FiArrowUpRight aria-hidden="true" /></button>
       </nav>
 
-      {/* Hero */}
-      <section className="land-hero">
-        <div className="land-hero-glow land-hero-glow--1" />
-        <div className="land-hero-glow land-hero-glow--2" />
-        <div className="land-hero-content">
-          <div className="land-hero-badge">🚀 AI Execution Platform</div>
-          <h1 className="land-hero-title">
-            From community problem<br />
-            <span className="land-hero-accent">to executed project.</span>
-          </h1>
-          <p className="land-hero-desc">
-            Save research ideas on mobile. Come to desktop and let AI turn them
-            into a full project plan, tech stack, and starter code — instantly.
-          </p>
+      <section className="land-hero" id="top">
+        <div className="land-hero-copy">
+          <p className="land-kicker"><span /> Community ideas, made actionable</p>
+          <h1>Make room for<br /><em>bright</em> local ideas<span className="land-pixel-word"> now</span>.</h1>
+          <p className="land-hero-description">Alitaptap turns the problems you notice into research projects with a clear, confident path from first spark to real-world impact.</p>
           <div className="land-hero-actions">
-            <button className="land-btn-primary" onClick={() => navigate('/login')}>
-              Start Building Free
-            </button>
-            <a href="#how" className="land-btn-ghost">See how it works →</a>
+            <button className="land-btn-primary" onClick={() => navigate('/login')}>Begin with an idea <FiArrowRight aria-hidden="true" /></button>
+            <a href="#how" className="land-text-link">Explore the process <FiArrowRight aria-hidden="true" /></a>
           </div>
-          <p className="land-hero-sub">
-            Connected to the Alitaptap mobile app · No credit card required
-          </p>
+          <div className="land-trust-row"><span className="land-trust-spark">+</span><p>Built around the problems your community already knows.</p></div>
         </div>
 
-        {/* Mock UI preview */}
-        <div className="land-hero-preview">
-          <div className="land-preview-card">
-            <div className="land-preview-header">
-              <span className="land-preview-dot red" />
-              <span className="land-preview-dot yellow" />
-              <span className="land-preview-dot green" />
-              <span className="land-preview-title">AI Project Planner</span>
-            </div>
-            <div className="land-preview-body">
-              <div className="land-preview-idea">
-                <span className="land-preview-label">💡 Saved Idea</span>
-                <p>Low-cost flood warning system for urban barangays</p>
-              </div>
-              <div className="land-preview-arrow">↓ Generate Plan with AI</div>
-              <div className="land-preview-output">
-                <div className="land-preview-line land-preview-line--yellow">📋 Project Breakdown</div>
-                <div className="land-preview-line">⚙️ Tech Stack: React, FastAPI, Firebase</div>
-                <div className="land-preview-line">📁 Folder Structure Generated</div>
-                <div className="land-preview-line land-preview-line--green">✅ Starter Code Ready</div>
-              </div>
-            </div>
+        <div className="land-project-window" aria-label="An example Alitaptap project plan">
+          <div className="land-window-topline"><span>LIVE PROJECT VIEW</span><span>01 / 04</span></div>
+          <div className="land-window-title-row"><div><p>Saved community signal</p><h2>Flood-ready<br /><em>barangays.</em></h2></div><span className="land-sun-token">*</span></div>
+          <div className="land-window-flow">
+            <article className="land-window-card land-window-card-idea"><span className="land-card-tag">THE START</span><p>Low-cost flood alerts for areas that need more time to respond.</p></article>
+            <div className="land-flow-rail"><span /></div>
+            <article className="land-window-card land-window-card-plan"><span className="land-card-tag">THE PLAN</span><ul><li><b>01</b> Community context</li><li><b>02</b> Practical tech stack</li><li><b>03</b> Starter implementation</li></ul><span className="land-card-status">Ready to shape</span></article>
           </div>
+          <CubeField />
         </div>
       </section>
 
-      {/* How it works */}
+      <section className="land-intro" aria-label="Alitaptap introduction">
+        <div className="land-intro-label">ALITAPTAP / FIELD NOTES</div>
+        <p>The <em>real world</em> is already full of meaningful prompts. We help you <span>carry them forward</span> with care.</p>
+        <div className="land-dots" aria-hidden="true" />
+      </section>
+
       <section className="land-how" id="how">
-        <h2 className="land-section-title">How it works</h2>
-        <p className="land-section-sub">Three steps from idea to execution</p>
+        <div className="land-section-heading"><p className="land-kicker"><span /> An intentional process</p><h2>One small signal.<br /><em>A project with direction.</em></h2><p>From a saved observation to a shareable plan, the path stays simple and visible.</p></div>
         <div className="land-steps">
-          {[
-            { num: '01', icon: '📲', title: 'Save on Mobile', desc: 'Browse community problems on the Alitaptap app. Bookmark the ones you want to solve.' },
-            { num: '02', icon: '💻', title: 'Open on Desktop', desc: 'Log in with the same account. Your saved ideas sync automatically.' },
-            { num: '03', icon: '🤖', title: 'AI Builds the Plan', desc: 'Click "Generate Plan". AI returns a full project breakdown, tech stack, and starter code.' },
-          ].map(s => (
-            <div key={s.num} className="land-step">
-              <div className="land-step-num">{s.num}</div>
-              <div className="land-step-icon">{s.icon}</div>
-              <h3>{s.title}</h3>
-              <p>{s.desc}</p>
-            </div>
-          ))}
+          {steps.map(({ number, icon: Icon, title, description }) => <article className="land-step" key={number}><div className="land-step-top"><span>{number}</span>{createElement(Icon, { 'aria-hidden': true })}</div><h3>{title}</h3><p>{description}</p><div className="land-step-line" /></article>)}
         </div>
+        <CubeField />
       </section>
 
-      {/* Features */}
-      <section className="land-features" id="features">
-        <h2 className="land-section-title">What AI generates for you</h2>
+      <section className="land-toolkit" id="toolkit">
+        <div className="land-toolkit-copy"><p className="land-kicker"><span /> The research toolkit</p><h2>Thoughtful tools for <em>making</em> momentum.</h2><p>Everything is designed to help a local concern become a grounded, buildable response.</p><button className="land-btn-secondary" onClick={() => navigate('/login')}>Open Alitaptap <FiArrowUpRight aria-hidden="true" /></button></div>
         <div className="land-features-grid">
-          {[
-            { icon: '📋', title: 'Project Breakdown', desc: 'Clear scope, goals, and deliverables for your research idea.' },
-            { icon: '⚙️', title: 'Tech Stack', desc: 'Recommended tools, frameworks, and libraries based on your problem.' },
-            { icon: '🗺️', title: 'Step-by-Step Plan', desc: 'A development roadmap from setup to deployment.' },
-            { icon: '📁', title: 'Folder Structure', desc: 'Ready-to-use project scaffold with frontend, backend, and README.' },
-            { icon: '💻', title: 'Starter Code', desc: 'Basic working code to get you running in minutes, not days.' },
-            { icon: '🌍', title: 'SDG Alignment', desc: 'Maps your project to the UN Sustainable Development Goals.' },
-          ].map(f => (
-            <div key={f.title} className="land-feature-card">
-              <div className="land-feature-icon">{f.icon}</div>
-              <h3>{f.title}</h3>
-              <p>{f.desc}</p>
-            </div>
-          ))}
+          {features.map(({ icon: Icon, title, description }) => <article className="land-feature-card" key={title}><span className="land-feature-icon">{createElement(Icon, { 'aria-hidden': true })}</span><h3>{title}</h3><p>{description}</p><FiArrowUpRight className="land-feature-arrow" aria-hidden="true" /></article>)}
         </div>
       </section>
 
-      {/* CTA */}
       <section className="land-cta">
-        <div className="land-cta-glow" />
-        <h2>Your idea is waiting to be built.</h2>
-        <p>Log in, pick a saved problem, and let AI do the heavy lifting.</p>
-        <button className="land-btn-primary land-btn-large" onClick={() => navigate('/login')}>
-          Start Building Now →
-        </button>
+        <div className="land-cta-aurora" aria-hidden="true" /><CubeField />
+        <p className="land-kicker"><span /> A place to begin</p><h2>Let the next <em>useful</em><br /> idea find its form.</h2><p className="land-cta-copy">Start with a problem worth noticing. We will help you map what comes next.</p>
+        <button className="land-btn-primary land-btn-large" onClick={() => navigate('/login')}>Start building <FiArrowRight aria-hidden="true" /></button>
       </section>
 
-      {/* Footer */}
-      <footer className="land-footer">
-        <div className="land-footer-logo">
-          <span className="land-logo-dot">●</span> ALITAPTAP
-        </div>
-        <p>Community problems → Student research → Real impact.</p>
-        <p className="land-footer-copy">© 2026 Alitaptap. All rights reserved.</p>
-      </footer>
-    </div>
+      <footer className="land-footer"><a className="land-brand" href="#top"><span className="land-brand-mark"><i /><i /><i /></span><span>ALITAPTAP</span></a><p>Community problems, student research, real impact.</p><span>2026</span></footer>
+    </main>
   );
 }

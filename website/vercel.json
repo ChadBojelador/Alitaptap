@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm ci --prefix client && npm ci --prefix server && npm --prefix client run build",
+  "outputDirectory": "client/dist",
+  "rewrites": [
+    { "source": "/login", "destination": "/api/login" },
+    { "source": "/signup", "destination": "/api/signup" },
+    { "source": "/profile", "destination": "/api/profile" },
+    { "source": "/logout", "destination": "/api/logout" },
+    { "source": "/auth/:path*", "destination": "/api/auth/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

@@ -17,12 +17,13 @@ const Draft = require('./models/Draft');
 const ChatHistory = require('./models/ChatHistory');
 const sequelize = require('./db');
 const cors = require('cors');
-const { spawn } = require('child_process');
-const path = require('path');
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
+const { chat, checkCredibility } = require('./ai_service');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) throw new Error('JWT_SECRET must be set in .env');
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) throw new Error('SESSION_SECRET must be set in .env');
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 const app = express();
@@ -93,7 +94,7 @@ app.use(express.urlencoded({ extended: true, limit: '50kb' }));
 app.use(hpp());
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'keyboard_cat_random_secret',
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: sessionStore,
@@ -105,7 +106,17 @@ app.use(session({
     }
 }));
 
-sessionStore.sync();
+let databaseReady;
+
+function ensureDatabase() {
+    if (!databaseReady) {
+        databaseReady = Promise.all([sequelize.sync(), sessionStore.sync()]).catch((error) => {
+            databaseReady = undefined;
+            throw error;
+        });
+    }
+    return databaseReady;
+}
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -287,117 +298,34 @@ app.delete('/api/chat/sessions/:sessionId', authMiddleware, apiLimiter,
     }
 );
 
-// --- Chat with IThink (Python ADK + Groq) ---
+// --- Chat with IThink (Groq) ---
 app.post('/api/chat', authMiddleware, apiLimiter,
     [body('message').isString().trim().isLength({ min: 1, max: 5000 }).withMessage('Message must be 1–5000 characters')],
     validate,
-    (req, res) => {
+    async (req, res) => {
         const message = xss(req.body.message);
-
-    const scriptPath = path.join(__dirname, 'credibility_checker', 'chat_agent.py');
-    const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
-    const python = spawn(pythonCmd, ['-u', scriptPath], { env: { ...process.env } });
-
-    let output = '';
-    let errorOutput = '';
-    
-    python.on('error', (err) => {
-        console.error('Failed to start python process:', err);
-        if (!res.headersSent) res.status(500).json({ error: 'Failed to start AI agent' });
-    });
-
-    python.stdout.on('data', (data) => { output += data.toString(); });
-    python.stderr.on('data', (data) => { errorOutput += data.toString(); });
-
-    python.stdin.write(JSON.stringify({ message }));
-    python.stdin.end();
-
-    python.on('close', () => {
-        if (res.headersSent) return;
         try {
-            const jsonStart = output.indexOf('{');
-            const jsonEnd = output.lastIndexOf('}') + 1;
-            const data = JSON.parse(output.substring(jsonStart, jsonEnd));
-            if (data.error) return res.status(500).json({ error: data.error });
-            res.json({ reply: data.reply });
-        } catch (err) {
-            console.error('chat_agent stderr:', errorOutput);
-            if (!res.headersSent) {
-                res.status(500).json({ error: 'Failed to parse chat response', raw: output.slice(0, 300) });
-            }
+            return res.json({ reply: await chat(message) });
+        } catch (error) {
+            console.error('Chat request failed:', error);
+            return res.status(502).json({ error: 'The AI service is unavailable. Please try again.' });
         }
-    });
+
 });
 
-// --- NEW: Credibility API (Python Integration) ---
+// --- Credibility API (Groq + Serper) ---
 app.post('/api/credibility', authMiddleware, apiLimiter,
     [body('text').isString().trim().isLength({ min: 1, max: 20000 })],
     validate,
-    (req, res) => {
+    async (req, res) => {
         const { text, persona } = req.body;
+        try {
+            return res.json(await checkCredibility(xss(text), persona || '1'));
+        } catch (error) {
+            console.error('Credibility request failed:', error);
+            return res.status(502).json({ error: 'The AI service is unavailable. Please try again.' });
+        }
 
-        const scriptPath = path.join(__dirname, 'credibility_checker', 'agent.py');
-        const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
-
-        const python = spawn(pythonCmd, ['-u', scriptPath], {
-            env: { ...process.env }
-        });
-
-        let output = '';
-        let errorOutput = '';
-
-        python.on('error', (err) => {
-            console.error('Failed to start python process:', err);
-            if (!res.headersSent) res.status(500).json({ error: 'Failed to start AI agent' });
-        });
-
-        python.stdout.on('data', (data) => {
-            output += data.toString();
-        });
-
-        python.stderr.on('data', (data) => {
-            errorOutput += data.toString();
-        });
-
-        python.stdin.write(JSON.stringify({ text, persona: persona || '1' }));
-        python.stdin.end();
-
-        python.on('close', (code) => {
-
-            if (code !== 0) {
-                console.error('Python crashed:', errorOutput);
-                if (!res.headersSent) {
-                    return res.status(500).json({
-                        error: 'Python process failed',
-                        details: errorOutput
-                    });
-                }
-            }
-
-            try {
-                const jsonStart = output.indexOf('{');
-                const jsonEnd = output.lastIndexOf('}') + 1;
-
-                if (jsonStart === -1 || jsonEnd === -1) {
-                    throw new Error("No JSON found in output");
-                }
-
-                const data = JSON.parse(output.substring(jsonStart, jsonEnd));
-
-                res.json(data);
-
-            } catch (err) {
-                console.error('Parse error:', err);
-                console.error('Raw output:', output);
-                console.error('Stderr:', errorOutput);
-
-                res.status(500).json({
-                    error: 'Invalid JSON from Python',
-                    raw: output,
-                    stderr: errorOutput
-                });
-            }
-        });
     }
 );
 
@@ -603,8 +531,10 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ error: 'Something went wrong' });
 });
 
+module.exports = { app, ensureDatabase };
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
+if (require.main === module) app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     sequelize.sync({ alter: true })
         .then(() => console.log('✅ DB synced'))
